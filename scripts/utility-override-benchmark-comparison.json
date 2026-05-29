@@ -1,0 +1,1261 @@
+{
+  "generatedAt": "2026-05-29T16:54:41.557Z",
+  "comparisonBaseline": "benchmark-report-pre-utility-override.json",
+  "summary": {
+    "improved": [
+      "Linear"
+    ],
+    "unchanged": [
+      "Stripe",
+      "Spotify",
+      "Vercel",
+      "Notion",
+      "Framer",
+      "Apple",
+      "Netflix",
+      "Slack"
+    ],
+    "regressed": []
+  },
+  "averages": {
+    "brandAccuracy": {
+      "before": 8.2,
+      "after": 8.6,
+      "delta": 0.3
+    },
+    "designerUsefulness": {
+      "before": 8.3,
+      "after": 8.3,
+      "delta": 0
+    }
+  },
+  "sites": [
+    {
+      "site": "Linear",
+      "before": {
+        "site": "Linear",
+        "foundation": "#08090a",
+        "primary": "#d0d6e0",
+        "secondaries": [],
+        "full": [
+          {
+            "role": "foundation",
+            "hex": "#08090a",
+            "bc": 0.467,
+            "score": 0.76
+          },
+          {
+            "role": "primary",
+            "hex": "#d0d6e0",
+            "bc": 0.149,
+            "score": 0.119
+          },
+          {
+            "role": "neutral",
+            "hex": "#f7f8f8",
+            "bc": 0.517,
+            "score": 0.561
+          },
+          {
+            "role": "neutral",
+            "hex": "#8a8f98",
+            "bc": 0.483,
+            "score": 0.424
+          },
+          {
+            "role": "neutral",
+            "hex": "#e5e5e6",
+            "bc": 0.433,
+            "score": 0.343
+          },
+          {
+            "role": "neutral",
+            "hex": "#23252a",
+            "bc": 0.45,
+            "score": 0.333
+          },
+          {
+            "role": "neutral",
+            "hex": "#62666d",
+            "bc": 0.149,
+            "score": 0.12
+          },
+          {
+            "role": "neutral",
+            "hex": "#2e2e32",
+            "bc": 0.08,
+            "score": 0.067
+          }
+        ]
+      },
+      "after": {
+        "site": "Linear",
+        "foundation": "#08090a",
+        "primary": "#5e6ad2",
+        "secondaries": [],
+        "full": [
+          {
+            "role": "foundation",
+            "hex": "#08090a",
+            "bc": 0.467,
+            "score": 0.76
+          },
+          {
+            "role": "primary",
+            "hex": "#5e6ad2",
+            "bc": 0.307,
+            "score": 0.152
+          },
+          {
+            "role": "neutral",
+            "hex": "#f7f8f8",
+            "bc": 0.517,
+            "score": 0.561
+          },
+          {
+            "role": "neutral",
+            "hex": "#8a8f98",
+            "bc": 0.483,
+            "score": 0.424
+          },
+          {
+            "role": "neutral",
+            "hex": "#e5e5e6",
+            "bc": 0.433,
+            "score": 0.343
+          },
+          {
+            "role": "neutral",
+            "hex": "#23252a",
+            "bc": 0.45,
+            "score": 0.333
+          },
+          {
+            "role": "neutral",
+            "hex": "#62666d",
+            "bc": 0.149,
+            "score": 0.12
+          },
+          {
+            "role": "neutral",
+            "hex": "#2e2e32",
+            "bc": 0.08,
+            "score": 0.067
+          }
+        ]
+      },
+      "scores": {
+        "before": {
+          "brandScore": 7,
+          "usefulScore": 9
+        },
+        "after": {
+          "brandScore": 10,
+          "usefulScore": 9
+        }
+      },
+      "status": "improved",
+      "utilityPromotions": {
+        "promoted": [
+          {
+            "hex": "#5e6ad2",
+            "brandConfidence": 0.307,
+            "hasHero": true,
+            "hasNav": false,
+            "sourceCounts": {
+              "hero_background": 1,
+              "demo_illustration": 2
+            },
+            "reason": "hasHero override"
+          }
+        ],
+        "incorrectlyPromoted": [],
+        "newlyNonUtilityCount": 1
+      }
+    },
+    {
+      "site": "Stripe",
+      "before": {
+        "site": "Stripe",
+        "foundation": "#ffffff",
+        "primary": "#533afd",
+        "secondaries": [
+          "#c2c8f1",
+          "#ff6118"
+        ],
+        "full": [
+          {
+            "role": "foundation",
+            "hex": "#ffffff",
+            "bc": 0.414,
+            "score": 0.413
+          },
+          {
+            "role": "primary",
+            "hex": "#533afd",
+            "bc": 0.561,
+            "score": 0.302
+          },
+          {
+            "role": "secondary",
+            "hex": "#c2c8f1",
+            "bc": 0.284,
+            "score": 0.138
+          },
+          {
+            "role": "secondary",
+            "hex": "#ff6118",
+            "bc": 0.093,
+            "score": 0.075
+          },
+          {
+            "role": "neutral",
+            "hex": "#000000",
+            "bc": 0.75,
+            "score": 0.822
+          },
+          {
+            "role": "neutral",
+            "hex": "#061b31",
+            "bc": 0.353,
+            "score": 0.276
+          },
+          {
+            "role": "neutral",
+            "hex": "#031323",
+            "bc": 0.225,
+            "score": 0.109
+          },
+          {
+            "role": "neutral",
+            "hex": "#e5edf5",
+            "bc": 0.111,
+            "score": 0.015
+          }
+        ]
+      },
+      "after": {
+        "site": "Stripe",
+        "foundation": "#ffffff",
+        "primary": "#533afd",
+        "secondaries": [
+          "#c2c8f1",
+          "#ff6118"
+        ],
+        "full": [
+          {
+            "role": "foundation",
+            "hex": "#ffffff",
+            "bc": 0.414,
+            "score": 0.413
+          },
+          {
+            "role": "primary",
+            "hex": "#533afd",
+            "bc": 0.561,
+            "score": 0.302
+          },
+          {
+            "role": "secondary",
+            "hex": "#c2c8f1",
+            "bc": 0.284,
+            "score": 0.138
+          },
+          {
+            "role": "secondary",
+            "hex": "#ff6118",
+            "bc": 0.093,
+            "score": 0.075
+          },
+          {
+            "role": "neutral",
+            "hex": "#000000",
+            "bc": 0.75,
+            "score": 0.822
+          },
+          {
+            "role": "neutral",
+            "hex": "#061b31",
+            "bc": 0.353,
+            "score": 0.276
+          },
+          {
+            "role": "neutral",
+            "hex": "#031323",
+            "bc": 0.225,
+            "score": 0.109
+          },
+          {
+            "role": "neutral",
+            "hex": "#e5edf5",
+            "bc": 0.111,
+            "score": 0.051
+          }
+        ]
+      },
+      "scores": {
+        "before": {
+          "brandScore": 10,
+          "usefulScore": 9
+        },
+        "after": {
+          "brandScore": 10,
+          "usefulScore": 9
+        }
+      },
+      "status": "unchanged",
+      "utilityPromotions": {
+        "promoted": [],
+        "incorrectlyPromoted": [],
+        "newlyNonUtilityCount": 0
+      }
+    },
+    {
+      "site": "Spotify",
+      "before": {
+        "site": "Spotify",
+        "secondaries": [],
+        "full": [
+          {
+            "role": "neutral",
+            "hex": "#000000",
+            "bc": 0.733,
+            "score": 0.88
+          },
+          {
+            "role": "neutral",
+            "hex": "#b3b3b3",
+            "bc": 0.75,
+            "score": 0.629
+          },
+          {
+            "role": "neutral",
+            "hex": "#ffffff",
+            "bc": 0.5,
+            "score": 0.461
+          },
+          {
+            "role": "neutral",
+            "hex": "#1f1f1f",
+            "bc": 0.683,
+            "score": 0.458
+          },
+          {
+            "role": "neutral",
+            "hex": "#121212",
+            "bc": 0.417,
+            "score": 0.381
+          },
+          {
+            "role": "neutral",
+            "hex": "#0000ee",
+            "bc": 0.417,
+            "score": 0.316
+          },
+          {
+            "role": "neutral",
+            "hex": "#7c7c7c",
+            "bc": 0.417,
+            "score": 0.308
+          },
+          {
+            "role": "neutral",
+            "hex": "#333333",
+            "bc": 0.217,
+            "score": 0.226
+          }
+        ]
+      },
+      "after": {
+        "site": "Spotify",
+        "secondaries": [],
+        "full": [
+          {
+            "role": "neutral",
+            "hex": "#000000",
+            "bc": 0.733,
+            "score": 0.88
+          },
+          {
+            "role": "neutral",
+            "hex": "#b3b3b3",
+            "bc": 0.75,
+            "score": 0.629
+          },
+          {
+            "role": "neutral",
+            "hex": "#ffffff",
+            "bc": 0.5,
+            "score": 0.461
+          },
+          {
+            "role": "neutral",
+            "hex": "#1f1f1f",
+            "bc": 0.683,
+            "score": 0.458
+          },
+          {
+            "role": "neutral",
+            "hex": "#121212",
+            "bc": 0.417,
+            "score": 0.381
+          },
+          {
+            "role": "neutral",
+            "hex": "#0000ee",
+            "bc": 0.417,
+            "score": 0.316
+          },
+          {
+            "role": "neutral",
+            "hex": "#7c7c7c",
+            "bc": 0.417,
+            "score": 0.308
+          },
+          {
+            "role": "neutral",
+            "hex": "#333333",
+            "bc": 0.217,
+            "score": 0.226
+          }
+        ]
+      },
+      "scores": {
+        "before": {
+          "brandScore": 2,
+          "usefulScore": 3
+        },
+        "after": {
+          "brandScore": 2,
+          "usefulScore": 3
+        }
+      },
+      "status": "unchanged",
+      "utilityPromotions": {
+        "promoted": [],
+        "incorrectlyPromoted": [],
+        "newlyNonUtilityCount": 0
+      }
+    },
+    {
+      "site": "Vercel",
+      "before": {
+        "site": "Vercel",
+        "foundation": "#fafafa",
+        "primary": "#00dc82",
+        "secondaries": [
+          "#ff3e00",
+          "#7820bc"
+        ],
+        "full": [
+          {
+            "role": "foundation",
+            "hex": "#fafafa",
+            "bc": 0.983,
+            "score": 0.651
+          },
+          {
+            "role": "primary",
+            "hex": "#00dc82",
+            "bc": 0.417,
+            "score": 0.309
+          },
+          {
+            "role": "secondary",
+            "hex": "#ff3e00",
+            "bc": 0.417,
+            "score": 0.309
+          },
+          {
+            "role": "secondary",
+            "hex": "#7820bc",
+            "bc": 0.15,
+            "score": 0.148
+          },
+          {
+            "role": "neutral",
+            "hex": "#000000",
+            "bc": 0.967,
+            "score": 0.929
+          },
+          {
+            "role": "neutral",
+            "hex": "#171717",
+            "bc": 1,
+            "score": 0.71
+          },
+          {
+            "role": "neutral",
+            "hex": "#4d4d4d",
+            "bc": 0.483,
+            "score": 0.563
+          },
+          {
+            "role": "neutral",
+            "hex": "#ededed",
+            "bc": 0.433,
+            "score": 0.317
+          }
+        ]
+      },
+      "after": {
+        "site": "Vercel",
+        "foundation": "#fafafa",
+        "primary": "#00dc82",
+        "secondaries": [
+          "#ff3e00",
+          "#7820bc"
+        ],
+        "full": [
+          {
+            "role": "foundation",
+            "hex": "#fafafa",
+            "bc": 0.983,
+            "score": 0.651
+          },
+          {
+            "role": "primary",
+            "hex": "#00dc82",
+            "bc": 0.417,
+            "score": 0.309
+          },
+          {
+            "role": "secondary",
+            "hex": "#ff3e00",
+            "bc": 0.417,
+            "score": 0.309
+          },
+          {
+            "role": "secondary",
+            "hex": "#7820bc",
+            "bc": 0.15,
+            "score": 0.148
+          },
+          {
+            "role": "neutral",
+            "hex": "#000000",
+            "bc": 0.967,
+            "score": 0.929
+          },
+          {
+            "role": "neutral",
+            "hex": "#171717",
+            "bc": 1,
+            "score": 0.71
+          },
+          {
+            "role": "neutral",
+            "hex": "#4d4d4d",
+            "bc": 0.483,
+            "score": 0.563
+          },
+          {
+            "role": "neutral",
+            "hex": "#ededed",
+            "bc": 0.433,
+            "score": 0.317
+          }
+        ]
+      },
+      "scores": {
+        "before": {
+          "brandScore": 10,
+          "usefulScore": 9
+        },
+        "after": {
+          "brandScore": 10,
+          "usefulScore": 9
+        }
+      },
+      "status": "unchanged",
+      "utilityPromotions": {
+        "promoted": [],
+        "incorrectlyPromoted": [],
+        "newlyNonUtilityCount": 0
+      }
+    },
+    {
+      "site": "Notion",
+      "before": {
+        "site": "Notion",
+        "foundation": "#ffffff",
+        "primary": "#0075de",
+        "secondaries": [
+          "#455dd3",
+          "#62aef0",
+          "#f77463"
+        ],
+        "full": [
+          {
+            "role": "foundation",
+            "hex": "#ffffff",
+            "bc": 1.017,
+            "score": 0.72
+          },
+          {
+            "role": "primary",
+            "hex": "#0075de",
+            "bc": 0.433,
+            "score": 0.3
+          },
+          {
+            "role": "secondary",
+            "hex": "#455dd3",
+            "bc": 0.267,
+            "score": 0.151
+          },
+          {
+            "role": "secondary",
+            "hex": "#62aef0",
+            "bc": 0.15,
+            "score": 0.139
+          },
+          {
+            "role": "secondary",
+            "hex": "#f77463",
+            "bc": 0.083,
+            "score": 0.078
+          },
+          {
+            "role": "neutral",
+            "hex": "#000000",
+            "bc": 1.017,
+            "score": 0.941
+          },
+          {
+            "role": "neutral",
+            "hex": "#02093a",
+            "bc": 0.3,
+            "score": 0.179
+          },
+          {
+            "role": "neutral",
+            "hex": "#191918",
+            "bc": 0.117,
+            "score": 0.106
+          }
+        ]
+      },
+      "after": {
+        "site": "Notion",
+        "foundation": "#ffffff",
+        "primary": "#0075de",
+        "secondaries": [
+          "#455dd3",
+          "#62aef0",
+          "#f77463"
+        ],
+        "full": [
+          {
+            "role": "foundation",
+            "hex": "#ffffff",
+            "bc": 1.017,
+            "score": 0.72
+          },
+          {
+            "role": "primary",
+            "hex": "#0075de",
+            "bc": 0.433,
+            "score": 0.3
+          },
+          {
+            "role": "secondary",
+            "hex": "#455dd3",
+            "bc": 0.267,
+            "score": 0.151
+          },
+          {
+            "role": "secondary",
+            "hex": "#62aef0",
+            "bc": 0.15,
+            "score": 0.139
+          },
+          {
+            "role": "secondary",
+            "hex": "#f77463",
+            "bc": 0.083,
+            "score": 0.078
+          },
+          {
+            "role": "neutral",
+            "hex": "#000000",
+            "bc": 1.017,
+            "score": 0.941
+          },
+          {
+            "role": "neutral",
+            "hex": "#02093a",
+            "bc": 0.3,
+            "score": 0.179
+          },
+          {
+            "role": "neutral",
+            "hex": "#191918",
+            "bc": 0.117,
+            "score": 0.106
+          }
+        ]
+      },
+      "scores": {
+        "before": {
+          "brandScore": 8,
+          "usefulScore": 9
+        },
+        "after": {
+          "brandScore": 8,
+          "usefulScore": 9
+        }
+      },
+      "status": "unchanged",
+      "utilityPromotions": {
+        "promoted": [],
+        "incorrectlyPromoted": [],
+        "newlyNonUtilityCount": 0
+      }
+    },
+    {
+      "site": "Framer",
+      "before": {
+        "site": "Framer",
+        "foundation": "#000000",
+        "primary": "#0099ff",
+        "secondaries": [
+          "#0055ff",
+          "#fd5d5c"
+        ],
+        "full": [
+          {
+            "role": "foundation",
+            "hex": "#000000",
+            "bc": 0.717,
+            "score": 0.872
+          },
+          {
+            "role": "primary",
+            "hex": "#0099ff",
+            "bc": 0.096,
+            "score": 0.081
+          },
+          {
+            "role": "secondary",
+            "hex": "#0055ff",
+            "bc": 0.038,
+            "score": 0.03
+          },
+          {
+            "role": "secondary",
+            "hex": "#fd5d5c",
+            "bc": 0.027,
+            "score": 0.019
+          },
+          {
+            "role": "neutral",
+            "hex": "#ffffff",
+            "bc": 0.717,
+            "score": 0.513
+          },
+          {
+            "role": "neutral",
+            "hex": "#0000ee",
+            "bc": 0.433,
+            "score": 0.366
+          },
+          {
+            "role": "neutral",
+            "hex": "#171717",
+            "bc": 0.111,
+            "score": 0.108
+          },
+          {
+            "role": "neutral",
+            "hex": "#222222",
+            "bc": 0.107,
+            "score": 0.093
+          }
+        ]
+      },
+      "after": {
+        "site": "Framer",
+        "foundation": "#000000",
+        "primary": "#0099ff",
+        "secondaries": [
+          "#0055ff",
+          "#fd5d5c"
+        ],
+        "full": [
+          {
+            "role": "foundation",
+            "hex": "#000000",
+            "bc": 0.717,
+            "score": 0.872
+          },
+          {
+            "role": "primary",
+            "hex": "#0099ff",
+            "bc": 0.096,
+            "score": 0.081
+          },
+          {
+            "role": "secondary",
+            "hex": "#0055ff",
+            "bc": 0.038,
+            "score": 0.03
+          },
+          {
+            "role": "secondary",
+            "hex": "#fd5d5c",
+            "bc": 0.027,
+            "score": 0.019
+          },
+          {
+            "role": "neutral",
+            "hex": "#ffffff",
+            "bc": 0.717,
+            "score": 0.513
+          },
+          {
+            "role": "neutral",
+            "hex": "#0000ee",
+            "bc": 0.433,
+            "score": 0.366
+          },
+          {
+            "role": "neutral",
+            "hex": "#171717",
+            "bc": 0.111,
+            "score": 0.108
+          },
+          {
+            "role": "neutral",
+            "hex": "#222222",
+            "bc": 0.107,
+            "score": 0.093
+          }
+        ]
+      },
+      "scores": {
+        "before": {
+          "brandScore": 10,
+          "usefulScore": 9
+        },
+        "after": {
+          "brandScore": 10,
+          "usefulScore": 9
+        }
+      },
+      "status": "unchanged",
+      "utilityPromotions": {
+        "promoted": [],
+        "incorrectlyPromoted": [],
+        "newlyNonUtilityCount": 0
+      }
+    },
+    {
+      "site": "Apple",
+      "before": {
+        "site": "Apple",
+        "foundation": "#ffffff",
+        "primary": "#0071e3",
+        "secondaries": [
+          "#2997ff",
+          "#a4618d"
+        ],
+        "full": [
+          {
+            "role": "foundation",
+            "hex": "#ffffff",
+            "bc": 1,
+            "score": 0.977
+          },
+          {
+            "role": "primary",
+            "hex": "#0071e3",
+            "bc": 0.121,
+            "score": 0.107
+          },
+          {
+            "role": "secondary",
+            "hex": "#2997ff",
+            "bc": 0.071,
+            "score": 0.055
+          },
+          {
+            "role": "secondary",
+            "hex": "#a4618d",
+            "bc": 0.042,
+            "score": 0.034
+          },
+          {
+            "role": "neutral",
+            "hex": "#000000",
+            "bc": 0.767,
+            "score": 0.822
+          },
+          {
+            "role": "neutral",
+            "hex": "#1d1d1f",
+            "bc": 0.717,
+            "score": 0.601
+          },
+          {
+            "role": "neutral",
+            "hex": "#d2d2d7",
+            "bc": 0.279,
+            "score": 0.133
+          },
+          {
+            "role": "neutral",
+            "hex": "#6e6e73",
+            "bc": 0.029,
+            "score": 0.021
+          }
+        ]
+      },
+      "after": {
+        "site": "Apple",
+        "foundation": "#ffffff",
+        "primary": "#0071e3",
+        "secondaries": [
+          "#2997ff",
+          "#a4618d"
+        ],
+        "full": [
+          {
+            "role": "foundation",
+            "hex": "#ffffff",
+            "bc": 1,
+            "score": 0.977
+          },
+          {
+            "role": "primary",
+            "hex": "#0071e3",
+            "bc": 0.121,
+            "score": 0.107
+          },
+          {
+            "role": "secondary",
+            "hex": "#2997ff",
+            "bc": 0.071,
+            "score": 0.055
+          },
+          {
+            "role": "secondary",
+            "hex": "#a4618d",
+            "bc": 0.042,
+            "score": 0.034
+          },
+          {
+            "role": "neutral",
+            "hex": "#000000",
+            "bc": 0.767,
+            "score": 0.822
+          },
+          {
+            "role": "neutral",
+            "hex": "#1d1d1f",
+            "bc": 0.717,
+            "score": 0.601
+          },
+          {
+            "role": "neutral",
+            "hex": "#d2d2d7",
+            "bc": 0.279,
+            "score": 0.133
+          },
+          {
+            "role": "neutral",
+            "hex": "#6e6e73",
+            "bc": 0.029,
+            "score": 0.021
+          }
+        ]
+      },
+      "scores": {
+        "before": {
+          "brandScore": 10,
+          "usefulScore": 9
+        },
+        "after": {
+          "brandScore": 10,
+          "usefulScore": 9
+        }
+      },
+      "status": "unchanged",
+      "utilityPromotions": {
+        "promoted": [],
+        "incorrectlyPromoted": [],
+        "newlyNonUtilityCount": 0
+      }
+    },
+    {
+      "site": "Netflix",
+      "before": {
+        "site": "Netflix",
+        "foundation": "#000000",
+        "primary": "#e50914",
+        "secondaries": [],
+        "full": [
+          {
+            "role": "foundation",
+            "hex": "#000000",
+            "bc": 0.533,
+            "score": 0.79
+          },
+          {
+            "role": "primary",
+            "hex": "#e50914",
+            "bc": 0.67,
+            "score": 0.412
+          },
+          {
+            "role": "neutral",
+            "hex": "#ffffff",
+            "bc": 0.533,
+            "score": 0.687
+          },
+          {
+            "role": "neutral",
+            "hex": "#161616",
+            "bc": 0.387,
+            "score": 0.256
+          },
+          {
+            "role": "neutral",
+            "hex": "#232323",
+            "bc": 0.323,
+            "score": 0.203
+          },
+          {
+            "role": "neutral",
+            "hex": "#2d2d2d",
+            "bc": 0.193,
+            "score": 0.196
+          },
+          {
+            "role": "neutral",
+            "hex": "#808080",
+            "bc": 0.137,
+            "score": 0.134
+          },
+          {
+            "role": "neutral",
+            "hex": "#3f3f3f",
+            "bc": 0.073,
+            "score": 0.058
+          }
+        ]
+      },
+      "after": {
+        "site": "Netflix",
+        "foundation": "#000000",
+        "primary": "#e50914",
+        "secondaries": [],
+        "full": [
+          {
+            "role": "foundation",
+            "hex": "#000000",
+            "bc": 0.533,
+            "score": 0.79
+          },
+          {
+            "role": "primary",
+            "hex": "#e50914",
+            "bc": 0.67,
+            "score": 0.412
+          },
+          {
+            "role": "neutral",
+            "hex": "#ffffff",
+            "bc": 0.533,
+            "score": 0.687
+          },
+          {
+            "role": "neutral",
+            "hex": "#161616",
+            "bc": 0.387,
+            "score": 0.256
+          },
+          {
+            "role": "neutral",
+            "hex": "#232323",
+            "bc": 0.323,
+            "score": 0.203
+          },
+          {
+            "role": "neutral",
+            "hex": "#2d2d2d",
+            "bc": 0.193,
+            "score": 0.196
+          },
+          {
+            "role": "neutral",
+            "hex": "#808080",
+            "bc": 0.137,
+            "score": 0.134
+          },
+          {
+            "role": "neutral",
+            "hex": "#3f3f3f",
+            "bc": 0.073,
+            "score": 0.058
+          }
+        ]
+      },
+      "scores": {
+        "before": {
+          "brandScore": 10,
+          "usefulScore": 9
+        },
+        "after": {
+          "brandScore": 10,
+          "usefulScore": 9
+        }
+      },
+      "status": "unchanged",
+      "utilityPromotions": {
+        "promoted": [],
+        "incorrectlyPromoted": [],
+        "newlyNonUtilityCount": 0
+      }
+    },
+    {
+      "site": "Slack",
+      "before": {
+        "site": "Slack",
+        "foundation": "#f9edff",
+        "primary": "#3d0157",
+        "secondaries": [
+          "#611f69",
+          "#1264a3",
+          "#f6bbc1"
+        ],
+        "full": [
+          {
+            "role": "foundation",
+            "hex": "#f9edff",
+            "bc": 0.181,
+            "score": 0.222
+          },
+          {
+            "role": "primary",
+            "hex": "#3d0157",
+            "bc": 0.42,
+            "score": 0.295
+          },
+          {
+            "role": "secondary",
+            "hex": "#611f69",
+            "bc": 0.417,
+            "score": 0.317
+          },
+          {
+            "role": "secondary",
+            "hex": "#1264a3",
+            "bc": 0.168,
+            "score": 0.154
+          },
+          {
+            "role": "secondary",
+            "hex": "#f6bbc1",
+            "bc": 0.04,
+            "score": 0.033
+          },
+          {
+            "role": "neutral",
+            "hex": "#000000",
+            "bc": 1.017,
+            "score": 1.007
+          },
+          {
+            "role": "neutral",
+            "hex": "#1d1d1d",
+            "bc": 0.967,
+            "score": 0.641
+          },
+          {
+            "role": "neutral",
+            "hex": "#ffffff",
+            "bc": 1,
+            "score": 0.612
+          }
+        ]
+      },
+      "after": {
+        "site": "Slack",
+        "foundation": "#f9edff",
+        "primary": "#3d0157",
+        "secondaries": [
+          "#611f69",
+          "#1264a3",
+          "#f6bbc1"
+        ],
+        "full": [
+          {
+            "role": "foundation",
+            "hex": "#f9edff",
+            "bc": 0.181,
+            "score": 0.222
+          },
+          {
+            "role": "primary",
+            "hex": "#3d0157",
+            "bc": 0.42,
+            "score": 0.295
+          },
+          {
+            "role": "secondary",
+            "hex": "#611f69",
+            "bc": 0.417,
+            "score": 0.317
+          },
+          {
+            "role": "secondary",
+            "hex": "#1264a3",
+            "bc": 0.168,
+            "score": 0.154
+          },
+          {
+            "role": "secondary",
+            "hex": "#f6bbc1",
+            "bc": 0.04,
+            "score": 0.033
+          },
+          {
+            "role": "neutral",
+            "hex": "#000000",
+            "bc": 1.017,
+            "score": 1.007
+          },
+          {
+            "role": "neutral",
+            "hex": "#1d1d1d",
+            "bc": 0.967,
+            "score": 0.641
+          },
+          {
+            "role": "neutral",
+            "hex": "#ffffff",
+            "bc": 1,
+            "score": 0.612
+          }
+        ]
+      },
+      "scores": {
+        "before": {
+          "brandScore": 7,
+          "usefulScore": 9
+        },
+        "after": {
+          "brandScore": 7,
+          "usefulScore": 9
+        }
+      },
+      "status": "unchanged",
+      "utilityPromotions": {
+        "promoted": [],
+        "incorrectlyPromoted": [],
+        "newlyNonUtilityCount": 0
+      }
+    }
+  ]
+}

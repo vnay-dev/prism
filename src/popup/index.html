@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prism Palette</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <section id="intro" class="intro">
+        <h1>Prism Palette</h1>
+        <p class="intro-desc">
+          Extract a curated color palette from the current page — grouped by role so you can
+          copy it straight into Figma.
+        </p>
+        <button id="extractBtn" class="btn btn-primary btn-block" type="button">
+          <span>Extract palette</span>
+          <span class="material-symbols-outlined" aria-hidden="true">palette</span>
+        </button>
+      </section>
+
+      <section id="results" class="results" hidden>
+        <header class="results-header">
+          <h1>Prism Palette</h1>
+          <button
+            id="copyBtn"
+            class="btn btn-icon"
+            type="button"
+            aria-label="Copy palette as image"
+            title="Copy as image"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">content_copy</span>
+          </button>
+        </header>
+        <p id="status" class="status"></p>
+        <div id="swatches" class="swatches"></div>
+        <footer class="actions">
+          <button id="resetBtn" class="btn btn-secondary" type="button">
+            <span class="material-symbols-outlined" aria-hidden="true">restart_alt</span>
+            <span>Reset</span>
+          </button>
+          <button id="extractAgainBtn" class="btn btn-primary" type="button">
+            <span>Extract again</span>
+            <span class="material-symbols-outlined" aria-hidden="true">refresh</span>
+          </button>
+        </footer>
+      </section>
+    </main>
+    <script type="module" src="./App.js"></script>
+  </body>
+</html>

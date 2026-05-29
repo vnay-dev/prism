@@ -1,0 +1,1355 @@
+{
+  "note": "Area attribution fix only — scoring, ranking, curation, classification unchanged.",
+  "sampleCount": {
+    "before": 7080,
+    "after": 4050
+  },
+  "areaContributions": [
+    {
+      "hex": "#000000",
+      "sourceType": "SVG Fill",
+      "area": 1981687332,
+      "count": 1931
+    },
+    {
+      "hex": "#08090a",
+      "sourceType": "Background",
+      "area": 939518714,
+      "count": 72
+    },
+    {
+      "hex": "#f7f8f8",
+      "sourceType": "Text",
+      "area": 11077324,
+      "count": 959
+    },
+    {
+      "hex": "#0f1011",
+      "sourceType": "Background",
+      "area": 3938468,
+      "count": 5
+    },
+    {
+      "hex": "#08090a",
+      "sourceType": "SVG Fill",
+      "area": 3342668,
+      "count": 44
+    },
+    {
+      "hex": "#2e2e32",
+      "sourceType": "SVG Stroke",
+      "area": 2947725,
+      "count": 40
+    },
+    {
+      "hex": "#090a0b",
+      "sourceType": "Background",
+      "area": 2592000,
+      "count": 3
+    },
+    {
+      "hex": "#101112",
+      "sourceType": "Background",
+      "area": 2592000,
+      "count": 3
+    },
+    {
+      "hex": "#62666d",
+      "sourceType": "SVG Stroke",
+      "area": 2179816,
+      "count": 35
+    },
+    {
+      "hex": "#121314",
+      "sourceType": "Background",
+      "area": 2010624,
+      "count": 3
+    },
+    {
+      "hex": "#3e3e44",
+      "sourceType": "SVG Stroke",
+      "area": 1383146,
+      "count": 19
+    },
+    {
+      "hex": "#d0d6e0",
+      "sourceType": "SVG Stroke",
+      "area": 961112,
+      "count": 12
+    },
+    {
+      "hex": "#8a8f98",
+      "sourceType": "Text",
+      "area": 493643,
+      "count": 229
+    },
+    {
+      "hex": "#d0d6e0",
+      "sourceType": "Text",
+      "area": 374863,
+      "count": 122
+    },
+    {
+      "hex": "#161718",
+      "sourceType": "Background",
+      "area": 358400,
+      "count": 2
+    },
+    {
+      "hex": "#62666d",
+      "sourceType": "Text",
+      "area": 98001,
+      "count": 145
+    },
+    {
+      "hex": "#f7f8f8",
+      "sourceType": "SVG Fill",
+      "area": 93328,
+      "count": 49
+    },
+    {
+      "hex": "#ffffff",
+      "sourceType": "SVG Fill",
+      "area": 76108,
+      "count": 39
+    },
+    {
+      "hex": "#e5e5e6",
+      "sourceType": "Background",
+      "area": 55488,
+      "count": 24
+    },
+    {
+      "hex": "#ffffff",
+      "sourceType": "Text",
+      "area": 47872,
+      "count": 26
+    },
+    {
+      "hex": "#62666d",
+      "sourceType": "SVG Fill",
+      "area": 26216,
+      "count": 131
+    },
+    {
+      "hex": "#f7f8f8",
+      "sourceType": "Border",
+      "area": 24451,
+      "count": 37
+    },
+    {
+      "hex": "#383b3f",
+      "sourceType": "Border",
+      "area": 22432,
+      "count": 9
+    },
+    {
+      "hex": "#08090a",
+      "sourceType": "Text",
+      "area": 18016,
+      "count": 24
+    },
+    {
+      "hex": "#e4e5e9",
+      "sourceType": "SVG Fill",
+      "area": 17744,
+      "count": 100
+    },
+    {
+      "hex": "#5e6ad2",
+      "sourceType": "Text",
+      "area": 9917,
+      "count": 4
+    },
+    {
+      "hex": "#323334",
+      "sourceType": "Border",
+      "area": 7520,
+      "count": 3
+    },
+    {
+      "hex": "#9c9da1",
+      "sourceType": "SVG Fill",
+      "area": 6572,
+      "count": 32
+    },
+    {
+      "hex": "#e5e5e6",
+      "sourceType": "Border",
+      "area": 3336,
+      "count": 24
+    },
+    {
+      "hex": "#993b3b",
+      "sourceType": "SVG Stroke",
+      "area": 3072,
+      "count": 1
+    },
+    {
+      "hex": "#8a8f98",
+      "sourceType": "SVG Fill",
+      "area": 2712,
+      "count": 12
+    },
+    {
+      "hex": "#000000",
+      "sourceType": "Background",
+      "area": 2560,
+      "count": 2
+    },
+    {
+      "hex": "#27a644",
+      "sourceType": "SVG Fill",
+      "area": 2552,
+      "count": 17
+    },
+    {
+      "hex": "#5e6ad2",
+      "sourceType": "Background",
+      "area": 1820,
+      "count": 1
+    },
+    {
+      "hex": "#f0bf00",
+      "sourceType": "SVG Fill",
+      "area": 1808,
+      "count": 8
+    },
+    {
+      "hex": "#23252a",
+      "sourceType": "Background",
+      "area": 1597,
+      "count": 27
+    },
+    {
+      "hex": "#e2e4e7",
+      "sourceType": "SVG Fill",
+      "area": 1536,
+      "count": 6
+    },
+    {
+      "hex": "#232534",
+      "sourceType": "Background",
+      "area": 1514,
+      "count": 1
+    },
+    {
+      "hex": "#00b8cc",
+      "sourceType": "SVG Fill",
+      "area": 1176,
+      "count": 6
+    },
+    {
+      "hex": "#6d78d5",
+      "sourceType": "Text",
+      "area": 1027,
+      "count": 1
+    }
+  ],
+  "comparison": {
+    "f7f8f8": {
+      "before": 3249342194,
+      "after": 9693474
+    },
+    "08090a": {
+      "before": 940158548,
+      "after": 942879398
+    },
+    "5e6ad2": {
+      "before": 15267,
+      "after": 7779
+    }
+  },
+  "top20Colors": [
+    {
+      "hex": "#000000",
+      "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 0
+      },
+      "hueFamily": "neutral",
+      "totalArea": 1640788035,
+      "occurrences": 1828,
+      "sectionCount": 24,
+      "bySource": {
+        "SVG Fill": 1640785477,
+        "Background": 2560
+      }
+    },
+    {
+      "hex": "#08090a",
+      "hsl": {
+        "h": 210,
+        "s": 11,
+        "l": 4
+      },
+      "hueFamily": "neutral",
+      "totalArea": 942879398,
+      "occurrences": 140,
+      "sectionCount": 24,
+      "bySource": {
+        "Background": 939518712,
+        "Text": 18024,
+        "SVG Fill": 3342668
+      }
+    },
+    {
+      "hex": "#f7f8f8",
+      "hsl": {
+        "h": 180,
+        "s": 7,
+        "l": 97
+      },
+      "hueFamily": "neutral",
+      "totalArea": 9693474,
+      "occurrences": 972,
+      "sectionCount": 24,
+      "bySource": {
+        "Text": 9575637,
+        "Border": 24447,
+        "SVG Fill": 93328
+      }
+    },
+    {
+      "hex": "#0f1011",
+      "hsl": {
+        "h": 210,
+        "s": 6,
+        "l": 6
+      },
+      "hueFamily": "neutral",
+      "totalArea": 3938468,
+      "occurrences": 5,
+      "sectionCount": 5,
+      "bySource": {
+        "Background": 3938467
+      }
+    },
+    {
+      "hex": "#2e2e32",
+      "hsl": {
+        "h": 240,
+        "s": 4,
+        "l": 19
+      },
+      "hueFamily": "neutral",
+      "totalArea": 2947725,
+      "occurrences": 40,
+      "sectionCount": 3,
+      "bySource": {
+        "SVG Stroke": 2947725
+      }
+    },
+    {
+      "hex": "#090a0b",
+      "hsl": {
+        "h": 210,
+        "s": 10,
+        "l": 4
+      },
+      "hueFamily": "neutral",
+      "totalArea": 2592000,
+      "occurrences": 3,
+      "sectionCount": 3,
+      "bySource": {
+        "Background": 2592000
+      }
+    },
+    {
+      "hex": "#101112",
+      "hsl": {
+        "h": 210,
+        "s": 6,
+        "l": 7
+      },
+      "hueFamily": "neutral",
+      "totalArea": 2592000,
+      "occurrences": 3,
+      "sectionCount": 3,
+      "bySource": {
+        "Background": 2592000
+      }
+    },
+    {
+      "hex": "#62666d",
+      "hsl": {
+        "h": 218,
+        "s": 5,
+        "l": 41
+      },
+      "hueFamily": "neutral",
+      "totalArea": 2304033,
+      "occurrences": 311,
+      "sectionCount": 9,
+      "bySource": {
+        "Text": 98009,
+        "SVG Fill": 26216,
+        "SVG Stroke": 2179816
+      }
+    },
+    {
+      "hex": "#121314",
+      "hsl": {
+        "h": 210,
+        "s": 5,
+        "l": 7
+      },
+      "hueFamily": "neutral",
+      "totalArea": 2010624,
+      "occurrences": 3,
+      "sectionCount": 3,
+      "bySource": {
+        "Background": 2010624
+      }
+    },
+    {
+      "hex": "#3e3e44",
+      "hsl": {
+        "h": 240,
+        "s": 5,
+        "l": 25
+      },
+      "hueFamily": "neutral",
+      "totalArea": 1383146,
+      "occurrences": 19,
+      "sectionCount": 2,
+      "bySource": {
+        "SVG Stroke": 1383146
+      }
+    },
+    {
+      "hex": "#d0d6e0",
+      "hsl": {
+        "h": 218,
+        "s": 21,
+        "l": 85
+      },
+      "hueFamily": "other-chroma",
+      "totalArea": 1325877,
+      "occurrences": 133,
+      "sectionCount": 9,
+      "bySource": {
+        "Text": 364762,
+        "SVG Stroke": 961112
+      }
+    },
+    {
+      "hex": "#8a8f98",
+      "hsl": {
+        "h": 219,
+        "s": 6,
+        "l": 57
+      },
+      "hueFamily": "neutral",
+      "totalArea": 496355,
+      "occurrences": 241,
+      "sectionCount": 24,
+      "bySource": {
+        "Text": 493636,
+        "SVG Fill": 2712
+      }
+    },
+    {
+      "hex": "#161718",
+      "hsl": {
+        "h": 210,
+        "s": 4,
+        "l": 9
+      },
+      "hueFamily": "neutral",
+      "totalArea": 358400,
+      "occurrences": 2,
+      "sectionCount": 2,
+      "bySource": {
+        "Background": 358400
+      }
+    },
+    {
+      "hex": "#ffffff",
+      "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 100
+      },
+      "hueFamily": "neutral",
+      "totalArea": 108492,
+      "occurrences": 57,
+      "sectionCount": 6,
+      "bySource": {
+        "Text": 32384,
+        "SVG Fill": 76108
+      }
+    },
+    {
+      "hex": "#e5e5e6",
+      "hsl": {
+        "h": 240,
+        "s": 2,
+        "l": 90
+      },
+      "hueFamily": "neutral",
+      "totalArea": 55488,
+      "occurrences": 24,
+      "sectionCount": 24,
+      "bySource": {
+        "Background": 55488
+      }
+    },
+    {
+      "hex": "#e4e5e9",
+      "hsl": {
+        "h": 228,
+        "s": 10,
+        "l": 90
+      },
+      "hueFamily": "neutral",
+      "totalArea": 17744,
+      "occurrences": 100,
+      "sectionCount": 2,
+      "bySource": {
+        "SVG Fill": 17750
+      }
+    },
+    {
+      "hex": "#383b3f",
+      "hsl": {
+        "h": 214,
+        "s": 6,
+        "l": 23
+      },
+      "hueFamily": "neutral",
+      "totalArea": 14976,
+      "occurrences": 6,
+      "sectionCount": 3,
+      "bySource": {
+        "Border": 14976
+      }
+    },
+    {
+      "hex": "#5e6ad2",
+      "hsl": {
+        "h": 234,
+        "s": 56,
+        "l": 60
+      },
+      "hueFamily": "indigo",
+      "totalArea": 7779,
+      "occurrences": 7,
+      "sectionCount": 3,
+      "bySource": {
+        "Text": 5371,
+        "SVG Fill": 588,
+        "Background": 1820
+      }
+    },
+    {
+      "hex": "#323334",
+      "hsl": {
+        "h": 210,
+        "s": 2,
+        "l": 20
+      },
+      "hueFamily": "neutral",
+      "totalArea": 7520,
+      "occurrences": 3,
+      "sectionCount": 3,
+      "bySource": {
+        "Border": 7521
+      }
+    },
+    {
+      "hex": "#9c9da1",
+      "hsl": {
+        "h": 228,
+        "s": 3,
+        "l": 62
+      },
+      "hueFamily": "neutral",
+      "totalArea": 6572,
+      "occurrences": 32,
+      "sectionCount": 3,
+      "bySource": {
+        "SVG Fill": 6572
+      }
+    }
+  ],
+  "updatedScores": [
+    {
+      "hex": "#08090a",
+      "hsl": {
+        "h": 210,
+        "s": 11,
+        "l": 4
+      },
+      "hueFamily": "neutral",
+      "isNeutral": true,
+      "totalArea": 2594131117,
+      "scores": {
+        "areaScore": 1,
+        "sectionCoverage": 1,
+        "interactionScore": 1,
+        "contrastScore": 0.4379,
+        "utilityPenalty": 1,
+        "finalScore": 0.985
+      }
+    },
+    {
+      "hex": "#e5e5e6",
+      "hsl": {
+        "h": 240,
+        "s": 2,
+        "l": 90
+      },
+      "hueFamily": "neutral",
+      "isNeutral": true,
+      "totalArea": 1401321,
+      "scores": {
+        "areaScore": 0.0005,
+        "sectionCoverage": 1,
+        "interactionScore": 0.1172,
+        "contrastScore": 0.5384,
+        "utilityPenalty": 1,
+        "finalScore": 0.6036
+      }
+    },
+    {
+      "hex": "#23252a",
+      "hsl": {
+        "h": 223,
+        "s": 9,
+        "l": 15
+      },
+      "hueFamily": "neutral",
+      "isNeutral": true,
+      "totalArea": 3547,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 1,
+        "interactionScore": 0.026,
+        "contrastScore": 0.823,
+        "utilityPenalty": 1,
+        "finalScore": 0.5491
+      }
+    },
+    {
+      "hex": "#f7f8f8",
+      "hsl": {
+        "h": 180,
+        "s": 7,
+        "l": 97
+      },
+      "hueFamily": "neutral",
+      "isNeutral": true,
+      "totalArea": 9801966,
+      "scores": {
+        "areaScore": 0.0038,
+        "sectionCoverage": 1,
+        "interactionScore": 0.5061,
+        "contrastScore": 0.6467,
+        "utilityPenalty": 1,
+        "finalScore": 0.5224
+      }
+    },
+    {
+      "hex": "#8a8f98",
+      "hsl": {
+        "h": 219,
+        "s": 6,
+        "l": 57
+      },
+      "hueFamily": "neutral",
+      "isNeutral": true,
+      "totalArea": 496355,
+      "scores": {
+        "areaScore": 0.0002,
+        "sectionCoverage": 1,
+        "interactionScore": 0.2123,
+        "contrastScore": 0.7977,
+        "utilityPenalty": 1,
+        "finalScore": 0.4118
+      }
+    },
+    {
+      "hex": "#00b8cc",
+      "hsl": {
+        "h": 186,
+        "s": 100,
+        "l": 40
+      },
+      "hueFamily": "other-chroma",
+      "isNeutral": false,
+      "totalArea": 2232,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.2083,
+        "interactionScore": 0.0045,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.2628
+      }
+    },
+    {
+      "hex": "#eb5757",
+      "hsl": {
+        "h": 0,
+        "s": 79,
+        "l": 63
+      },
+      "hueFamily": "other-chroma",
+      "isNeutral": false,
+      "totalArea": 964,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.2083,
+        "interactionScore": 0.0045,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.2628
+      }
+    },
+    {
+      "hex": "#62666d",
+      "hsl": {
+        "h": 218,
+        "s": 5,
+        "l": 41
+      },
+      "hueFamily": "neutral",
+      "isNeutral": true,
+      "totalArea": 2304033,
+      "scores": {
+        "areaScore": 0.0009,
+        "sectionCoverage": 0.375,
+        "interactionScore": 0.0387,
+        "contrastScore": 0.782,
+        "utilityPenalty": 1,
+        "finalScore": 0.2049
+      }
+    },
+    {
+      "hex": "#5e6ad2",
+      "hsl": {
+        "h": 234,
+        "s": 56,
+        "l": 60
+      },
+      "hueFamily": "indigo",
+      "isNeutral": false,
+      "totalArea": 7779,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.125,
+        "interactionScore": 0.0002,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.1613
+      }
+    },
+    {
+      "hex": "#161718",
+      "hsl": {
+        "h": 210,
+        "s": 4,
+        "l": 9
+      },
+      "hueFamily": "neutral",
+      "isNeutral": true,
+      "totalArea": 1028608,
+      "scores": {
+        "areaScore": 0.0004,
+        "sectionCoverage": 0.0833,
+        "interactionScore": 0.0001,
+        "contrastScore": 0.0414,
+        "utilityPenalty": 1,
+        "finalScore": 0.1376
+      }
+    },
+    {
+      "hex": "#8b5cf6",
+      "hsl": {
+        "h": 258,
+        "s": 90,
+        "l": 66
+      },
+      "hueFamily": "indigo",
+      "isNeutral": false,
+      "totalArea": 80,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.0833,
+        "interactionScore": 0.0002,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.1376
+      }
+    },
+    {
+      "hex": "#6366f1",
+      "hsl": {
+        "h": 239,
+        "s": 84,
+        "l": 67
+      },
+      "hueFamily": "indigo",
+      "isNeutral": false,
+      "totalArea": 64,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.0833,
+        "interactionScore": 0.0002,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.1376
+      }
+    },
+    {
+      "hex": "#9c9da1",
+      "hsl": {
+        "h": 228,
+        "s": 3,
+        "l": 62
+      },
+      "hueFamily": "neutral",
+      "isNeutral": true,
+      "totalArea": 6572,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.125,
+        "interactionScore": 0.0261,
+        "contrastScore": 0.9776,
+        "utilityPenalty": 1,
+        "finalScore": 0.1329
+      }
+    },
+    {
+      "hex": "#10b981",
+      "hsl": {
+        "h": 160,
+        "s": 84,
+        "l": 39
+      },
+      "hueFamily": "other-chroma",
+      "isNeutral": false,
+      "totalArea": 16,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.0417,
+        "interactionScore": 0,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.1288
+      }
+    },
+    {
+      "hex": "#f0bf00",
+      "hsl": {
+        "h": 48,
+        "s": 100,
+        "l": 47
+      },
+      "hueFamily": "other-chroma",
+      "isNeutral": false,
+      "totalArea": 2592,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.125,
+        "interactionScore": 0.0071,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.1262
+      }
+    },
+    {
+      "hex": "#585a5c",
+      "hsl": {
+        "h": 210,
+        "s": 2,
+        "l": 35
+      },
+      "hueFamily": "neutral",
+      "isNeutral": true,
+      "totalArea": 1124,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.125,
+        "interactionScore": 0.0043,
+        "contrastScore": 0.7155,
+        "utilityPenalty": 1,
+        "finalScore": 0.1253
+      }
+    },
+    {
+      "hex": "#323334",
+      "hsl": {
+        "h": 210,
+        "s": 2,
+        "l": 20
+      },
+      "hueFamily": "neutral",
+      "isNeutral": true,
+      "totalArea": 2970221,
+      "scores": {
+        "areaScore": 0.0011,
+        "sectionCoverage": 0.2083,
+        "interactionScore": 0.0036,
+        "contrastScore": 0.8708,
+        "utilityPenalty": 1,
+        "finalScore": 0.0601
+      }
+    },
+    {
+      "hex": "#27a644",
+      "hsl": {
+        "h": 134,
+        "s": 62,
+        "l": 40
+      },
+      "hueFamily": "other-chroma",
+      "isNeutral": false,
+      "totalArea": 2552,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.125,
+        "interactionScore": 0.0005,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.0339
+      }
+    },
+    {
+      "hex": "#3e3e44",
+      "hsl": {
+        "h": 240,
+        "s": 5,
+        "l": 25
+      },
+      "hueFamily": "neutral",
+      "isNeutral": true,
+      "totalArea": 1383146,
+      "scores": {
+        "areaScore": 0.0005,
+        "sectionCoverage": 0.0833,
+        "interactionScore": 0.0016,
+        "contrastScore": 0.5585,
+        "utilityPenalty": 1,
+        "finalScore": 0.0256
+      }
+    },
+    {
+      "hex": "#f2c94c",
+      "hsl": {
+        "h": 45,
+        "s": 86,
+        "l": 62
+      },
+      "hueFamily": "other-chroma",
+      "isNeutral": false,
+      "totalArea": 768,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.0417,
+        "interactionScore": 0.0001,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.0163
+      }
+    }
+  ],
+  "finalPalette": [
+    {
+      "hex": "#000000",
+      "role": "foundation",
+      "score": 0.985,
+      "brandConfidence": 0.967,
+      "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 0
+      },
+      "areaShare": 99.3,
+      "isUtility": false,
+      "source": {
+        "usageWeight": 2594131117,
+        "semanticWeight": 524006,
+        "sectionCoverage": 24,
+        "sourceCounts": {
+          "hero_background": 87,
+          "illustration": 1015,
+          "navigation": 759,
+          "card": 2,
+          "hero_cta": 59,
+          "success_state": 2,
+          "status_chip": 34,
+          "warning_state": 2,
+          "logo": 20,
+          "default": 3
+        }
+      }
+    },
+    {
+      "hex": "#d0d6e0",
+      "role": "primary",
+      "score": 0.442,
+      "brandConfidence": 0.842,
+      "hsl": {
+        "h": 218,
+        "s": 21,
+        "l": 85
+      },
+      "areaShare": 0.1,
+      "isUtility": false,
+      "source": {
+        "usageWeight": 1325877,
+        "semanticWeight": 27396,
+        "sectionCoverage": 9,
+        "sourceCounts": {
+          "default": 85,
+          "navigation": 34,
+          "hero_cta": 2,
+          "illustration": 12
+        }
+      }
+    },
+    {
+      "hex": "#00b8cc",
+      "role": "secondary",
+      "score": 0.263,
+      "brandConfidence": 0.525,
+      "hsl": {
+        "h": 186,
+        "s": 100,
+        "l": 40
+      },
+      "areaShare": 0,
+      "isUtility": false,
+      "source": {
+        "usageWeight": 2232,
+        "semanticWeight": 2378,
+        "sectionCoverage": 5,
+        "sourceCounts": {
+          "navigation": 4,
+          "illustration": 6,
+          "hero_background": 2
+        }
+      }
+    },
+    {
+      "hex": "#eb5757",
+      "role": "secondary",
+      "score": 0.263,
+      "brandConfidence": 0.525,
+      "hsl": {
+        "h": 0,
+        "s": 79,
+        "l": 63
+      },
+      "areaShare": 0,
+      "isUtility": false,
+      "source": {
+        "usageWeight": 964,
+        "semanticWeight": 2375,
+        "sectionCoverage": 5,
+        "sourceCounts": {
+          "navigation": 4,
+          "hero_background": 5,
+          "illustration": 1
+        }
+      }
+    },
+    {
+      "hex": "#23252a",
+      "role": "neutral",
+      "score": 0.549,
+      "brandConfidence": 0.933,
+      "hsl": {
+        "h": 223,
+        "s": 9,
+        "l": 15
+      },
+      "areaShare": 0,
+      "isUtility": false,
+      "source": {
+        "usageWeight": 2033,
+        "semanticWeight": 13620,
+        "sectionCoverage": 24,
+        "sourceCounts": {
+          "navigation": 26,
+          "hero_background": 3,
+          "hero_cta": 2
+        }
+      }
+    },
+    {
+      "hex": "#ffffff",
+      "role": "neutral",
+      "score": 0.522,
+      "brandConfidence": 0.5,
+      "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 100
+      },
+      "areaShare": 0.4,
+      "isUtility": false,
+      "source": {
+        "usageWeight": 9801966,
+        "semanticWeight": 265211,
+        "sectionCoverage": 24,
+        "sourceCounts": {
+          "default": 513,
+          "navigation": 444,
+          "card": 2,
+          "illustration": 40,
+          "status_chip": 30
+        }
+      }
+    },
+    {
+      "hex": "#62666d",
+      "role": "neutral",
+      "score": 0.205,
+      "brandConfidence": 0.325,
+      "hsl": {
+        "h": 218,
+        "s": 5,
+        "l": 41
+      },
+      "areaShare": 0.1,
+      "isUtility": false,
+      "source": {
+        "usageWeight": 2304033,
+        "semanticWeight": 20262,
+        "sectionCoverage": 9,
+        "sourceCounts": {
+          "default": 136,
+          "navigation": 14,
+          "illustration": 155,
+          "status_chip": 4,
+          "warning_state": 2
+        }
+      }
+    },
+    {
+      "hex": "#2e2e32",
+      "role": "neutral",
+      "score": 0.06,
+      "brandConfidence": 0.075,
+      "hsl": {
+        "h": 240,
+        "s": 4,
+        "l": 19
+      },
+      "areaShare": 0.1,
+      "isUtility": false,
+      "source": {
+        "usageWeight": 2970221,
+        "semanticWeight": 1896,
+        "sectionCoverage": 5,
+        "sourceCounts": {
+          "default": 9,
+          "illustration": 40
+        }
+      }
+    }
+  ],
+  "beforeFinalPalette": [
+    {
+      "hex": "#ffffff",
+      "role": "foundation",
+      "score": 0.918,
+      "brandConfidence": 1,
+      "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 100
+      },
+      "areaShare": 55.5,
+      "isUtility": false,
+      "source": {
+        "usageWeight": 3249746611,
+        "semanticWeight": 400750,
+        "sectionCoverage": 24,
+        "sourceCounts": {
+          "default": 1984,
+          "navigation": 1126,
+          "card": 6,
+          "hero_cta": 11,
+          "logo": 38,
+          "illustration": 40,
+          "status_chip": 52
+        }
+      }
+    },
+    {
+      "hex": "#d0d6e0",
+      "role": "primary",
+      "score": 0.456,
+      "brandConfidence": 0.858,
+      "hsl": {
+        "h": 218,
+        "s": 21,
+        "l": 85
+      },
+      "areaShare": 0,
+      "isUtility": false,
+      "source": {
+        "usageWeight": 1730737,
+        "semanticWeight": 36868,
+        "sectionCoverage": 9,
+        "sourceCounts": {
+          "default": 181,
+          "navigation": 80,
+          "hero_cta": 2,
+          "illustration": 12
+        }
+      }
+    },
+    {
+      "hex": "#00b8cc",
+      "role": "secondary",
+      "score": 0.263,
+      "brandConfidence": 0.525,
+      "hsl": {
+        "h": 186,
+        "s": 100,
+        "l": 40
+      },
+      "areaShare": 0,
+      "isUtility": false,
+      "source": {
+        "usageWeight": 1915,
+        "semanticWeight": 2378,
+        "sectionCoverage": 5,
+        "sourceCounts": {
+          "navigation": 4,
+          "illustration": 6,
+          "hero_background": 2
+        }
+      }
+    },
+    {
+      "hex": "#eb5757",
+      "role": "secondary",
+      "score": 0.263,
+      "brandConfidence": 0.525,
+      "hsl": {
+        "h": 0,
+        "s": 79,
+        "l": 63
+      },
+      "areaShare": 0,
+      "isUtility": false,
+      "source": {
+        "usageWeight": 819,
+        "semanticWeight": 2375,
+        "sectionCoverage": 5,
+        "sourceCounts": {
+          "navigation": 4,
+          "hero_background": 5,
+          "illustration": 1
+        }
+      }
+    },
+    {
+      "hex": "#000000",
+      "role": "neutral",
+      "score": 0.969,
+      "brandConfidence": 0.967,
+      "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 0
+      },
+      "areaShare": 44.3,
+      "isUtility": false,
+      "source": {
+        "usageWeight": 2591473204,
+        "semanticWeight": 524156,
+        "sectionCoverage": 24,
+        "sourceCounts": {
+          "hero_background": 87,
+          "illustration": 1025,
+          "navigation": 759,
+          "card": 2,
+          "hero_cta": 59,
+          "success_state": 2,
+          "status_chip": 34,
+          "warning_state": 2,
+          "logo": 20,
+          "default": 3
+        }
+      }
+    },
+    {
+      "hex": "#23252a",
+      "role": "neutral",
+      "score": 0.549,
+      "brandConfidence": 0.933,
+      "hsl": {
+        "h": 223,
+        "s": 9,
+        "l": 15
+      },
+      "areaShare": 0,
+      "isUtility": false,
+      "source": {
+        "usageWeight": 7408,
+        "semanticWeight": 13620,
+        "sectionCoverage": 24,
+        "sourceCounts": {
+          "navigation": 26,
+          "hero_background": 3,
+          "hero_cta": 2
+        }
+      }
+    },
+    {
+      "hex": "#8a8f98",
+      "role": "neutral",
+      "score": 0.42,
+      "brandConfidence": 0.5,
+      "hsl": {
+        "h": 219,
+        "s": 6,
+        "l": 57
+      },
+      "areaShare": 0,
+      "isUtility": false,
+      "source": {
+        "usageWeight": 1382132,
+        "semanticWeight": 111780,
+        "sectionCoverage": 24,
+        "sourceCounts": {
+          "navigation": 174,
+          "default": 116,
+          "success_state": 4,
+          "illustration": 6
+        }
+      }
+    },
+    {
+      "hex": "#2e2e32",
+      "role": "neutral",
+      "score": 0.06,
+      "brandConfidence": 0.075,
+      "hsl": {
+        "h": 240,
+        "s": 4,
+        "l": 19
+      },
+      "areaShare": 0.1,
+      "isUtility": false,
+      "source": {
+        "usageWeight": 7810235,
+        "semanticWeight": 1896,
+        "sectionCoverage": 5,
+        "sourceCounts": {
+          "default": 9,
+          "illustration": 40
+        }
+      }
+    }
+  ],
+  "paletteChanged": true
+}

@@ -1,0 +1,67 @@
+[
+  {
+    "name": "saas-marketing-site",
+    "sampledElements": 980,
+    "candidates": [
+      { "hex": "#2952ff", "rgb": { "r": 41, "g": 82, "b": 255 }, "hsl": { "h": 228, "s": 100, "l": 58 }, "surfaceWeight": 40, "semanticWeight": 55, "usageWeight": 40 },
+      { "hex": "#1bb978", "rgb": { "r": 27, "g": 185, "b": 120 }, "hsl": { "h": 155, "s": 74, "l": 42 }, "surfaceWeight": 20, "semanticWeight": 28, "usageWeight": 20 },
+      { "hex": "#f4f6fb", "rgb": { "r": 244, "g": 246, "b": 251 }, "hsl": { "h": 223, "s": 47, "l": 97 }, "surfaceWeight": 88, "semanticWeight": 30, "usageWeight": 88 },
+      { "hex": "#10131d", "rgb": { "r": 16, "g": 19, "b": 29 }, "hsl": { "h": 226, "s": 29, "l": 9 }, "surfaceWeight": 62, "semanticWeight": 20, "usageWeight": 62 },
+      { "hex": "#61708a", "rgb": { "r": 97, "g": 112, "b": 138 }, "hsl": { "h": 218, "s": 17, "l": 46 }, "surfaceWeight": 19, "semanticWeight": 8, "usageWeight": 19 },
+      { "hex": "#ff6b2c", "rgb": { "r": 255, "g": 107, "b": 44 }, "hsl": { "h": 18, "s": 100, "l": 59 }, "surfaceWeight": 8, "semanticWeight": 22, "usageWeight": 8 },
+      { "hex": "#8e9cff", "rgb": { "r": 142, "g": 156, "b": 255 }, "hsl": { "h": 233, "s": 100, "l": 78 }, "surfaceWeight": 10, "semanticWeight": 6, "usageWeight": 10 },
+      { "hex": "#ffd166", "rgb": { "r": 255, "g": 209, "b": 102 }, "hsl": { "h": 42, "s": 100, "l": 70 }, "surfaceWeight": 7, "semanticWeight": 5, "usageWeight": 7 },
+      { "hex": "#e9ecf4", "rgb": { "r": 233, "g": 236, "b": 244 }, "hsl": { "h": 224, "s": 33, "l": 94 }, "surfaceWeight": 24, "semanticWeight": 10, "usageWeight": 24 },
+      { "hex": "#2a2f40", "rgb": { "r": 42, "g": 47, "b": 64 }, "hsl": { "h": 226, "s": 21, "l": 21 }, "surfaceWeight": 18, "semanticWeight": 8, "usageWeight": 18 }
+    ]
+  },
+  {
+    "name": "neutral-docs-site",
+    "sampledElements": 1200,
+    "candidates": [
+      { "hex": "#ffffff", "rgb": { "r": 255, "g": 255, "b": 255 }, "hsl": { "h": 0, "s": 0, "l": 100 }, "surfaceWeight": 500, "semanticWeight": 120, "usageWeight": 500 },
+      { "hex": "#f4f4f4", "rgb": { "r": 244, "g": 244, "b": 244 }, "hsl": { "h": 0, "s": 0, "l": 96 }, "surfaceWeight": 180, "semanticWeight": 40, "usageWeight": 180 },
+      { "hex": "#ececec", "rgb": { "r": 236, "g": 236, "b": 236 }, "hsl": { "h": 0, "s": 0, "l": 93 }, "surfaceWeight": 90, "semanticWeight": 20, "usageWeight": 90 },
+      { "hex": "#0d0d0d", "rgb": { "r": 13, "g": 13, "b": 13 }, "hsl": { "h": 0, "s": 0, "l": 5 }, "surfaceWeight": 70, "semanticWeight": 35, "usageWeight": 70 },
+      { "hex": "#8a8a8a", "rgb": { "r": 138, "g": 138, "b": 138 }, "hsl": { "h": 0, "s": 0, "l": 54 }, "surfaceWeight": 40, "semanticWeight": 15, "usageWeight": 40 },
+      { "hex": "#5d5d5d", "rgb": { "r": 93, "g": 93, "b": 93 }, "hsl": { "h": 0, "s": 0, "l": 36 }, "surfaceWeight": 25, "semanticWeight": 10, "usageWeight": 25 }
+    ]
+  },
+  {
+    "name": "dark-saas-site",
+    "sectionCount": 5,
+    "sampledElements": 1400,
+    "samples": [
+      { "hex": "#0a0a0a", "rgb": { "r": 10, "g": 10, "b": 10 }, "hsl": { "h": 0, "s": 0, "l": 4 }, "area": 620, "importance": 240, "sourceCategory": "global_background", "sectionId": "section-0", "context": "surface", "contrast": 0.15 },
+      { "hex": "#0a0a0a", "rgb": { "r": 10, "g": 10, "b": 10 }, "hsl": { "h": 0, "s": 0, "l": 4 }, "area": 280, "importance": 175, "sourceCategory": "repeated_section_bg", "sectionId": "section-1", "context": "surface", "contrast": 0.15 },
+      { "hex": "#0a0a0a", "rgb": { "r": 10, "g": 10, "b": 10 }, "hsl": { "h": 0, "s": 0, "l": 4 }, "area": 180, "importance": 140, "sourceCategory": "repeated_section_bg", "sectionId": "section-2", "context": "surface", "contrast": 0.15 },
+      { "hex": "#0a0a0a", "rgb": { "r": 10, "g": 10, "b": 10 }, "hsl": { "h": 0, "s": 0, "l": 4 }, "area": 120, "importance": 126, "sourceCategory": "repeated_section_bg", "sectionId": "section-3", "context": "surface", "contrast": 0.15 },
+      { "hex": "#111111", "rgb": { "r": 17, "g": 17, "b": 17 }, "hsl": { "h": 0, "s": 0, "l": 7 }, "area": 90, "importance": 36, "sourceCategory": "major_container", "sectionId": "section-4", "context": "surface", "contrast": 0.2 },
+      { "hex": "#3b82f6", "rgb": { "r": 59, "g": 130, "b": 246 }, "hsl": { "h": 217, "s": 91, "l": 60 }, "area": 55, "importance": 765, "sourceCategory": "hero_cta", "sectionId": "section-0", "context": "button", "contrast": 0.7 },
+      { "hex": "#3b82f6", "rgb": { "r": 59, "g": 130, "b": 246 }, "hsl": { "h": 217, "s": 91, "l": 60 }, "area": 35, "importance": 480, "sourceCategory": "navigation", "sectionId": "section-2", "context": "link", "contrast": 0.65 },
+      { "hex": "#8b5cf6", "rgb": { "r": 139, "g": 92, "b": 246 }, "hsl": { "h": 258, "s": 90, "l": 66 }, "area": 28, "importance": 440, "sourceCategory": "primary_button", "sectionId": "section-1", "context": "link", "contrast": 0.6 },
+      { "hex": "#22c55e", "rgb": { "r": 34, "g": 197, "b": 94 }, "hsl": { "h": 142, "s": 71, "l": 45 }, "area": 12, "importance": 45, "sourceCategory": "success_state", "sectionId": "section-3", "context": "button", "contrast": 0.75 },
+      { "hex": "#a1a1aa", "rgb": { "r": 161, "g": 161, "b": 170 }, "hsl": { "h": 240, "s": 5, "l": 65 }, "area": 40, "importance": 45, "sourceCategory": "default", "sectionId": "section-0", "context": "text", "contrast": 0.45 },
+      { "hex": "#fafafa", "rgb": { "r": 250, "g": 250, "b": 250 }, "hsl": { "h": 0, "s": 0, "l": 98 }, "area": 22, "importance": 75, "sourceCategory": "default", "sectionId": "section-1", "context": "text", "contrast": 0.9 }
+    ]
+  },
+  {
+    "name": "dark-saas-with-utility-noise",
+    "sectionCount": 6,
+    "sampledElements": 2200,
+    "samples": [
+      { "hex": "#0a0a0a", "rgb": { "r": 10, "g": 10, "b": 10 }, "hsl": { "h": 0, "s": 0, "l": 4 }, "area": 700, "importance": 240, "sourceCategory": "global_background", "sectionId": "section-0", "context": "surface", "contrast": 0.15 },
+      { "hex": "#0a0a0a", "rgb": { "r": 10, "g": 10, "b": 10 }, "hsl": { "h": 0, "s": 0, "l": 4 }, "area": 500, "importance": 175, "sourceCategory": "repeated_section_bg", "sectionId": "section-1", "context": "surface", "contrast": 0.15 },
+      { "hex": "#0a0a0a", "rgb": { "r": 10, "g": 10, "b": 10 }, "hsl": { "h": 0, "s": 0, "l": 4 }, "area": 400, "importance": 140, "sourceCategory": "repeated_section_bg", "sectionId": "section-2", "context": "surface", "contrast": 0.15 },
+      { "hex": "#0a0a0a", "rgb": { "r": 10, "g": 10, "b": 10 }, "hsl": { "h": 0, "s": 0, "l": 4 }, "area": 350, "importance": 126, "sourceCategory": "repeated_section_bg", "sectionId": "section-3", "context": "surface", "contrast": 0.15 },
+      { "hex": "#5e6ad2", "rgb": { "r": 94, "g": 106, "b": 210 }, "hsl": { "h": 234, "s": 56, "l": 60 }, "area": 45, "importance": 900, "sourceCategory": "hero_cta", "sectionId": "section-0", "context": "button", "contrast": 0.7 },
+      { "hex": "#5e6ad2", "rgb": { "r": 94, "g": 106, "b": 210 }, "hsl": { "h": 234, "s": 56, "l": 60 }, "area": 30, "importance": 640, "sourceCategory": "navigation", "sectionId": "section-1", "context": "link", "contrast": 0.65 },
+      { "hex": "#8b5cf6", "rgb": { "r": 139, "g": 92, "b": 246 }, "hsl": { "h": 258, "s": 90, "l": 66 }, "area": 25, "importance": 495, "sourceCategory": "primary_button", "sectionId": "section-2", "context": "button", "contrast": 0.6 },
+      { "hex": "#22c55e", "rgb": { "r": 34, "g": 197, "b": 94 }, "hsl": { "h": 142, "s": 71, "l": 45 }, "area": 180, "importance": 180, "sourceCategory": "success_state", "sectionId": "section-0", "context": "surface", "contrast": 0.5 },
+      { "hex": "#22c55e", "rgb": { "r": 34, "g": 197, "b": 94 }, "hsl": { "h": 142, "s": 71, "l": 45 }, "area": 120, "importance": 120, "sourceCategory": "status_chip", "sectionId": "section-1", "context": "text", "contrast": 0.5 },
+      { "hex": "#f59e0b", "rgb": { "r": 245, "g": 158, "b": 11 }, "hsl": { "h": 38, "s": 92, "l": 50 }, "area": 150, "importance": 150, "sourceCategory": "warning_state", "sectionId": "section-2", "context": "surface", "contrast": 0.5 },
+      { "hex": "#ef4444", "rgb": { "r": 239, "g": 68, "b": 68 }, "hsl": { "h": 0, "s": 84, "l": 60 }, "area": 130, "importance": 130, "sourceCategory": "error_state", "sectionId": "section-3", "context": "surface", "contrast": 0.5 },
+      { "hex": "#fafafa", "rgb": { "r": 250, "g": 250, "b": 250 }, "hsl": { "h": 0, "s": 0, "l": 98 }, "area": 35, "importance": 75, "sourceCategory": "default", "sectionId": "section-0", "context": "text", "contrast": 0.9 }
+    ]
+  }
+]

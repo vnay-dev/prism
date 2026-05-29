@@ -1,0 +1,70 @@
+{
+  "generatedAt": "2026-05-29T16:52:26.331Z",
+  "site": "Linear",
+  "validation": {
+    "q1_fiveSixRemainsNonUtility": true,
+    "q2_survivesChromaticFiltering": true,
+    "q3_entersCuratedChromaticSet": true,
+    "q4_becomesPrimary": true
+  },
+  "targetCluster": {
+    "hex": "#5e6ad2",
+    "isUtility": false,
+    "brandConfidence": 0.30686274509803924,
+    "designSystemScore": 0.19083932351620475,
+    "hasHero": true,
+    "hasNav": false,
+    "sourceCounts": {
+      "hero_background": 1,
+      "demo_illustration": 2
+    }
+  },
+  "pipeline": {
+    "brandChromaCount": 3,
+    "brandChromaHexes": [
+      "#d0d6e0",
+      "#5e6ad2",
+      "#6d78d5"
+    ],
+    "chromaDedupedHexes": [
+      "#d0d6e0"
+    ],
+    "targetInBrandChromas": true,
+    "targetInChromaDeduped": false
+  },
+  "before": {
+    "foundation": "#08090a",
+    "primary": "#d0d6e0",
+    "chromaticCurated": [
+      "#d0d6e0"
+    ],
+    "fiveSixIsUtility": true,
+    "fiveSixInBrandChromas": false,
+    "fiveSixInChromaDeduped": false
+  },
+  "after": {
+    "foundation": "#08090a",
+    "primary": "#5e6ad2",
+    "fullPalette": [
+      "foundation #08090a",
+      "primary #5e6ad2",
+      "neutral #f7f8f8",
+      "neutral #8a8f98",
+      "neutral #e5e5e6",
+      "neutral #23252a",
+      "neutral #62666d",
+      "neutral #2e2e32"
+    ],
+    "chromaticCurated": [
+      "#5e6ad2"
+    ]
+  },
+  "chromaticCuratedDetail": [
+    {
+      "hex": "#5e6ad2",
+      "brandConfidence": 0.30686274509803924,
+      "designSystemScore": 0.1524943767896625,
+      "roleHint": "primary"
+    }
+  ]
+}

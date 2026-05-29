@@ -1,0 +1,466 @@
+{
+  "version": 1,
+  "frozenAt": "2026-05-29T16:58:39.078Z",
+  "description": "Frozen palette extraction baseline. Regenerate only when intentionally accepting benchmark changes.",
+  "extractionsSource": "scripts/benchmark-extractions/",
+  "sites": [
+    {
+      "slug": "linear",
+      "name": "Linear",
+      "url": "https://linear.app/",
+      "foundation": "#08090a",
+      "primary": "#5e6ad2",
+      "secondaries": [],
+      "palette": [
+        {
+          "role": "foundation",
+          "hex": "#08090a"
+        },
+        {
+          "role": "primary",
+          "hex": "#5e6ad2"
+        },
+        {
+          "role": "neutral",
+          "hex": "#f7f8f8"
+        },
+        {
+          "role": "neutral",
+          "hex": "#8a8f98"
+        },
+        {
+          "role": "neutral",
+          "hex": "#e5e5e6"
+        },
+        {
+          "role": "neutral",
+          "hex": "#23252a"
+        },
+        {
+          "role": "neutral",
+          "hex": "#62666d"
+        },
+        {
+          "role": "neutral",
+          "hex": "#2e2e32"
+        }
+      ],
+      "paletteMode": "brand",
+      "scores": {
+        "brandAccuracy": 10,
+        "designerUsefulness": 9
+      }
+    },
+    {
+      "slug": "stripe",
+      "name": "Stripe",
+      "url": "https://stripe.com/",
+      "foundation": "#ffffff",
+      "primary": "#533afd",
+      "secondaries": [
+        "#c2c8f1",
+        "#ff6118"
+      ],
+      "palette": [
+        {
+          "role": "foundation",
+          "hex": "#ffffff"
+        },
+        {
+          "role": "primary",
+          "hex": "#533afd"
+        },
+        {
+          "role": "secondary",
+          "hex": "#c2c8f1"
+        },
+        {
+          "role": "secondary",
+          "hex": "#ff6118"
+        },
+        {
+          "role": "neutral",
+          "hex": "#000000"
+        },
+        {
+          "role": "neutral",
+          "hex": "#061b31"
+        },
+        {
+          "role": "neutral",
+          "hex": "#031323"
+        },
+        {
+          "role": "neutral",
+          "hex": "#e5edf5"
+        }
+      ],
+      "paletteMode": "brand",
+      "scores": {
+        "brandAccuracy": 10,
+        "designerUsefulness": 9
+      }
+    },
+    {
+      "slug": "spotify",
+      "name": "Spotify",
+      "url": "https://www.spotify.com/",
+      "foundation": null,
+      "primary": null,
+      "secondaries": [],
+      "palette": [
+        {
+          "role": "neutral",
+          "hex": "#000000"
+        },
+        {
+          "role": "neutral",
+          "hex": "#b3b3b3"
+        },
+        {
+          "role": "neutral",
+          "hex": "#ffffff"
+        },
+        {
+          "role": "neutral",
+          "hex": "#1f1f1f"
+        },
+        {
+          "role": "neutral",
+          "hex": "#121212"
+        },
+        {
+          "role": "neutral",
+          "hex": "#0000ee"
+        },
+        {
+          "role": "neutral",
+          "hex": "#7c7c7c"
+        },
+        {
+          "role": "neutral",
+          "hex": "#333333"
+        }
+      ],
+      "paletteMode": "foundation",
+      "scores": {
+        "brandAccuracy": 2,
+        "designerUsefulness": 3
+      }
+    },
+    {
+      "slug": "vercel",
+      "name": "Vercel",
+      "url": "https://vercel.com/",
+      "foundation": "#fafafa",
+      "primary": "#00dc82",
+      "secondaries": [
+        "#ff3e00",
+        "#7820bc"
+      ],
+      "palette": [
+        {
+          "role": "foundation",
+          "hex": "#fafafa"
+        },
+        {
+          "role": "primary",
+          "hex": "#00dc82"
+        },
+        {
+          "role": "secondary",
+          "hex": "#ff3e00"
+        },
+        {
+          "role": "secondary",
+          "hex": "#7820bc"
+        },
+        {
+          "role": "neutral",
+          "hex": "#000000"
+        },
+        {
+          "role": "neutral",
+          "hex": "#171717"
+        },
+        {
+          "role": "neutral",
+          "hex": "#4d4d4d"
+        },
+        {
+          "role": "neutral",
+          "hex": "#ededed"
+        }
+      ],
+      "paletteMode": "brand",
+      "scores": {
+        "brandAccuracy": 10,
+        "designerUsefulness": 9
+      }
+    },
+    {
+      "slug": "notion",
+      "name": "Notion",
+      "url": "https://www.notion.so/",
+      "foundation": "#ffffff",
+      "primary": "#0075de",
+      "secondaries": [
+        "#455dd3",
+        "#62aef0",
+        "#f77463"
+      ],
+      "palette": [
+        {
+          "role": "foundation",
+          "hex": "#ffffff"
+        },
+        {
+          "role": "primary",
+          "hex": "#0075de"
+        },
+        {
+          "role": "secondary",
+          "hex": "#455dd3"
+        },
+        {
+          "role": "secondary",
+          "hex": "#62aef0"
+        },
+        {
+          "role": "secondary",
+          "hex": "#f77463"
+        },
+        {
+          "role": "neutral",
+          "hex": "#000000"
+        },
+        {
+          "role": "neutral",
+          "hex": "#02093a"
+        },
+        {
+          "role": "neutral",
+          "hex": "#191918"
+        }
+      ],
+      "paletteMode": "brand",
+      "scores": {
+        "brandAccuracy": 8,
+        "designerUsefulness": 9
+      }
+    },
+    {
+      "slug": "framer",
+      "name": "Framer",
+      "url": "https://www.framer.com/",
+      "foundation": "#000000",
+      "primary": "#0099ff",
+      "secondaries": [
+        "#0055ff",
+        "#fd5d5c"
+      ],
+      "palette": [
+        {
+          "role": "foundation",
+          "hex": "#000000"
+        },
+        {
+          "role": "primary",
+          "hex": "#0099ff"
+        },
+        {
+          "role": "secondary",
+          "hex": "#0055ff"
+        },
+        {
+          "role": "secondary",
+          "hex": "#fd5d5c"
+        },
+        {
+          "role": "neutral",
+          "hex": "#ffffff"
+        },
+        {
+          "role": "neutral",
+          "hex": "#0000ee"
+        },
+        {
+          "role": "neutral",
+          "hex": "#171717"
+        },
+        {
+          "role": "neutral",
+          "hex": "#222222"
+        }
+      ],
+      "paletteMode": "brand",
+      "scores": {
+        "brandAccuracy": 10,
+        "designerUsefulness": 9
+      }
+    },
+    {
+      "slug": "apple",
+      "name": "Apple",
+      "url": "https://www.apple.com/",
+      "foundation": "#ffffff",
+      "primary": "#0071e3",
+      "secondaries": [
+        "#2997ff",
+        "#a4618d"
+      ],
+      "palette": [
+        {
+          "role": "foundation",
+          "hex": "#ffffff"
+        },
+        {
+          "role": "primary",
+          "hex": "#0071e3"
+        },
+        {
+          "role": "secondary",
+          "hex": "#2997ff"
+        },
+        {
+          "role": "secondary",
+          "hex": "#a4618d"
+        },
+        {
+          "role": "neutral",
+          "hex": "#000000"
+        },
+        {
+          "role": "neutral",
+          "hex": "#1d1d1f"
+        },
+        {
+          "role": "neutral",
+          "hex": "#d2d2d7"
+        },
+        {
+          "role": "neutral",
+          "hex": "#6e6e73"
+        }
+      ],
+      "paletteMode": "brand",
+      "scores": {
+        "brandAccuracy": 10,
+        "designerUsefulness": 9
+      }
+    },
+    {
+      "slug": "netflix",
+      "name": "Netflix",
+      "url": "https://www.netflix.com/",
+      "foundation": "#000000",
+      "primary": "#e50914",
+      "secondaries": [],
+      "palette": [
+        {
+          "role": "foundation",
+          "hex": "#000000"
+        },
+        {
+          "role": "primary",
+          "hex": "#e50914"
+        },
+        {
+          "role": "neutral",
+          "hex": "#ffffff"
+        },
+        {
+          "role": "neutral",
+          "hex": "#161616"
+        },
+        {
+          "role": "neutral",
+          "hex": "#232323"
+        },
+        {
+          "role": "neutral",
+          "hex": "#2d2d2d"
+        },
+        {
+          "role": "neutral",
+          "hex": "#808080"
+        },
+        {
+          "role": "neutral",
+          "hex": "#3f3f3f"
+        }
+      ],
+      "paletteMode": "brand",
+      "scores": {
+        "brandAccuracy": 10,
+        "designerUsefulness": 9
+      }
+    },
+    {
+      "slug": "slack",
+      "name": "Slack",
+      "url": "https://slack.com/",
+      "foundation": "#f9edff",
+      "primary": "#3d0157",
+      "secondaries": [
+        "#611f69",
+        "#1264a3",
+        "#f6bbc1"
+      ],
+      "palette": [
+        {
+          "role": "foundation",
+          "hex": "#f9edff"
+        },
+        {
+          "role": "primary",
+          "hex": "#3d0157"
+        },
+        {
+          "role": "secondary",
+          "hex": "#611f69"
+        },
+        {
+          "role": "secondary",
+          "hex": "#1264a3"
+        },
+        {
+          "role": "secondary",
+          "hex": "#f6bbc1"
+        },
+        {
+          "role": "neutral",
+          "hex": "#000000"
+        },
+        {
+          "role": "neutral",
+          "hex": "#1d1d1d"
+        },
+        {
+          "role": "neutral",
+          "hex": "#ffffff"
+        }
+      ],
+      "paletteMode": "brand",
+      "scores": {
+        "brandAccuracy": 7,
+        "designerUsefulness": 9
+      }
+    }
+  ],
+  "averages": {
+    "brandAccuracy": 8.6,
+    "designerUsefulness": 8.3
+  },
+  "siteSlugs": [
+    "linear",
+    "stripe",
+    "spotify",
+    "vercel",
+    "notion",
+    "framer",
+    "apple",
+    "netflix",
+    "slack"
+  ]
+}

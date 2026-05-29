@@ -1,0 +1,1806 @@
+{
+  "generatedAt": "2026-05-29T15:58:32.931Z",
+  "site": {
+    "url": "https://linear.app/",
+    "title": "Linear – The system for product development",
+    "viewport": {
+      "w": 1280,
+      "h": 613
+    }
+  },
+  "scan": {
+    "sectionsScanned": 24,
+    "rawSamples": 7080,
+    "uniqueRawColors": 45,
+    "gradientsSupported": false,
+    "gradientsSkippedOnLinear": 0
+  },
+  "top50BeforeClassification": [
+    {
+      "hex": "#f7f8f8",
+      "hsl": {
+        "h": 180,
+        "s": 7,
+        "l": 97
+      },
+      "hueFamily": "neutral",
+      "totalArea": 3250106687,
+      "occurrences": 3122,
+      "sectionCount": 24,
+      "sources": {
+        "text-color": 1564,
+        "border-color": 1509,
+        "svg-fill": 49
+      }
+    },
+    {
+      "hex": "#000000",
+      "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 0
+      },
+      "hueFamily": "neutral",
+      "totalArea": 1640986642,
+      "occurrences": 1851,
+      "sectionCount": 24,
+      "sources": {
+        "svg-fill": 1849,
+        "background-color": 2
+      }
+    },
+    {
+      "hex": "#08090a",
+      "hsl": {
+        "h": 210,
+        "s": 11,
+        "l": 4
+      },
+      "hueFamily": "neutral",
+      "totalArea": 940158548,
+      "occurrences": 140,
+      "sectionCount": 24,
+      "sources": {
+        "background-color": 72,
+        "text-color": 24,
+        "svg-fill": 44
+      }
+    },
+    {
+      "hex": "#ffffff",
+      "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 100
+      },
+      "hueFamily": "neutral",
+      "totalArea": 11603783,
+      "occurrences": 414,
+      "sectionCount": 10,
+      "sources": {
+        "border-color": 191,
+        "text-color": 94,
+        "background-color": 90,
+        "svg-fill": 39
+      }
+    },
+    {
+      "hex": "#383b3f",
+      "hsl": {
+        "h": 214,
+        "s": 6,
+        "l": 23
+      },
+      "hueFamily": "neutral",
+      "totalArea": 4955520,
+      "occurrences": 6,
+      "sectionCount": 3,
+      "sources": {
+        "border-color": 6
+      }
+    },
+    {
+      "hex": "#0f1011",
+      "hsl": {
+        "h": 210,
+        "s": 6,
+        "l": 6
+      },
+      "hueFamily": "neutral",
+      "totalArea": 3938468,
+      "occurrences": 5,
+      "sectionCount": 5,
+      "sources": {
+        "background-color": 5
+      }
+    },
+    {
+      "hex": "#090a0b",
+      "hsl": {
+        "h": 210,
+        "s": 10,
+        "l": 4
+      },
+      "hueFamily": "neutral",
+      "totalArea": 2592000,
+      "occurrences": 3,
+      "sectionCount": 3,
+      "sources": {
+        "background-color": 3
+      }
+    },
+    {
+      "hex": "#101112",
+      "hsl": {
+        "h": 210,
+        "s": 6,
+        "l": 7
+      },
+      "hueFamily": "neutral",
+      "totalArea": 2592000,
+      "occurrences": 3,
+      "sectionCount": 3,
+      "sources": {
+        "background-color": 3
+      }
+    },
+    {
+      "hex": "#323334",
+      "hsl": {
+        "h": 210,
+        "s": 2,
+        "l": 20
+      },
+      "hueFamily": "neutral",
+      "totalArea": 2505600,
+      "occurrences": 3,
+      "sectionCount": 3,
+      "sources": {
+        "border-color": 3
+      }
+    },
+    {
+      "hex": "#8a8f98",
+      "hsl": {
+        "h": 219,
+        "s": 6,
+        "l": 57
+      },
+      "hueFamily": "neutral",
+      "totalArea": 2098348,
+      "occurrences": 470,
+      "sectionCount": 24,
+      "sources": {
+        "text-color": 229,
+        "border-color": 229,
+        "svg-fill": 12
+      }
+    },
+    {
+      "hex": "#121314",
+      "hsl": {
+        "h": 210,
+        "s": 5,
+        "l": 7
+      },
+      "hueFamily": "neutral",
+      "totalArea": 2010624,
+      "occurrences": 3,
+      "sectionCount": 3,
+      "sources": {
+        "background-color": 3
+      }
+    },
+    {
+      "hex": "#d0d6e0",
+      "hsl": {
+        "h": 218,
+        "s": 21,
+        "l": 85
+      },
+      "hueFamily": "other-chroma",
+      "totalArea": 1866626,
+      "occurrences": 299,
+      "sectionCount": 10,
+      "sources": {
+        "text-color": 145,
+        "border-color": 142,
+        "svg-stroke": 12
+      }
+    },
+    {
+      "hex": "#62666d",
+      "hsl": {
+        "h": 218,
+        "s": 5,
+        "l": 41
+      },
+      "hueFamily": "neutral",
+      "totalArea": 746859,
+      "occurrences": 901,
+      "sectionCount": 10,
+      "sources": {
+        "text-color": 379,
+        "border-color": 355,
+        "svg-fill": 131,
+        "svg-stroke": 35,
+        "background-color": 1
+      }
+    },
+    {
+      "hex": "#161718",
+      "hsl": {
+        "h": 210,
+        "s": 4,
+        "l": 9
+      },
+      "hueFamily": "neutral",
+      "totalArea": 358400,
+      "occurrences": 2,
+      "sectionCount": 2,
+      "sources": {
+        "background-color": 2
+      }
+    },
+    {
+      "hex": "#2e2e32",
+      "hsl": {
+        "h": 240,
+        "s": 4,
+        "l": 19
+      },
+      "hueFamily": "neutral",
+      "totalArea": 349115,
+      "occurrences": 40,
+      "sectionCount": 3,
+      "sources": {
+        "svg-stroke": 40
+      }
+    },
+    {
+      "hex": "#3e3e44",
+      "hsl": {
+        "h": 240,
+        "s": 5,
+        "l": 25
+      },
+      "hueFamily": "neutral",
+      "totalArea": 229283,
+      "occurrences": 19,
+      "sectionCount": 2,
+      "sources": {
+        "svg-stroke": 19
+      }
+    },
+    {
+      "hex": "#e5e5e6",
+      "hsl": {
+        "h": 240,
+        "s": 2,
+        "l": 90
+      },
+      "hueFamily": "neutral",
+      "totalArea": 110976,
+      "occurrences": 48,
+      "sectionCount": 24,
+      "sources": {
+        "background-color": 24,
+        "border-color": 24
+      }
+    },
+    {
+      "hex": "#5e6ad2",
+      "hsl": {
+        "h": 234,
+        "s": 56,
+        "l": 60
+      },
+      "hueFamily": "indigo",
+      "totalArea": 15779,
+      "occurrences": 15,
+      "sectionCount": 4,
+      "sources": {
+        "background-color": 2,
+        "text-color": 5,
+        "border-color": 5,
+        "svg-fill": 3
+      }
+    },
+    {
+      "hex": "#21b3ff",
+      "hsl": {
+        "h": 201,
+        "s": 100,
+        "l": 56
+      },
+      "hueFamily": "other-chroma",
+      "totalArea": 10830,
+      "occurrences": 2,
+      "sectionCount": 2,
+      "sources": {
+        "svg-stroke": 2
+      }
+    },
+    {
+      "hex": "#23252a",
+      "hsl": {
+        "h": 223,
+        "s": 9,
+        "l": 15
+      },
+      "hueFamily": "neutral",
+      "totalArea": 5840,
+      "occurrences": 29,
+      "sectionCount": 24,
+      "sources": {
+        "background-color": 27,
+        "border-color": 2
+      }
+    },
+    {
+      "hex": "#e2e4e7",
+      "hsl": {
+        "h": 216,
+        "s": 9,
+        "l": 90
+      },
+      "hueFamily": "neutral",
+      "totalArea": 4664,
+      "occurrences": 20,
+      "sectionCount": 2,
+      "sources": {
+        "text-color": 8,
+        "border-color": 6,
+        "svg-fill": 6
+      }
+    },
+    {
+      "hex": "#9c9da1",
+      "hsl": {
+        "h": 228,
+        "s": 3,
+        "l": 62
+      },
+      "hueFamily": "neutral",
+      "totalArea": 3575,
+      "occurrences": 32,
+      "sectionCount": 3,
+      "sources": {
+        "svg-fill": 32
+      }
+    },
+    {
+      "hex": "#6d78d5",
+      "hsl": {
+        "h": 234,
+        "s": 55,
+        "l": 63
+      },
+      "hueFamily": "indigo",
+      "totalArea": 3028,
+      "occurrences": 2,
+      "sectionCount": 1,
+      "sources": {
+        "text-color": 1,
+        "border-color": 1
+      }
+    },
+    {
+      "hex": "#993b3b",
+      "hsl": {
+        "h": 0,
+        "s": 44,
+        "l": 42
+      },
+      "hueFamily": "other-chroma",
+      "totalArea": 3000,
+      "occurrences": 1,
+      "sectionCount": 1,
+      "sources": {
+        "svg-stroke": 1
+      }
+    },
+    {
+      "hex": "#e2e4e6",
+      "hsl": {
+        "h": 210,
+        "s": 7,
+        "l": 89
+      },
+      "hueFamily": "neutral",
+      "totalArea": 2028,
+      "occurrences": 12,
+      "sectionCount": 2,
+      "sources": {
+        "text-color": 4,
+        "border-color": 4,
+        "svg-fill": 4
+      }
+    },
+    {
+      "hex": "#f0bf00",
+      "hsl": {
+        "h": 48,
+        "s": 100,
+        "l": 47
+      },
+      "hueFamily": "other-chroma",
+      "totalArea": 1578,
+      "occurrences": 12,
+      "sectionCount": 3,
+      "sources": {
+        "svg-fill": 8,
+        "svg-stroke": 4
+      }
+    },
+    {
+      "hex": "#24282c",
+      "hsl": {
+        "h": 210,
+        "s": 10,
+        "l": 16
+      },
+      "hueFamily": "neutral",
+      "totalArea": 1568,
+      "occurrences": 2,
+      "sectionCount": 2,
+      "sources": {
+        "border-color": 2
+      }
+    },
+    {
+      "hex": "#232534",
+      "hsl": {
+        "h": 233,
+        "s": 20,
+        "l": 17
+      },
+      "hueFamily": "indigo",
+      "totalArea": 1514,
+      "occurrences": 1,
+      "sectionCount": 1,
+      "sources": {
+        "background-color": 1
+      }
+    },
+    {
+      "hex": "#00b8cc",
+      "hsl": {
+        "h": 186,
+        "s": 100,
+        "l": 40
+      },
+      "hueFamily": "other-chroma",
+      "totalArea": 1035,
+      "occurrences": 6,
+      "sectionCount": 3,
+      "sources": {
+        "svg-fill": 6
+      }
+    },
+    {
+      "hex": "#27a644",
+      "hsl": {
+        "h": 134,
+        "s": 62,
+        "l": 40
+      },
+      "hueFamily": "other-chroma",
+      "totalArea": 935,
+      "occurrences": 17,
+      "sectionCount": 3,
+      "sources": {
+        "svg-fill": 17
+      }
+    },
+    {
+      "hex": "#02b8cc",
+      "hsl": {
+        "h": 186,
+        "s": 98,
+        "l": 40
+      },
+      "hueFamily": "other-chroma",
+      "totalArea": 848,
+      "occurrences": 4,
+      "sectionCount": 2,
+      "sources": {
+        "svg-fill": 4
+      }
+    },
+    {
+      "hex": "#008d2c",
+      "hsl": {
+        "h": 139,
+        "s": 100,
+        "l": 28
+      },
+      "hueFamily": "other-chroma",
+      "totalArea": 822,
+      "occurrences": 5,
+      "sectionCount": 2,
+      "sources": {
+        "svg-fill": 5
+      }
+    },
+    {
+      "hex": "#121414",
+      "hsl": {
+        "h": 180,
+        "s": 5,
+        "l": 7
+      },
+      "hueFamily": "neutral",
+      "totalArea": 800,
+      "occurrences": 2,
+      "sectionCount": 2,
+      "sources": {
+        "background-color": 2
+      }
+    },
+    {
+      "hex": "#eb5757",
+      "hsl": {
+        "h": 0,
+        "s": 79,
+        "l": 63
+      },
+      "hueFamily": "other-chroma",
+      "totalArea": 772,
+      "occurrences": 9,
+      "sectionCount": 4,
+      "sources": {
+        "svg-fill": 4,
+        "background-color": 5
+      }
+    },
+    {
+      "hex": "#4ea7fc",
+      "hsl": {
+        "h": 209,
+        "s": 97,
+        "l": 65
+      },
+      "hueFamily": "other-chroma",
+      "totalArea": 649,
+      "occurrences": 4,
+      "sectionCount": 2,
+      "sources": {
+        "svg-fill": 4
+      }
+    },
+    {
+      "hex": "#585a5c",
+      "hsl": {
+        "h": 210,
+        "s": 2,
+        "l": 35
+      },
+      "hueFamily": "neutral",
+      "totalArea": 616,
+      "occurrences": 4,
+      "sectionCount": 2,
+      "sources": {
+        "svg-fill": 4
+      }
+    },
+    {
+      "hex": "#d4a600",
+      "hsl": {
+        "h": 47,
+        "s": 100,
+        "l": 42
+      },
+      "hueFamily": "other-chroma",
+      "totalArea": 450,
+      "occurrences": 3,
+      "sectionCount": 1,
+      "sources": {
+        "svg-fill": 3
+      }
+    },
+    {
+      "hex": "#f2c94c",
+      "hsl": {
+        "h": 45,
+        "s": 86,
+        "l": 62
+      },
+      "hueFamily": "other-chroma",
+      "totalArea": 418,
+      "occurrences": 3,
+      "sectionCount": 1,
+      "sources": {
+        "svg-fill": 3
+      }
+    },
+    {
+      "hex": "#e4e5e9",
+      "hsl": {
+        "h": 228,
+        "s": 10,
+        "l": 90
+      },
+      "hueFamily": "neutral",
+      "totalArea": 277,
+      "occurrences": 100,
+      "sectionCount": 2,
+      "sources": {
+        "svg-fill": 100
+      }
+    },
+    {
+      "hex": "#5b5c5a",
+      "hsl": {
+        "h": 90,
+        "s": 1,
+        "l": 36
+      },
+      "hueFamily": "neutral",
+      "totalArea": 234,
+      "occurrences": 5,
+      "sectionCount": 2,
+      "sources": {
+        "svg-stroke": 5
+      }
+    },
+    {
+      "hex": "#8b5cf6",
+      "hsl": {
+        "h": 258,
+        "s": 90,
+        "l": 66
+      },
+      "hueFamily": "indigo",
+      "totalArea": 80,
+      "occurrences": 5,
+      "sectionCount": 2,
+      "sources": {
+        "background-color": 5
+      }
+    },
+    {
+      "hex": "#6366f1",
+      "hsl": {
+        "h": 239,
+        "s": 84,
+        "l": 67
+      },
+      "hueFamily": "indigo",
+      "totalArea": 64,
+      "occurrences": 4,
+      "sectionCount": 2,
+      "sources": {
+        "background-color": 4
+      }
+    },
+    {
+      "hex": "#e3484e",
+      "hsl": {
+        "h": 358,
+        "s": 73,
+        "l": 59
+      },
+      "hueFamily": "other-chroma",
+      "totalArea": 47,
+      "occurrences": 1,
+      "sectionCount": 1,
+      "sources": {
+        "svg-stroke": 1
+      }
+    },
+    {
+      "hex": "#06b6d4",
+      "hsl": {
+        "h": 189,
+        "s": 94,
+        "l": 43
+      },
+      "hueFamily": "other-chroma",
+      "totalArea": 32,
+      "occurrences": 2,
+      "sectionCount": 2,
+      "sources": {
+        "background-color": 2
+      }
+    },
+    {
+      "hex": "#10b981",
+      "hsl": {
+        "h": 160,
+        "s": 84,
+        "l": 39
+      },
+      "hueFamily": "other-chroma",
+      "totalArea": 16,
+      "occurrences": 1,
+      "sectionCount": 1,
+      "sources": {
+        "background-color": 1
+      }
+    }
+  ],
+  "scoredClustersAll": [
+    {
+      "hex": "#08090a",
+      "hsl": {
+        "h": 210,
+        "s": 11,
+        "l": 4
+      },
+      "hueFamily": "neutral",
+      "isNeutral": true,
+      "isUtility": false,
+      "utilityRatio": 0.003,
+      "brandConfidence": 0.9667,
+      "sourceCounts": {
+        "hero_background": 87,
+        "illustration": 1025,
+        "navigation": 759,
+        "card": 2,
+        "hero_cta": 59,
+        "success_state": 2,
+        "status_chip": 34,
+        "warning_state": 2,
+        "logo": 20,
+        "default": 3
+      },
+      "hasHero": true,
+      "hasCta": true,
+      "hasNav": true,
+      "sectionCount": 24,
+      "totalArea": 2591473204,
+      "scores": {
+        "areaScore": 0.7974,
+        "sectionCoverage": 1,
+        "interactionScore": 1,
+        "contrastScore": 0.437,
+        "utilityPenalty": 1,
+        "finalScore": 0.9688
+      }
+    },
+    {
+      "hex": "#f7f8f8",
+      "hsl": {
+        "h": 180,
+        "s": 7,
+        "l": 97
+      },
+      "hueFamily": "neutral",
+      "isNeutral": true,
+      "isUtility": false,
+      "utilityRatio": 0.003,
+      "brandConfidence": 1,
+      "sourceCounts": {
+        "default": 1984,
+        "navigation": 1126,
+        "card": 6,
+        "hero_cta": 11,
+        "logo": 38,
+        "illustration": 40,
+        "status_chip": 52
+      },
+      "hasHero": true,
+      "hasCta": true,
+      "hasNav": true,
+      "sectionCount": 24,
+      "totalArea": 3249746611,
+      "scores": {
+        "areaScore": 1,
+        "sectionCoverage": 1,
+        "interactionScore": 0.7646,
+        "contrastScore": 0.5876,
+        "utilityPenalty": 1,
+        "finalScore": 0.9176
+      }
+    },
+    {
+      "hex": "#e5e5e6",
+      "hsl": {
+        "h": 240,
+        "s": 2,
+        "l": 90
+      },
+      "hueFamily": "neutral",
+      "isNeutral": true,
+      "isUtility": false,
+      "utilityRatio": 0,
+      "brandConfidence": 1,
+      "sourceCounts": {
+        "navigation": 136,
+        "default": 181,
+        "hero_cta": 2,
+        "illustration": 112
+      },
+      "hasHero": true,
+      "hasCta": true,
+      "hasNav": true,
+      "sectionCount": 24,
+      "totalArea": 1793194,
+      "scores": {
+        "areaScore": 0.0006,
+        "sectionCoverage": 1,
+        "interactionScore": 0.1483,
+        "contrastScore": 0.6775,
+        "utilityPenalty": 1,
+        "finalScore": 0.6219
+      }
+    },
+    {
+      "hex": "#23252a",
+      "hsl": {
+        "h": 223,
+        "s": 9,
+        "l": 15
+      },
+      "hueFamily": "neutral",
+      "isNeutral": true,
+      "isUtility": false,
+      "utilityRatio": 0,
+      "brandConfidence": 0.9333,
+      "sourceCounts": {
+        "navigation": 26,
+        "hero_background": 4,
+        "hero_cta": 2
+      },
+      "hasHero": true,
+      "hasCta": true,
+      "hasNav": true,
+      "sectionCount": 24,
+      "totalArea": 8922,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 1,
+        "interactionScore": 0.026,
+        "contrastScore": 0.823,
+        "utilityPenalty": 1,
+        "finalScore": 0.5491
+      }
+    },
+    {
+      "hex": "#62666d",
+      "hsl": {
+        "h": 218,
+        "s": 5,
+        "l": 41
+      },
+      "hueFamily": "neutral",
+      "isNeutral": true,
+      "isUtility": false,
+      "utilityRatio": 0.003,
+      "brandConfidence": 0.85,
+      "sourceCounts": {
+        "default": 564,
+        "navigation": 92,
+        "hero_cta": 46,
+        "illustration": 155,
+        "status_chip": 8,
+        "warning_state": 4
+      },
+      "hasHero": true,
+      "hasCta": true,
+      "hasNav": true,
+      "sectionCount": 10,
+      "totalArea": 713150,
+      "scores": {
+        "areaScore": 0.0002,
+        "sectionCoverage": 0.4167,
+        "interactionScore": 0.1505,
+        "contrastScore": 0.7606,
+        "utilityPenalty": 1,
+        "finalScore": 0.4852
+      }
+    },
+    {
+      "hex": "#8a8f98",
+      "hsl": {
+        "h": 219,
+        "s": 6,
+        "l": 57
+      },
+      "hueFamily": "neutral",
+      "isNeutral": true,
+      "isUtility": false,
+      "utilityRatio": 0.002,
+      "brandConfidence": 0.5,
+      "sourceCounts": {
+        "navigation": 174,
+        "default": 116,
+        "success_state": 4,
+        "illustration": 6
+      },
+      "hasHero": false,
+      "hasCta": false,
+      "hasNav": true,
+      "sectionCount": 24,
+      "totalArea": 1382132,
+      "scores": {
+        "areaScore": 0.0004,
+        "sectionCoverage": 1,
+        "interactionScore": 0.2133,
+        "contrastScore": 0.8171,
+        "utilityPenalty": 1,
+        "finalScore": 0.4197
+      }
+    },
+    {
+      "hex": "#00b8cc",
+      "hsl": {
+        "h": 186,
+        "s": 100,
+        "l": 40
+      },
+      "hueFamily": "other-chroma",
+      "isNeutral": false,
+      "isUtility": false,
+      "utilityRatio": 0,
+      "brandConfidence": 0.525,
+      "sourceCounts": {
+        "navigation": 4,
+        "illustration": 6,
+        "hero_background": 2
+      },
+      "hasHero": true,
+      "hasCta": false,
+      "hasNav": true,
+      "sectionCount": 5,
+      "totalArea": 1915,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.2083,
+        "interactionScore": 0.0045,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.2628
+      }
+    },
+    {
+      "hex": "#eb5757",
+      "hsl": {
+        "h": 0,
+        "s": 79,
+        "l": 63
+      },
+      "hueFamily": "other-chroma",
+      "isNeutral": false,
+      "isUtility": false,
+      "utilityRatio": 0,
+      "brandConfidence": 0.525,
+      "sourceCounts": {
+        "navigation": 4,
+        "hero_background": 5,
+        "illustration": 1
+      },
+      "hasHero": true,
+      "hasCta": false,
+      "hasNav": true,
+      "sectionCount": 5,
+      "totalArea": 819,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.2083,
+        "interactionScore": 0.0045,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.2628
+      }
+    },
+    {
+      "hex": "#161718",
+      "hsl": {
+        "h": 210,
+        "s": 4,
+        "l": 9
+      },
+      "hueFamily": "neutral",
+      "isNeutral": true,
+      "isUtility": false,
+      "utilityRatio": 0,
+      "brandConfidence": 0.2833,
+      "sourceCounts": {
+        "hero_background": 3
+      },
+      "hasHero": true,
+      "hasCta": false,
+      "hasNav": false,
+      "sectionCount": 2,
+      "totalArea": 1028608,
+      "scores": {
+        "areaScore": 0.0003,
+        "sectionCoverage": 0.0833,
+        "interactionScore": 0.0001,
+        "contrastScore": 0.0414,
+        "utilityPenalty": 1,
+        "finalScore": 0.1376
+      }
+    },
+    {
+      "hex": "#8b5cf6",
+      "hsl": {
+        "h": 258,
+        "s": 90,
+        "l": 66
+      },
+      "hueFamily": "indigo",
+      "isNeutral": false,
+      "isUtility": false,
+      "utilityRatio": 0,
+      "brandConfidence": 0.2833,
+      "sourceCounts": {
+        "hero_background": 5
+      },
+      "hasHero": true,
+      "hasCta": false,
+      "hasNav": false,
+      "sectionCount": 2,
+      "totalArea": 80,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.0833,
+        "interactionScore": 0.0002,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.1376
+      }
+    },
+    {
+      "hex": "#6366f1",
+      "hsl": {
+        "h": 239,
+        "s": 84,
+        "l": 67
+      },
+      "hueFamily": "indigo",
+      "isNeutral": false,
+      "isUtility": false,
+      "utilityRatio": 0,
+      "brandConfidence": 0.2833,
+      "sourceCounts": {
+        "hero_background": 4
+      },
+      "hasHero": true,
+      "hasCta": false,
+      "hasNav": false,
+      "sectionCount": 2,
+      "totalArea": 64,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.0833,
+        "interactionScore": 0.0002,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.1376
+      }
+    },
+    {
+      "hex": "#585a5c",
+      "hsl": {
+        "h": 210,
+        "s": 2,
+        "l": 35
+      },
+      "hueFamily": "neutral",
+      "isNeutral": true,
+      "isUtility": false,
+      "utilityRatio": 0,
+      "brandConfidence": 0.25,
+      "sourceCounts": {
+        "navigation": 4,
+        "illustration": 5
+      },
+      "hasHero": false,
+      "hasCta": false,
+      "hasNav": true,
+      "sectionCount": 4,
+      "totalArea": 850,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.1667,
+        "interactionScore": 0.0044,
+        "contrastScore": 0.8419,
+        "utilityPenalty": 1,
+        "finalScore": 0.134
+      }
+    },
+    {
+      "hex": "#9c9da1",
+      "hsl": {
+        "h": 228,
+        "s": 3,
+        "l": 62
+      },
+      "hueFamily": "neutral",
+      "isNeutral": true,
+      "isUtility": false,
+      "utilityRatio": 0,
+      "brandConfidence": 0.2417,
+      "sourceCounts": {
+        "navigation": 23,
+        "illustration": 9
+      },
+      "hasHero": false,
+      "hasCta": false,
+      "hasNav": true,
+      "sectionCount": 3,
+      "totalArea": 3575,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.125,
+        "interactionScore": 0.0261,
+        "contrastScore": 0.9776,
+        "utilityPenalty": 1,
+        "finalScore": 0.1329
+      }
+    },
+    {
+      "hex": "#10b981",
+      "hsl": {
+        "h": 160,
+        "s": 84,
+        "l": 39
+      },
+      "hueFamily": "other-chroma",
+      "isNeutral": false,
+      "isUtility": false,
+      "utilityRatio": 0,
+      "brandConfidence": 0.275,
+      "sourceCounts": {
+        "hero_background": 1
+      },
+      "hasHero": true,
+      "hasCta": false,
+      "hasNav": false,
+      "sectionCount": 1,
+      "totalArea": 16,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.0417,
+        "interactionScore": 0,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.1288
+      }
+    },
+    {
+      "hex": "#f0bf00",
+      "hsl": {
+        "h": 48,
+        "s": 100,
+        "l": 47
+      },
+      "hueFamily": "other-chroma",
+      "isNeutral": false,
+      "isUtility": false,
+      "utilityRatio": 0,
+      "brandConfidence": 0.2417,
+      "sourceCounts": {
+        "illustration": 8,
+        "navigation": 4
+      },
+      "hasHero": false,
+      "hasCta": false,
+      "hasNav": true,
+      "sectionCount": 3,
+      "totalArea": 1578,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.125,
+        "interactionScore": 0.0071,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.1262
+      }
+    },
+    {
+      "hex": "#323334",
+      "hsl": {
+        "h": 210,
+        "s": 2,
+        "l": 20
+      },
+      "hueFamily": "neutral",
+      "isNeutral": true,
+      "isUtility": false,
+      "utilityRatio": 0,
+      "brandConfidence": 0.075,
+      "sourceCounts": {
+        "default": 9,
+        "illustration": 40
+      },
+      "hasHero": false,
+      "hasCta": false,
+      "hasNav": false,
+      "sectionCount": 5,
+      "totalArea": 7810235,
+      "scores": {
+        "areaScore": 0.0024,
+        "sectionCoverage": 0.2083,
+        "interactionScore": 0.0036,
+        "contrastScore": 0.8708,
+        "utilityPenalty": 1,
+        "finalScore": 0.0602
+      }
+    },
+    {
+      "hex": "#5e6ad2",
+      "hsl": {
+        "h": 234,
+        "s": 56,
+        "l": 60
+      },
+      "hueFamily": "indigo",
+      "isNeutral": false,
+      "isUtility": false,
+      "utilityRatio": 0,
+      "brandConfidence": 0.0667,
+      "sourceCounts": {
+        "default": 10,
+        "illustration": 3
+      },
+      "hasHero": false,
+      "hasCta": false,
+      "hasNav": false,
+      "sectionCount": 2,
+      "totalArea": 15267,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.0833,
+        "interactionScore": 0.0003,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.0401
+      }
+    },
+    {
+      "hex": "#27a644",
+      "hsl": {
+        "h": 134,
+        "s": 62,
+        "l": 40
+      },
+      "hueFamily": "other-chroma",
+      "isNeutral": false,
+      "isUtility": false,
+      "utilityRatio": 0,
+      "brandConfidence": 0.0417,
+      "sourceCounts": {
+        "illustration": 17
+      },
+      "hasHero": false,
+      "hasCta": false,
+      "hasNav": false,
+      "sectionCount": 3,
+      "totalArea": 935,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.125,
+        "interactionScore": 0.0005,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.0339
+      }
+    },
+    {
+      "hex": "#3e3e44",
+      "hsl": {
+        "h": 240,
+        "s": 5,
+        "l": 25
+      },
+      "hueFamily": "neutral",
+      "isNeutral": true,
+      "isUtility": false,
+      "utilityRatio": 0,
+      "brandConfidence": 0.0333,
+      "sourceCounts": {
+        "illustration": 19
+      },
+      "hasHero": false,
+      "hasCta": false,
+      "hasNav": false,
+      "sectionCount": 2,
+      "totalArea": 229283,
+      "scores": {
+        "areaScore": 0.0001,
+        "sectionCoverage": 0.0833,
+        "interactionScore": 0.0016,
+        "contrastScore": 0.5585,
+        "utilityPenalty": 1,
+        "finalScore": 0.0256
+      }
+    },
+    {
+      "hex": "#6d78d5",
+      "hsl": {
+        "h": 234,
+        "s": 55,
+        "l": 63
+      },
+      "hueFamily": "indigo",
+      "isNeutral": false,
+      "isUtility": false,
+      "utilityRatio": 0,
+      "brandConfidence": 0.0417,
+      "sourceCounts": {
+        "default": 2
+      },
+      "hasHero": false,
+      "hasCta": false,
+      "hasNav": false,
+      "sectionCount": 1,
+      "totalArea": 3028,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.0417,
+        "interactionScore": 0,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.0238
+      }
+    },
+    {
+      "hex": "#f2c94c",
+      "hsl": {
+        "h": 45,
+        "s": 86,
+        "l": 62
+      },
+      "hueFamily": "other-chroma",
+      "isNeutral": false,
+      "isUtility": false,
+      "utilityRatio": 0,
+      "brandConfidence": 0.025,
+      "sourceCounts": {
+        "illustration": 3
+      },
+      "hasHero": false,
+      "hasCta": false,
+      "hasNav": false,
+      "sectionCount": 1,
+      "totalArea": 418,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.0417,
+        "interactionScore": 0.0001,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.0163
+      }
+    },
+    {
+      "hex": "#d4a600",
+      "hsl": {
+        "h": 47,
+        "s": 100,
+        "l": 42
+      },
+      "hueFamily": "other-chroma",
+      "isNeutral": false,
+      "isUtility": false,
+      "utilityRatio": 0,
+      "brandConfidence": 0.025,
+      "sourceCounts": {
+        "illustration": 3
+      },
+      "hasHero": false,
+      "hasCta": false,
+      "hasNav": false,
+      "sectionCount": 1,
+      "totalArea": 450,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.0417,
+        "interactionScore": 0.0001,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.0163
+      }
+    },
+    {
+      "hex": "#993b3b",
+      "hsl": {
+        "h": 0,
+        "s": 44,
+        "l": 42
+      },
+      "hueFamily": "other-chroma",
+      "isNeutral": false,
+      "isUtility": false,
+      "utilityRatio": 0,
+      "brandConfidence": 0.025,
+      "sourceCounts": {
+        "illustration": 1
+      },
+      "hasHero": false,
+      "hasCta": false,
+      "hasNav": false,
+      "sectionCount": 1,
+      "totalArea": 3000,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.0417,
+        "interactionScore": 0,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.0163
+      }
+    },
+    {
+      "hex": "#008d2c",
+      "hsl": {
+        "h": 139,
+        "s": 100,
+        "l": 28
+      },
+      "hueFamily": "other-chroma",
+      "isNeutral": false,
+      "isUtility": false,
+      "utilityRatio": 0,
+      "brandConfidence": 0.025,
+      "sourceCounts": {
+        "illustration": 3
+      },
+      "hasHero": false,
+      "hasCta": false,
+      "hasNav": false,
+      "sectionCount": 1,
+      "totalArea": 430,
+      "scores": {
+        "areaScore": 0,
+        "sectionCoverage": 0.0417,
+        "interactionScore": 0.0001,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.0163
+      }
+    }
+  ],
+  "purpleFamily": [
+    {
+      "hex": "#5e6ad2",
+      "hsl": {
+        "h": 234,
+        "s": 56,
+        "l": 60
+      },
+      "hueFamily": "indigo",
+      "totalArea": 15779,
+      "occurrences": 15,
+      "sectionCount": 4,
+      "sources": {
+        "background-color": 2,
+        "text-color": 5,
+        "border-color": 5,
+        "svg-fill": 3
+      },
+      "scored": {
+        "areaScore": 0,
+        "sectionCoverage": 0.0833,
+        "interactionScore": 0.0003,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.0401
+      },
+      "brandConfidence": 0.0667,
+      "isUtility": false,
+      "sourceCountsProduction": {
+        "default": 10,
+        "illustration": 3
+      },
+      "inFinalPalette": false,
+      "finalRole": null,
+      "rejectionReason": "Tiny area footprint (15,779 px², ~0.000% of #f7f8f8 inflated text-color area); Area score 0 (8% weight in final); Brand confidence 0.0667 — hero=false cta=false nav=false; Often from SVG icon fills, not page-level brand surfaces; Not in curated top-8 after LAB merge + hue dedup + utility filter; Final palette: foundation:#ffffff, primary:#d0d6e0, secondary:#00b8cc, secondary:#eb5757, neutral:#000000, neutral:#23252a, neutral:#8a8f98, neutral:#2e2e32"
+    },
+    {
+      "hex": "#6d78d5",
+      "hsl": {
+        "h": 234,
+        "s": 55,
+        "l": 63
+      },
+      "hueFamily": "indigo",
+      "totalArea": 3028,
+      "occurrences": 2,
+      "sectionCount": 1,
+      "sources": {
+        "text-color": 1,
+        "border-color": 1
+      },
+      "scored": {
+        "areaScore": 0,
+        "sectionCoverage": 0.0417,
+        "interactionScore": 0,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.0238
+      },
+      "brandConfidence": 0.0417,
+      "isUtility": false,
+      "sourceCountsProduction": {
+        "default": 2
+      },
+      "inFinalPalette": false,
+      "finalRole": null,
+      "rejectionReason": "Tiny area footprint (3,028 px², ~0.000% of #f7f8f8 inflated text-color area); Area score 0 (8% weight in final); Brand confidence 0.0417 — hero=false cta=false nav=false; Mostly text-color on elements, not background surfaces; Not in curated top-8 after LAB merge + hue dedup + utility filter; Final palette: foundation:#ffffff, primary:#d0d6e0, secondary:#00b8cc, secondary:#eb5757, neutral:#000000, neutral:#23252a, neutral:#8a8f98, neutral:#2e2e32"
+    },
+    {
+      "hex": "#232534",
+      "hsl": {
+        "h": 233,
+        "s": 20,
+        "l": 17
+      },
+      "hueFamily": "indigo",
+      "totalArea": 1514,
+      "occurrences": 1,
+      "sectionCount": 1,
+      "sources": {
+        "background-color": 1
+      },
+      "inFinalPalette": false,
+      "finalRole": null,
+      "rejectionReason": "Color not present after LAB clustering merge."
+    },
+    {
+      "hex": "#8b5cf6",
+      "hsl": {
+        "h": 258,
+        "s": 90,
+        "l": 66
+      },
+      "hueFamily": "indigo",
+      "totalArea": 80,
+      "occurrences": 5,
+      "sectionCount": 2,
+      "sources": {
+        "background-color": 5
+      },
+      "scored": {
+        "areaScore": 0,
+        "sectionCoverage": 0.0833,
+        "interactionScore": 0.0002,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.1376
+      },
+      "brandConfidence": 0.2833,
+      "isUtility": false,
+      "sourceCountsProduction": {
+        "hero_background": 5
+      },
+      "inFinalPalette": false,
+      "finalRole": null,
+      "rejectionReason": "Tiny area footprint (80 px², ~0.000% of #f7f8f8 inflated text-color area); Area score 0 (8% weight in final); Not in curated top-8 after LAB merge + hue dedup + utility filter; Final palette: foundation:#ffffff, primary:#d0d6e0, secondary:#00b8cc, secondary:#eb5757, neutral:#000000, neutral:#23252a, neutral:#8a8f98, neutral:#2e2e32"
+    },
+    {
+      "hex": "#6366f1",
+      "hsl": {
+        "h": 239,
+        "s": 84,
+        "l": 67
+      },
+      "hueFamily": "indigo",
+      "totalArea": 64,
+      "occurrences": 4,
+      "sectionCount": 2,
+      "sources": {
+        "background-color": 4
+      },
+      "scored": {
+        "areaScore": 0,
+        "sectionCoverage": 0.0833,
+        "interactionScore": 0.0002,
+        "contrastScore": 1,
+        "utilityPenalty": 1,
+        "finalScore": 0.1376
+      },
+      "brandConfidence": 0.2833,
+      "isUtility": false,
+      "sourceCountsProduction": {
+        "hero_background": 4
+      },
+      "inFinalPalette": false,
+      "finalRole": null,
+      "rejectionReason": "Tiny area footprint (64 px², ~0.000% of #f7f8f8 inflated text-color area); Area score 0 (8% weight in final); Not in curated top-8 after LAB merge + hue dedup + utility filter; Final palette: foundation:#ffffff, primary:#d0d6e0, secondary:#00b8cc, secondary:#eb5757, neutral:#000000, neutral:#23252a, neutral:#8a8f98, neutral:#2e2e32"
+    }
+  ],
+  "finalPalette": [
+    {
+      "hex": "#ffffff",
+      "role": "foundation",
+      "score": 0.918,
+      "brandConfidence": 1,
+      "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 100
+      },
+      "areaShare": 55.5,
+      "isUtility": false,
+      "source": {
+        "usageWeight": 3249746611,
+        "semanticWeight": 400750,
+        "sectionCoverage": 24,
+        "sourceCounts": {
+          "default": 1984,
+          "navigation": 1126,
+          "card": 6,
+          "hero_cta": 11,
+          "logo": 38,
+          "illustration": 40,
+          "status_chip": 52
+        }
+      }
+    },
+    {
+      "hex": "#d0d6e0",
+      "role": "primary",
+      "score": 0.456,
+      "brandConfidence": 0.858,
+      "hsl": {
+        "h": 218,
+        "s": 21,
+        "l": 85
+      },
+      "areaShare": 0,
+      "isUtility": false,
+      "source": {
+        "usageWeight": 1730737,
+        "semanticWeight": 36868,
+        "sectionCoverage": 9,
+        "sourceCounts": {
+          "default": 181,
+          "navigation": 80,
+          "hero_cta": 2,
+          "illustration": 12
+        }
+      }
+    },
+    {
+      "hex": "#00b8cc",
+      "role": "secondary",
+      "score": 0.263,
+      "brandConfidence": 0.525,
+      "hsl": {
+        "h": 186,
+        "s": 100,
+        "l": 40
+      },
+      "areaShare": 0,
+      "isUtility": false,
+      "source": {
+        "usageWeight": 1915,
+        "semanticWeight": 2378,
+        "sectionCoverage": 5,
+        "sourceCounts": {
+          "navigation": 4,
+          "illustration": 6,
+          "hero_background": 2
+        }
+      }
+    },
+    {
+      "hex": "#eb5757",
+      "role": "secondary",
+      "score": 0.263,
+      "brandConfidence": 0.525,
+      "hsl": {
+        "h": 0,
+        "s": 79,
+        "l": 63
+      },
+      "areaShare": 0,
+      "isUtility": false,
+      "source": {
+        "usageWeight": 819,
+        "semanticWeight": 2375,
+        "sectionCoverage": 5,
+        "sourceCounts": {
+          "navigation": 4,
+          "hero_background": 5,
+          "illustration": 1
+        }
+      }
+    },
+    {
+      "hex": "#000000",
+      "role": "neutral",
+      "score": 0.969,
+      "brandConfidence": 0.967,
+      "hsl": {
+        "h": 0,
+        "s": 0,
+        "l": 0
+      },
+      "areaShare": 44.3,
+      "isUtility": false,
+      "source": {
+        "usageWeight": 2591473204,
+        "semanticWeight": 524156,
+        "sectionCoverage": 24,
+        "sourceCounts": {
+          "hero_background": 87,
+          "illustration": 1025,
+          "navigation": 759,
+          "card": 2,
+          "hero_cta": 59,
+          "success_state": 2,
+          "status_chip": 34,
+          "warning_state": 2,
+          "logo": 20,
+          "default": 3
+        }
+      }
+    },
+    {
+      "hex": "#23252a",
+      "role": "neutral",
+      "score": 0.549,
+      "brandConfidence": 0.933,
+      "hsl": {
+        "h": 223,
+        "s": 9,
+        "l": 15
+      },
+      "areaShare": 0,
+      "isUtility": false,
+      "source": {
+        "usageWeight": 7408,
+        "semanticWeight": 13620,
+        "sectionCoverage": 24,
+        "sourceCounts": {
+          "navigation": 26,
+          "hero_background": 3,
+          "hero_cta": 2
+        }
+      }
+    },
+    {
+      "hex": "#8a8f98",
+      "role": "neutral",
+      "score": 0.42,
+      "brandConfidence": 0.5,
+      "hsl": {
+        "h": 219,
+        "s": 6,
+        "l": 57
+      },
+      "areaShare": 0,
+      "isUtility": false,
+      "source": {
+        "usageWeight": 1382132,
+        "semanticWeight": 111780,
+        "sectionCoverage": 24,
+        "sourceCounts": {
+          "navigation": 174,
+          "default": 116,
+          "success_state": 4,
+          "illustration": 6
+        }
+      }
+    },
+    {
+      "hex": "#2e2e32",
+      "role": "neutral",
+      "score": 0.06,
+      "brandConfidence": 0.075,
+      "hsl": {
+        "h": 240,
+        "s": 4,
+        "l": 19
+      },
+      "areaShare": 0.1,
+      "isUtility": false,
+      "source": {
+        "usageWeight": 7810235,
+        "semanticWeight": 1896,
+        "sectionCoverage": 5,
+        "sourceCounts": {
+          "default": 9,
+          "illustration": 40
+        }
+      }
+    }
+  ],
+  "keyFindings": []
+}

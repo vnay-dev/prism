@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Prism Palette Extractor",
+  "description": "Extracts a curated website color palette for designers.",
+  "version": "0.1.0",
+  "permissions": ["activeTab", "scripting", "clipboardWrite", "downloads"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_title": "Prism Palette",
+    "default_popup": "src/popup/index.html"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com;"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "prism-chrome-ext",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "test:benchmark": "node --test tests/benchmark.test.js",
+    "benchmark:lock": "node scripts/generate-benchmark-lockfile.mjs"
+  }
+}

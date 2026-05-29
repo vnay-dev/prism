@@ -1,0 +1,3947 @@
+{
+  "generatedAt": "2026-05-29T16:39:07.269Z",
+  "sitesAnalyzed": 10,
+  "missingSites": [],
+  "failurePatterns": [
+    {
+      "pattern": "foundation_not_dominant_raw_color",
+      "sites": [
+        "Slack"
+      ],
+      "note": "Foundation role assigned to a neutral that is not the largest raw area color (often #000000 from SVG fills)"
+    },
+    {
+      "pattern": "no_chromatic_primary",
+      "sites": [
+        "Air India",
+        "Spotify"
+      ],
+      "note": "No chromatic color received primary role — brand color may be missing from palette"
+    },
+    {
+      "pattern": "top_scored_chroma_excluded",
+      "sites": [
+        "Notion"
+      ],
+      "note": "Highest-scored chromatic cluster not in final 8-color palette"
+    },
+    {
+      "pattern": "heavy_product_demo_pages",
+      "sites": [
+        {
+          "site": "Linear",
+          "demoShare": 50.9
+        }
+      ],
+      "note": "Marketing pages with large embedded product UI — demo detection heavily influences scoring"
+    }
+  ],
+  "reports": [
+    {
+      "site": "Air India",
+      "url": "https://www.airindia.com/",
+      "extractionStats": {
+        "samples": 0,
+        "sections": 1,
+        "totalArea": 1,
+        "productDemoShare": 0
+      },
+      "finalPalette": [],
+      "paletteMode": "foundation",
+      "top10RawColors": [],
+      "top10ScoredColors": []
+    },
+    {
+      "site": "Apple",
+      "url": "https://www.apple.com/",
+      "extractionStats": {
+        "samples": 4972,
+        "sections": 16,
+        "totalArea": 356145738,
+        "productDemoShare": 0
+      },
+      "finalPalette": [
+        {
+          "hex": "#ffffff",
+          "role": "foundation",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 100
+          },
+          "score": 0.977,
+          "brandConfidence": 1,
+          "areaShare": 89.5,
+          "isUtility": false,
+          "whySelected": [
+            "Dominant neutral surface (89.5% area share, 16 sections)",
+            "Sources: navigation×1376, default×117, primary_button×32",
+            "Curator hint: neutral",
+            "designSystemScore=0.977, brandConfidence=1"
+          ]
+        },
+        {
+          "hex": "#0071e3",
+          "role": "primary",
+          "hsl": {
+            "h": 210,
+            "s": 100,
+            "l": 45
+          },
+          "score": 0.107,
+          "brandConfidence": 0.121,
+          "areaShare": 0,
+          "isUtility": false,
+          "whySelected": [
+            "Highest brand-confidence chromatic in curated set",
+            "Sources: default×19, major_container×9, promo_content×1",
+            "Curator hint: primary",
+            "designSystemScore=0.107, brandConfidence=0.121"
+          ]
+        },
+        {
+          "hex": "#2997ff",
+          "role": "secondary",
+          "hsl": {
+            "h": 209,
+            "s": 100,
+            "l": 58
+          },
+          "score": 0.055,
+          "brandConfidence": 0.071,
+          "areaShare": 0.2,
+          "isUtility": false,
+          "whySelected": [
+            "Additional chromatic hue family after primary deduplication",
+            "Sources: default×44",
+            "Curator hint: secondary",
+            "designSystemScore=0.055, brandConfidence=0.071"
+          ]
+        },
+        {
+          "hex": "#a4618d",
+          "role": "secondary",
+          "hsl": {
+            "h": 321,
+            "s": 27,
+            "l": 51
+          },
+          "score": 0.034,
+          "brandConfidence": 0.042,
+          "areaShare": 0.1,
+          "isUtility": false,
+          "whySelected": [
+            "Additional chromatic hue family after primary deduplication",
+            "Sources: repeated_section_bg×2",
+            "Curator hint: secondary",
+            "designSystemScore=0.034, brandConfidence=0.042"
+          ]
+        },
+        {
+          "hex": "#000000",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 0
+          },
+          "score": 0.822,
+          "brandConfidence": 0.767,
+          "areaShare": 7.8,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (7.8%) and design-system score",
+            "Sources: navigation×1464, illustration×589, default×206",
+            "Curator hint: neutral",
+            "designSystemScore=0.822, brandConfidence=0.767"
+          ]
+        },
+        {
+          "hex": "#1d1d1f",
+          "role": "neutral",
+          "hsl": {
+            "h": 240,
+            "s": 3,
+            "l": 12
+          },
+          "score": 0.601,
+          "brandConfidence": 0.717,
+          "areaShare": 2.3,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (2.3%) and design-system score",
+            "Sources: navigation×656, default×90, card×51",
+            "Curator hint: neutral",
+            "designSystemScore=0.601, brandConfidence=0.717"
+          ]
+        },
+        {
+          "hex": "#d2d2d7",
+          "role": "neutral",
+          "hsl": {
+            "h": 240,
+            "s": 6,
+            "l": 83
+          },
+          "score": 0.133,
+          "brandConfidence": 0.279,
+          "areaShare": 0,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (0%) and design-system score",
+            "Sources: primary_button×1",
+            "Curator hint: neutral",
+            "designSystemScore=0.133, brandConfidence=0.279"
+          ]
+        },
+        {
+          "hex": "#6e6e73",
+          "role": "neutral",
+          "hsl": {
+            "h": 240,
+            "s": 2,
+            "l": 44
+          },
+          "score": 0.021,
+          "brandConfidence": 0.029,
+          "areaShare": 0,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (0%) and design-system score",
+            "Sources: chart×1, default×1",
+            "Curator hint: neutral",
+            "designSystemScore=0.021, brandConfidence=0.029"
+          ]
+        }
+      ],
+      "paletteMode": "brand",
+      "top10RawColors": [
+        {
+          "hex": "#ffffff",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 100
+          },
+          "totalArea": 235532166,
+          "hits": 1554,
+          "topSources": [
+            "navigation(1376)",
+            "default(105)",
+            "illustration(32)",
+            "global_background(16)"
+          ]
+        },
+        {
+          "hex": "#f5f5f7",
+          "hsl": {
+            "h": 240,
+            "s": 11,
+            "l": 96
+          },
+          "totalArea": 83132707,
+          "hits": 75,
+          "topSources": [
+            "primary_button(16)",
+            "repeated_section_bg(16)",
+            "default(12)",
+            "major_container(11)"
+          ]
+        },
+        {
+          "hex": "#000000",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 0
+          },
+          "totalArea": 27655474,
+          "hits": 2404,
+          "topSources": [
+            "navigation(1464)",
+            "illustration(589)",
+            "default(206)",
+            "primary_button(49)"
+          ]
+        },
+        {
+          "hex": "#1d1d1f",
+          "hsl": {
+            "h": 240,
+            "s": 3,
+            "l": 12
+          },
+          "totalArea": 6498531,
+          "hits": 823,
+          "topSources": [
+            "navigation(656)",
+            "default(90)",
+            "card(51)",
+            "chart(13)"
+          ]
+        },
+        {
+          "hex": "#161617",
+          "hsl": {
+            "h": 240,
+            "s": 2,
+            "l": 9
+          },
+          "totalArea": 1847328,
+          "hits": 32,
+          "topSources": [
+            "major_container(16)",
+            "primary_button(16)"
+          ]
+        },
+        {
+          "hex": "#2997ff",
+          "hsl": {
+            "h": 209,
+            "s": 100,
+            "l": 58
+          },
+          "totalArea": 633787,
+          "hits": 44,
+          "topSources": [
+            "default(44)"
+          ]
+        },
+        {
+          "hex": "#a4618d",
+          "hsl": {
+            "h": 321,
+            "s": 27,
+            "l": 51
+          },
+          "totalArea": 195625,
+          "hits": 2,
+          "topSources": [
+            "repeated_section_bg(2)"
+          ]
+        },
+        {
+          "hex": "#f4f8fb",
+          "hsl": {
+            "h": 206,
+            "s": 47,
+            "l": 97
+          },
+          "totalArea": 195625,
+          "hits": 2,
+          "topSources": [
+            "repeated_section_bg(2)"
+          ]
+        },
+        {
+          "hex": "#3397d4",
+          "hsl": {
+            "h": 203,
+            "s": 65,
+            "l": 52
+          },
+          "totalArea": 195625,
+          "hits": 2,
+          "topSources": [
+            "repeated_section_bg(2)"
+          ]
+        },
+        {
+          "hex": "#de9444",
+          "hsl": {
+            "h": 31,
+            "s": 70,
+            "l": 57
+          },
+          "totalArea": 195156,
+          "hits": 2,
+          "topSources": [
+            "repeated_section_bg(2)"
+          ]
+        }
+      ],
+      "top10ScoredColors": [
+        {
+          "hex": "#ffffff",
+          "designSystemScore": 0.9769,
+          "brandConfidence": 1,
+          "areaShare": 89.53,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": true,
+          "hasCta": true,
+          "hasNav": true,
+          "topSources": "navigation×1376, default×117, primary_button×32"
+        },
+        {
+          "hex": "#000000",
+          "designSystemScore": 0.8219,
+          "brandConfidence": 0.7667,
+          "areaShare": 7.77,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": true,
+          "hasNav": true,
+          "topSources": "navigation×1464, illustration×589, default×206"
+        },
+        {
+          "hex": "#1d1d1f",
+          "designSystemScore": 0.6013,
+          "brandConfidence": 0.7167,
+          "areaShare": 2.34,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": true,
+          "hasNav": true,
+          "topSources": "navigation×656, default×90, card×51"
+        },
+        {
+          "hex": "#d2d2d7",
+          "designSystemScore": 0.1333,
+          "brandConfidence": 0.2792,
+          "areaShare": 0,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": true,
+          "hasNav": false,
+          "topSources": "primary_button×1"
+        },
+        {
+          "hex": "#0071e3",
+          "designSystemScore": 0.107,
+          "brandConfidence": 0.1208,
+          "areaShare": 0.02,
+          "isNeutral": false,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "default×19, major_container×9, promo_content×1"
+        },
+        {
+          "hex": "#2997ff",
+          "designSystemScore": 0.0547,
+          "brandConfidence": 0.0708,
+          "areaShare": 0.18,
+          "isNeutral": false,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "default×44"
+        },
+        {
+          "hex": "#a4618d",
+          "designSystemScore": 0.0338,
+          "brandConfidence": 0.0417,
+          "areaShare": 0.05,
+          "isNeutral": false,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "repeated_section_bg×2"
+        },
+        {
+          "hex": "#3397d4",
+          "designSystemScore": 0.0338,
+          "brandConfidence": 0.0417,
+          "areaShare": 0.05,
+          "isNeutral": false,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "repeated_section_bg×2"
+        },
+        {
+          "hex": "#de9444",
+          "designSystemScore": 0.0338,
+          "brandConfidence": 0.0417,
+          "areaShare": 0.05,
+          "isNeutral": false,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "repeated_section_bg×2"
+        },
+        {
+          "hex": "#6e6e73",
+          "designSystemScore": 0.0206,
+          "brandConfidence": 0.0292,
+          "areaShare": 0,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "chart×1, default×1"
+        }
+      ]
+    },
+    {
+      "site": "Framer",
+      "url": "https://www.framer.com/",
+      "extractionStats": {
+        "samples": 5376,
+        "sections": 19,
+        "totalArea": 757812425,
+        "productDemoShare": 0
+      },
+      "finalPalette": [
+        {
+          "hex": "#000000",
+          "role": "foundation",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 0
+          },
+          "score": 0.872,
+          "brandConfidence": 0.717,
+          "areaShare": 97.7,
+          "isUtility": false,
+          "whySelected": [
+            "Dominant neutral surface (97.7% area share, 19 sections)",
+            "Sources: illustration×1642, navigation×1596, default×690",
+            "Curator hint: neutral",
+            "designSystemScore=0.872, brandConfidence=0.717"
+          ]
+        },
+        {
+          "hex": "#0099ff",
+          "role": "primary",
+          "hsl": {
+            "h": 204,
+            "s": 100,
+            "l": 50
+          },
+          "score": 0.081,
+          "brandConfidence": 0.096,
+          "areaShare": 0,
+          "isUtility": false,
+          "whySelected": [
+            "Highest brand-confidence chromatic in curated set",
+            "Sources: major_container×10, default×7",
+            "Curator hint: primary",
+            "designSystemScore=0.081, brandConfidence=0.096"
+          ]
+        },
+        {
+          "hex": "#0055ff",
+          "role": "secondary",
+          "hsl": {
+            "h": 220,
+            "s": 100,
+            "l": 50
+          },
+          "score": 0.03,
+          "brandConfidence": 0.038,
+          "areaShare": 0,
+          "isUtility": false,
+          "whySelected": [
+            "Additional chromatic hue family after primary deduplication",
+            "Sources: major_container×2",
+            "Curator hint: secondary",
+            "designSystemScore=0.03, brandConfidence=0.038"
+          ]
+        },
+        {
+          "hex": "#fd5d5c",
+          "role": "secondary",
+          "hsl": {
+            "h": 0,
+            "s": 98,
+            "l": 68
+          },
+          "score": 0.019,
+          "brandConfidence": 0.027,
+          "areaShare": 0,
+          "isUtility": false,
+          "whySelected": [
+            "Additional chromatic hue family after primary deduplication",
+            "Sources: major_container×1",
+            "Curator hint: secondary",
+            "designSystemScore=0.019, brandConfidence=0.027"
+          ]
+        },
+        {
+          "hex": "#ffffff",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 100
+          },
+          "score": 0.513,
+          "brandConfidence": 0.717,
+          "areaShare": 0.7,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (0.7%) and design-system score",
+            "Sources: navigation×323, default×206, major_container×78",
+            "Curator hint: neutral",
+            "designSystemScore=0.513, brandConfidence=0.717"
+          ]
+        },
+        {
+          "hex": "#0000ee",
+          "role": "neutral",
+          "hsl": {
+            "h": 240,
+            "s": 100,
+            "l": 47
+          },
+          "score": 0.366,
+          "brandConfidence": 0.433,
+          "areaShare": 0,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (0%) and design-system score",
+            "Sources: navigation×247, default×52",
+            "Curator hint: secondary",
+            "designSystemScore=0.366, brandConfidence=0.433"
+          ]
+        },
+        {
+          "hex": "#171717",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 9
+          },
+          "score": 0.108,
+          "brandConfidence": 0.111,
+          "areaShare": 1.5,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (1.5%) and design-system score",
+            "Sources: major_container×17, repeated_section_bg×4, blog_card×4",
+            "Curator hint: neutral",
+            "designSystemScore=0.108, brandConfidence=0.111"
+          ]
+        },
+        {
+          "hex": "#222222",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 13
+          },
+          "score": 0.093,
+          "brandConfidence": 0.107,
+          "areaShare": 0,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (0%) and design-system score",
+            "Sources: major_container×45, default×3, repeated_section_bg×2",
+            "Curator hint: neutral",
+            "designSystemScore=0.093, brandConfidence=0.107"
+          ]
+        }
+      ],
+      "paletteMode": "brand",
+      "top10RawColors": [
+        {
+          "hex": "#000000",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 0
+          },
+          "totalArea": 732876375,
+          "hits": 4238,
+          "topSources": [
+            "illustration(1642)",
+            "navigation(1596)",
+            "default(687)",
+            "logo(199)"
+          ]
+        },
+        {
+          "hex": "#111111",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 7
+          },
+          "totalArea": 7401440,
+          "hits": 10,
+          "topSources": [
+            "major_container(6)",
+            "blog_card(4)"
+          ]
+        },
+        {
+          "hex": "#080808",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 3
+          },
+          "totalArea": 7375717,
+          "hits": 16,
+          "topSources": [
+            "major_container(11)",
+            "default(3)",
+            "repeated_section_bg(2)"
+          ]
+        },
+        {
+          "hex": "#ffffff",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 100
+          },
+          "totalArea": 5292410,
+          "hits": 615,
+          "topSources": [
+            "navigation(323)",
+            "default(206)",
+            "major_container(78)",
+            "hero_background(3)"
+          ]
+        },
+        {
+          "hex": "#171717",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 9
+          },
+          "totalArea": 3654561,
+          "hits": 8,
+          "topSources": [
+            "major_container(6)",
+            "repeated_section_bg(2)"
+          ]
+        },
+        {
+          "hex": "#0084ff",
+          "hsl": {
+            "h": 209,
+            "s": 100,
+            "l": 50
+          },
+          "totalArea": 467060,
+          "hits": 2,
+          "topSources": [
+            "major_container(2)"
+          ]
+        },
+        {
+          "hex": "#0000ee",
+          "hsl": {
+            "h": 240,
+            "s": 100,
+            "l": 47
+          },
+          "totalArea": 257074,
+          "hits": 299,
+          "topSources": [
+            "navigation(247)",
+            "default(52)"
+          ]
+        },
+        {
+          "hex": "#089aff",
+          "hsl": {
+            "h": 205,
+            "s": 100,
+            "l": 52
+          },
+          "totalArea": 172500,
+          "hits": 2,
+          "topSources": [
+            "major_container(2)"
+          ]
+        },
+        {
+          "hex": "#141414",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 8
+          },
+          "totalArea": 99960,
+          "hits": 2,
+          "topSources": [
+            "major_container(2)"
+          ]
+        },
+        {
+          "hex": "#999999",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 60
+          },
+          "totalArea": 46509,
+          "hits": 58,
+          "topSources": [
+            "default(57)",
+            "logo(1)"
+          ]
+        }
+      ],
+      "top10ScoredColors": [
+        {
+          "hex": "#000000",
+          "designSystemScore": 0.8725,
+          "brandConfidence": 0.7167,
+          "areaShare": 97.68,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": true,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "illustration×1642, navigation×1596, default×690"
+        },
+        {
+          "hex": "#ffffff",
+          "designSystemScore": 0.5131,
+          "brandConfidence": 0.7167,
+          "areaShare": 0.7,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": true,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "navigation×323, default×206, major_container×78"
+        },
+        {
+          "hex": "#0000ee",
+          "designSystemScore": 0.3664,
+          "brandConfidence": 0.4333,
+          "areaShare": 0.03,
+          "isNeutral": false,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "navigation×247, default×52"
+        },
+        {
+          "hex": "#171717",
+          "designSystemScore": 0.1083,
+          "brandConfidence": 0.1114,
+          "areaShare": 1.48,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "major_container×17, repeated_section_bg×4, blog_card×4"
+        },
+        {
+          "hex": "#242424",
+          "designSystemScore": 0.0927,
+          "brandConfidence": 0.107,
+          "areaShare": 0.01,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "major_container×45, default×3, repeated_section_bg×2"
+        },
+        {
+          "hex": "#0099ff",
+          "designSystemScore": 0.0815,
+          "brandConfidence": 0.0965,
+          "areaShare": 0.03,
+          "isNeutral": false,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "major_container×10, default×7"
+        },
+        {
+          "hex": "#999999",
+          "designSystemScore": 0.0634,
+          "brandConfidence": 0.0693,
+          "areaShare": 0.01,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "default×57, logo×1"
+        },
+        {
+          "hex": "#888888",
+          "designSystemScore": 0.0483,
+          "brandConfidence": 0.0649,
+          "areaShare": 0,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "default×10, major_container×3, card×2"
+        },
+        {
+          "hex": "#cccccc",
+          "designSystemScore": 0.0299,
+          "brandConfidence": 0.0377,
+          "areaShare": 0,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "default×18, card×4"
+        },
+        {
+          "hex": "#0084ff",
+          "designSystemScore": 0.0297,
+          "brandConfidence": 0.0377,
+          "areaShare": 0.06,
+          "isNeutral": false,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "major_container×2"
+        }
+      ]
+    },
+    {
+      "site": "Linear",
+      "url": "https://linear.app/",
+      "extractionStats": {
+        "samples": 3766,
+        "sections": 17,
+        "totalArea": 821216916,
+        "productDemoShare": 0.5090281465746149
+      },
+      "finalPalette": [
+        {
+          "hex": "#08090a",
+          "role": "foundation",
+          "hsl": {
+            "h": 210,
+            "s": 11,
+            "l": 4
+          },
+          "score": 0.76,
+          "brandConfidence": 0.467,
+          "areaShare": 98.6,
+          "isUtility": false,
+          "whySelected": [
+            "Dominant neutral surface (98.6% area share, 17 sections)",
+            "Sources: demo_illustration×702, navigation×493, illustration×298",
+            "designSystemScore=0.76, brandConfidence=0.467"
+          ]
+        },
+        {
+          "hex": "#d0d6e0",
+          "role": "primary",
+          "hsl": {
+            "h": 218,
+            "s": 21,
+            "l": 85
+          },
+          "score": 0.119,
+          "brandConfidence": 0.149,
+          "areaShare": 0.1,
+          "isUtility": false,
+          "whySelected": [
+            "Highest brand-confidence chromatic in curated set",
+            "Sources: default×83, demo_navigation×18, demo_sidebar×18",
+            "Curator hint: primary",
+            "designSystemScore=0.119, brandConfidence=0.149"
+          ]
+        },
+        {
+          "hex": "#f7f8f8",
+          "role": "neutral",
+          "hsl": {
+            "h": 180,
+            "s": 7,
+            "l": 97
+          },
+          "score": 0.561,
+          "brandConfidence": 0.517,
+          "areaShare": 1,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (1%) and design-system score",
+            "Sources: default×532, navigation×306, demo_illustration×124",
+            "Curator hint: neutral",
+            "designSystemScore=0.561, brandConfidence=0.517"
+          ]
+        },
+        {
+          "hex": "#8a8f98",
+          "role": "neutral",
+          "hsl": {
+            "h": 219,
+            "s": 6,
+            "l": 57
+          },
+          "score": 0.424,
+          "brandConfidence": 0.483,
+          "areaShare": 0.1,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (0.1%) and design-system score",
+            "Sources: navigation×119, default×43, demo_illustration×6",
+            "Curator hint: neutral",
+            "designSystemScore=0.424, brandConfidence=0.483"
+          ]
+        },
+        {
+          "hex": "#e5e5e6",
+          "role": "neutral",
+          "hsl": {
+            "h": 240,
+            "s": 2,
+            "l": 90
+          },
+          "score": 0.343,
+          "brandConfidence": 0.433,
+          "areaShare": 0,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (0%) and design-system score",
+            "Sources: illustration×100, demo_illustration×25, navigation×17",
+            "Curator hint: neutral",
+            "designSystemScore=0.343, brandConfidence=0.433"
+          ]
+        },
+        {
+          "hex": "#23252a",
+          "role": "neutral",
+          "hsl": {
+            "h": 223,
+            "s": 9,
+            "l": 15
+          },
+          "score": 0.333,
+          "brandConfidence": 0.45,
+          "areaShare": 0,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (0%) and design-system score",
+            "Sources: navigation×17, demo_illustration×4, default×4",
+            "Curator hint: neutral",
+            "designSystemScore=0.333, brandConfidence=0.45"
+          ]
+        },
+        {
+          "hex": "#62666d",
+          "role": "neutral",
+          "hsl": {
+            "h": 218,
+            "s": 5,
+            "l": 41
+          },
+          "score": 0.12,
+          "brandConfidence": 0.149,
+          "areaShare": 0.1,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (0.1%) and design-system score",
+            "Sources: default×162, demo_illustration×118, illustration×30",
+            "Curator hint: neutral",
+            "designSystemScore=0.12, brandConfidence=0.149"
+          ]
+        },
+        {
+          "hex": "#2e2e32",
+          "role": "neutral",
+          "hsl": {
+            "h": 240,
+            "s": 4,
+            "l": 19
+          },
+          "score": 0.067,
+          "brandConfidence": 0.08,
+          "areaShare": 0.1,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (0.1%) and design-system score",
+            "Sources: illustration×41, default×6, demo_illustration×1",
+            "Curator hint: neutral",
+            "designSystemScore=0.067, brandConfidence=0.08"
+          ]
+        }
+      ],
+      "paletteMode": "brand",
+      "top10RawColors": [
+        {
+          "hex": "#08090a",
+          "hsl": {
+            "h": 210,
+            "s": 11,
+            "l": 4
+          },
+          "totalArea": 792653450,
+          "hits": 112,
+          "topSources": [
+            "illustration(44)",
+            "global_background(35)",
+            "navigation(17)",
+            "major_container(16)"
+          ]
+        },
+        {
+          "hex": "#000000",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 0
+          },
+          "totalArea": 10929565,
+          "hits": 1609,
+          "topSources": [
+            "demo_illustration(697)",
+            "navigation(476)",
+            "illustration(254)",
+            "default(65)"
+          ]
+        },
+        {
+          "hex": "#f7f8f8",
+          "hsl": {
+            "h": 180,
+            "s": 7,
+            "l": 97
+          },
+          "totalArea": 7840003,
+          "hits": 803,
+          "topSources": [
+            "default(474)",
+            "navigation(306)",
+            "demo_sidebar(8)",
+            "status_chip(5)"
+          ]
+        },
+        {
+          "hex": "#0f1011",
+          "hsl": {
+            "h": 210,
+            "s": 6,
+            "l": 6
+          },
+          "totalArea": 4162635,
+          "hits": 5,
+          "topSources": [
+            "demo_illustration(5)"
+          ]
+        },
+        {
+          "hex": "#090a0b",
+          "hsl": {
+            "h": 210,
+            "s": 10,
+            "l": 4
+          },
+          "totalArea": 1900800,
+          "hits": 2,
+          "topSources": [
+            "global_background(1)",
+            "major_container(1)"
+          ]
+        },
+        {
+          "hex": "#2e2e32",
+          "hsl": {
+            "h": 240,
+            "s": 4,
+            "l": 19
+          },
+          "totalArea": 797418,
+          "hits": 43,
+          "topSources": [
+            "illustration(41)",
+            "demo_illustration(2)"
+          ]
+        },
+        {
+          "hex": "#62666d",
+          "hsl": {
+            "h": 218,
+            "s": 5,
+            "l": 41
+          },
+          "totalArea": 699792,
+          "hits": 326,
+          "topSources": [
+            "default(162)",
+            "demo_illustration(118)",
+            "illustration(30)",
+            "demo_navigation(12)"
+          ]
+        },
+        {
+          "hex": "#d0d6e0",
+          "hsl": {
+            "h": 218,
+            "s": 21,
+            "l": 85
+          },
+          "totalArea": 628054,
+          "hits": 132,
+          "topSources": [
+            "default(83)",
+            "demo_navigation(18)",
+            "demo_sidebar(18)",
+            "illustration(12)"
+          ]
+        },
+        {
+          "hex": "#8a8f98",
+          "hsl": {
+            "h": 219,
+            "s": 6,
+            "l": 57
+          },
+          "totalArea": 515050,
+          "hits": 171,
+          "topSources": [
+            "navigation(119)",
+            "default(43)",
+            "demo_illustration(6)",
+            "demo_navigation(3)"
+          ]
+        },
+        {
+          "hex": "#3e3e44",
+          "hsl": {
+            "h": 240,
+            "s": 5,
+            "l": 25
+          },
+          "totalArea": 388800,
+          "hits": 20,
+          "topSources": [
+            "illustration(20)"
+          ]
+        }
+      ],
+      "top10ScoredColors": [
+        {
+          "hex": "#08090a",
+          "designSystemScore": 0.76,
+          "brandConfidence": 0.4667,
+          "areaShare": 98.59,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "demo_illustration×702, navigation×493, illustration×298"
+        },
+        {
+          "hex": "#f7f8f8",
+          "designSystemScore": 0.5614,
+          "brandConfidence": 0.5167,
+          "areaShare": 0.98,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "default×532, navigation×306, demo_illustration×124"
+        },
+        {
+          "hex": "#8a8f98",
+          "designSystemScore": 0.4238,
+          "brandConfidence": 0.4833,
+          "areaShare": 0.06,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "navigation×119, default×43, demo_illustration×6"
+        },
+        {
+          "hex": "#e5e5e6",
+          "designSystemScore": 0.3433,
+          "brandConfidence": 0.4333,
+          "areaShare": 0.01,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "illustration×100, demo_illustration×25, navigation×17"
+        },
+        {
+          "hex": "#23252a",
+          "designSystemScore": 0.3335,
+          "brandConfidence": 0.45,
+          "areaShare": 0,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "navigation×17, demo_illustration×4, default×4"
+        },
+        {
+          "hex": "#5e6ad2",
+          "designSystemScore": 0.1525,
+          "brandConfidence": 0.3069,
+          "areaShare": 0,
+          "isNeutral": false,
+          "isUtility": true,
+          "hasHero": true,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "demo_illustration×2, hero_background×1"
+        },
+        {
+          "hex": "#62666d",
+          "designSystemScore": 0.1197,
+          "brandConfidence": 0.149,
+          "areaShare": 0.09,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "default×162, demo_illustration×118, illustration×30"
+        },
+        {
+          "hex": "#d0d6e0",
+          "designSystemScore": 0.1191,
+          "brandConfidence": 0.149,
+          "areaShare": 0.08,
+          "isNeutral": false,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "default×83, demo_navigation×18, demo_sidebar×18"
+        },
+        {
+          "hex": "#323334",
+          "designSystemScore": 0.067,
+          "brandConfidence": 0.0804,
+          "areaShare": 0.1,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "illustration×41, default×6, demo_illustration×1"
+        },
+        {
+          "hex": "#9c9da1",
+          "designSystemScore": 0.0571,
+          "brandConfidence": 0.0637,
+          "areaShare": 0,
+          "isNeutral": true,
+          "isUtility": true,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "demo_navigation×36, demo_illustration×15"
+        }
+      ]
+    },
+    {
+      "site": "Netflix",
+      "url": "https://www.netflix.com/",
+      "extractionStats": {
+        "samples": 770,
+        "sections": 5,
+        "totalArea": 54338041,
+        "productDemoShare": 0
+      },
+      "finalPalette": [
+        {
+          "hex": "#000000",
+          "role": "foundation",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 0
+          },
+          "score": 0.79,
+          "brandConfidence": 0.533,
+          "areaShare": 88.7,
+          "isUtility": false,
+          "whySelected": [
+            "Dominant neutral surface (88.7% area share, 5 sections)",
+            "Sources: illustration×292, default×47, primary_button×19",
+            "Curator hint: neutral",
+            "designSystemScore=0.79, brandConfidence=0.533"
+          ]
+        },
+        {
+          "hex": "#e50914",
+          "role": "primary",
+          "hsl": {
+            "h": 357,
+            "s": 92,
+            "l": 47
+          },
+          "score": 0.412,
+          "brandConfidence": 0.67,
+          "areaShare": 0.1,
+          "isUtility": false,
+          "whySelected": [
+            "Highest brand-confidence chromatic in curated set",
+            "Appears in hero region",
+            "Linked to CTA/button context",
+            "Sources: illustration×3, primary_button×3, hero_background×1",
+            "Curator hint: primary",
+            "designSystemScore=0.412, brandConfidence=0.67"
+          ]
+        },
+        {
+          "hex": "#ffffff",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 100
+          },
+          "score": 0.687,
+          "brandConfidence": 0.533,
+          "areaShare": 7.4,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (7.4%) and design-system score",
+            "Sources: default×284, illustration×36, primary_button×22",
+            "Curator hint: neutral",
+            "designSystemScore=0.687, brandConfidence=0.533"
+          ]
+        },
+        {
+          "hex": "#161616",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 9
+          },
+          "score": 0.256,
+          "brandConfidence": 0.387,
+          "areaShare": 0.2,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (0.2%) and design-system score",
+            "Sources: hero_background×3, major_container×3",
+            "Curator hint: neutral",
+            "designSystemScore=0.256, brandConfidence=0.387"
+          ]
+        },
+        {
+          "hex": "#232323",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 14
+          },
+          "score": 0.203,
+          "brandConfidence": 0.323,
+          "areaShare": 1.1,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (1.1%) and design-system score",
+            "Sources: major_container×7, primary_button×6",
+            "Curator hint: neutral",
+            "designSystemScore=0.203, brandConfidence=0.323"
+          ]
+        },
+        {
+          "hex": "#2d2d2d",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 18
+          },
+          "score": 0.196,
+          "brandConfidence": 0.193,
+          "areaShare": 2.4,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (2.4%) and design-system score",
+            "Sources: major_container×15",
+            "Curator hint: neutral",
+            "designSystemScore=0.196, brandConfidence=0.193"
+          ]
+        },
+        {
+          "hex": "#808080",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 50
+          },
+          "score": 0.134,
+          "brandConfidence": 0.137,
+          "areaShare": 0,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (0%) and design-system score",
+            "Sources: default×6",
+            "Curator hint: neutral",
+            "designSystemScore=0.134, brandConfidence=0.137"
+          ]
+        },
+        {
+          "hex": "#3f3f3f",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 25
+          },
+          "score": 0.058,
+          "brandConfidence": 0.073,
+          "areaShare": 0.2,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (0.2%) and design-system score",
+            "Sources: default×6, major_container×1",
+            "Curator hint: neutral",
+            "designSystemScore=0.058, brandConfidence=0.073"
+          ]
+        }
+      ],
+      "paletteMode": "brand",
+      "top10RawColors": [
+        {
+          "hex": "#000000",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 0
+          },
+          "totalArea": 48196042,
+          "hits": 371,
+          "topSources": [
+            "illustration(292)",
+            "default(47)",
+            "primary_button(19)",
+            "global_background(10)"
+          ]
+        },
+        {
+          "hex": "#ffffff",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 100
+          },
+          "totalArea": 4015066,
+          "hits": 345,
+          "topSources": [
+            "default(284)",
+            "illustration(36)",
+            "primary_button(22)",
+            "chart(3)"
+          ]
+        },
+        {
+          "hex": "#2d2d2d",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 18
+          },
+          "totalArea": 1153152,
+          "hits": 12,
+          "topSources": [
+            "major_container(12)"
+          ]
+        },
+        {
+          "hex": "#232323",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 14
+          },
+          "totalArea": 544320,
+          "hits": 12,
+          "topSources": [
+            "primary_button(6)",
+            "major_container(6)"
+          ]
+        },
+        {
+          "hex": "#161616",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 9
+          },
+          "totalArea": 95358,
+          "hits": 6,
+          "topSources": [
+            "hero_background(3)",
+            "major_container(3)"
+          ]
+        },
+        {
+          "hex": "#e50914",
+          "hsl": {
+            "h": 357,
+            "s": 92,
+            "l": 47
+          },
+          "totalArea": 56047,
+          "hits": 7,
+          "topSources": [
+            "illustration(3)",
+            "primary_button(3)",
+            "hero_background(1)"
+          ]
+        },
+        {
+          "hex": "#414141",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 25
+          },
+          "totalArea": 47004,
+          "hits": 6,
+          "topSources": [
+            "default(6)"
+          ]
+        },
+        {
+          "hex": "#303030",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 19
+          },
+          "totalArea": 45360,
+          "hits": 1,
+          "topSources": [
+            "major_container(1)"
+          ]
+        },
+        {
+          "hex": "#3f3f3f",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 25
+          },
+          "totalArea": 45360,
+          "hits": 1,
+          "topSources": [
+            "major_container(1)"
+          ]
+        },
+        {
+          "hex": "#383838",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 22
+          },
+          "totalArea": 45360,
+          "hits": 1,
+          "topSources": [
+            "major_container(1)"
+          ]
+        }
+      ],
+      "top10ScoredColors": [
+        {
+          "hex": "#000000",
+          "designSystemScore": 0.79,
+          "brandConfidence": 0.5333,
+          "areaShare": 88.7,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": true,
+          "hasNav": false,
+          "topSources": "illustration×292, default×47, primary_button×19"
+        },
+        {
+          "hex": "#ffffff",
+          "designSystemScore": 0.6865,
+          "brandConfidence": 0.5333,
+          "areaShare": 7.39,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": true,
+          "hasNav": false,
+          "topSources": "default×284, illustration×36, primary_button×22"
+        },
+        {
+          "hex": "#e50914",
+          "designSystemScore": 0.4122,
+          "brandConfidence": 0.67,
+          "areaShare": 0.1,
+          "isNeutral": false,
+          "isUtility": false,
+          "hasHero": true,
+          "hasCta": true,
+          "hasNav": false,
+          "topSources": "illustration×3, primary_button×3, hero_background×1"
+        },
+        {
+          "hex": "#161616",
+          "designSystemScore": 0.2557,
+          "brandConfidence": 0.3867,
+          "areaShare": 0.18,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": true,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "hero_background×3, major_container×3"
+        },
+        {
+          "hex": "#232323",
+          "designSystemScore": 0.2033,
+          "brandConfidence": 0.3233,
+          "areaShare": 1.09,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": true,
+          "hasNav": false,
+          "topSources": "major_container×7, primary_button×6"
+        },
+        {
+          "hex": "#303030",
+          "designSystemScore": 0.1962,
+          "brandConfidence": 0.1933,
+          "areaShare": 2.37,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "major_container×15"
+        },
+        {
+          "hex": "#808080",
+          "designSystemScore": 0.1343,
+          "brandConfidence": 0.1367,
+          "areaShare": 0.01,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "default×6"
+        },
+        {
+          "hex": "#414141",
+          "designSystemScore": 0.0582,
+          "brandConfidence": 0.0733,
+          "areaShare": 0.17,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "default×6, major_container×1"
+        }
+      ]
+    },
+    {
+      "site": "Notion",
+      "url": "https://www.notion.so/",
+      "extractionStats": {
+        "samples": 2962,
+        "sections": 12,
+        "totalArea": 266095349,
+        "productDemoShare": 0.04287643484132343
+      },
+      "finalPalette": [
+        {
+          "hex": "#ffffff",
+          "role": "foundation",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 100
+          },
+          "score": 0.72,
+          "brandConfidence": 1.017,
+          "areaShare": 72.3,
+          "isUtility": false,
+          "whySelected": [
+            "Dominant neutral surface (72.3% area share, 12 sections)",
+            "Sources: navigation×101, chart×46, major_container×45",
+            "designSystemScore=0.72, brandConfidence=1.017"
+          ]
+        },
+        {
+          "hex": "#0075de",
+          "role": "primary",
+          "hsl": {
+            "h": 208,
+            "s": 100,
+            "l": 44
+          },
+          "score": 0.3,
+          "brandConfidence": 0.433,
+          "areaShare": 0,
+          "isUtility": false,
+          "whySelected": [
+            "Highest brand-confidence chromatic in curated set",
+            "Present in website navigation",
+            "Sources: navigation×11, default×10, chart×4",
+            "Curator hint: primary",
+            "designSystemScore=0.3, brandConfidence=0.433"
+          ]
+        },
+        {
+          "hex": "#455dd3",
+          "role": "secondary",
+          "hsl": {
+            "h": 230,
+            "s": 62,
+            "l": 55
+          },
+          "score": 0.151,
+          "brandConfidence": 0.267,
+          "areaShare": 0,
+          "isUtility": false,
+          "whySelected": [
+            "Additional chromatic hue family after primary deduplication",
+            "Sources: navigation×3, chart×1",
+            "Curator hint: secondary",
+            "designSystemScore=0.151, brandConfidence=0.267"
+          ]
+        },
+        {
+          "hex": "#62aef0",
+          "role": "secondary",
+          "hsl": {
+            "h": 208,
+            "s": 83,
+            "l": 66
+          },
+          "score": 0.139,
+          "brandConfidence": 0.15,
+          "areaShare": 0.4,
+          "isUtility": false,
+          "whySelected": [
+            "Additional chromatic hue family after primary deduplication",
+            "Sources: major_container×4, chart×2, illustration×2",
+            "Curator hint: secondary",
+            "designSystemScore=0.139, brandConfidence=0.15"
+          ]
+        },
+        {
+          "hex": "#f77463",
+          "role": "secondary",
+          "hsl": {
+            "h": 7,
+            "s": 90,
+            "l": 68
+          },
+          "score": 0.078,
+          "brandConfidence": 0.083,
+          "areaShare": 0.2,
+          "isUtility": false,
+          "whySelected": [
+            "Additional chromatic hue family after primary deduplication",
+            "Sources: chart×2, major_container×2",
+            "Curator hint: secondary",
+            "designSystemScore=0.078, brandConfidence=0.083"
+          ]
+        },
+        {
+          "hex": "#000000",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 0
+          },
+          "score": 0.941,
+          "brandConfidence": 1.017,
+          "areaShare": 12,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (12%) and design-system score",
+            "Sources: illustration×875, navigation×559, chart×378",
+            "Curator hint: neutral",
+            "designSystemScore=0.941, brandConfidence=1.017"
+          ]
+        },
+        {
+          "hex": "#02093a",
+          "role": "neutral",
+          "hsl": {
+            "h": 233,
+            "s": 93,
+            "l": 12
+          },
+          "score": 0.179,
+          "brandConfidence": 0.3,
+          "areaShare": 2.1,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (2.1%) and design-system score",
+            "Sources: navigation×3, promo_content×3, logo×3",
+            "Curator hint: neutral",
+            "designSystemScore=0.179, brandConfidence=0.3"
+          ]
+        },
+        {
+          "hex": "#191918",
+          "role": "neutral",
+          "hsl": {
+            "h": 60,
+            "s": 2,
+            "l": 10
+          },
+          "score": 0.106,
+          "brandConfidence": 0.117,
+          "areaShare": 12.3,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (12.3%) and design-system score",
+            "Sources: global_background×3, major_container×2, status_chip×1",
+            "Curator hint: neutral",
+            "designSystemScore=0.106, brandConfidence=0.117"
+          ]
+        }
+      ],
+      "paletteMode": "brand",
+      "top10RawColors": [
+        {
+          "hex": "#ffffff",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 100
+          },
+          "totalArea": 152771494,
+          "hits": 171,
+          "topSources": [
+            "navigation(38)",
+            "major_container(38)",
+            "repeated_section_bg(29)",
+            "chart(19)"
+          ]
+        },
+        {
+          "hex": "#f6f5f4",
+          "hsl": {
+            "h": 30,
+            "s": 10,
+            "l": 96
+          },
+          "totalArea": 36972670,
+          "hits": 120,
+          "topSources": [
+            "navigation(63)",
+            "chart(27)",
+            "illustration(13)",
+            "repeated_section_bg(9)"
+          ]
+        },
+        {
+          "hex": "#191918",
+          "hsl": {
+            "h": 60,
+            "s": 2,
+            "l": 10
+          },
+          "totalArea": 32631926,
+          "hits": 6,
+          "topSources": [
+            "global_background(3)",
+            "major_container(2)",
+            "status_chip(1)"
+          ]
+        },
+        {
+          "hex": "#000000",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 0
+          },
+          "totalArea": 31873569,
+          "hits": 2494,
+          "topSources": [
+            "illustration(875)",
+            "navigation(559)",
+            "chart(378)",
+            "default(362)"
+          ]
+        },
+        {
+          "hex": "#02093a",
+          "hsl": {
+            "h": 233,
+            "s": 93,
+            "l": 12
+          },
+          "totalArea": 5639539,
+          "hits": 13,
+          "topSources": [
+            "navigation(3)",
+            "promo_content(3)",
+            "logo(3)",
+            "repeated_section_bg(2)"
+          ]
+        },
+        {
+          "hex": "#f7f7f5",
+          "hsl": {
+            "h": 60,
+            "s": 11,
+            "l": 96
+          },
+          "totalArea": 2277838,
+          "hits": 8,
+          "topSources": [
+            "major_container(5)",
+            "repeated_section_bg(3)"
+          ]
+        },
+        {
+          "hex": "#62aef0",
+          "hsl": {
+            "h": 208,
+            "s": 83,
+            "l": 66
+          },
+          "totalArea": 1098202,
+          "hits": 8,
+          "topSources": [
+            "major_container(4)",
+            "chart(2)",
+            "illustration(2)"
+          ]
+        },
+        {
+          "hex": "#f77463",
+          "hsl": {
+            "h": 7,
+            "s": 90,
+            "l": 68
+          },
+          "totalArea": 552511,
+          "hits": 4,
+          "topSources": [
+            "chart(2)",
+            "major_container(2)"
+          ]
+        },
+        {
+          "hex": "#2a9d99",
+          "hsl": {
+            "h": 178,
+            "s": 58,
+            "l": 39
+          },
+          "totalArea": 547531,
+          "hits": 4,
+          "topSources": [
+            "chart(2)",
+            "major_container(2)"
+          ]
+        },
+        {
+          "hex": "#ffc95e",
+          "hsl": {
+            "h": 40,
+            "s": 100,
+            "l": 68
+          },
+          "totalArea": 538339,
+          "hits": 3,
+          "topSources": [
+            "major_container(2)",
+            "chart(1)"
+          ]
+        }
+      ],
+      "top10ScoredColors": [
+        {
+          "hex": "#000000",
+          "designSystemScore": 0.9408,
+          "brandConfidence": 1.0167,
+          "areaShare": 11.98,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": true,
+          "hasCta": true,
+          "hasNav": true,
+          "topSources": "illustration×875, navigation×559, chart×378"
+        },
+        {
+          "hex": "#ffffff",
+          "designSystemScore": 0.7199,
+          "brandConfidence": 1.0167,
+          "areaShare": 72.29,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": true,
+          "hasCta": true,
+          "hasNav": true,
+          "topSources": "navigation×101, chart×46, major_container×45"
+        },
+        {
+          "hex": "#097fe8",
+          "designSystemScore": 0.3004,
+          "brandConfidence": 0.4333,
+          "areaShare": 0.03,
+          "isNeutral": false,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "navigation×11, default×10, chart×4"
+        },
+        {
+          "hex": "#02093a",
+          "designSystemScore": 0.1791,
+          "brandConfidence": 0.3,
+          "areaShare": 2.12,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "navigation×3, promo_content×3, logo×3"
+        },
+        {
+          "hex": "#455dd3",
+          "designSystemScore": 0.1514,
+          "brandConfidence": 0.2667,
+          "areaShare": 0.01,
+          "isNeutral": false,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "navigation×3, chart×1"
+        },
+        {
+          "hex": "#62aef0",
+          "designSystemScore": 0.1386,
+          "brandConfidence": 0.15,
+          "areaShare": 0.41,
+          "isNeutral": false,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "major_container×4, chart×2, illustration×2"
+        },
+        {
+          "hex": "#a39e98",
+          "designSystemScore": 0.1372,
+          "brandConfidence": 0.25,
+          "areaShare": 0.01,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "illustration×24, navigation×10"
+        },
+        {
+          "hex": "#191918",
+          "designSystemScore": 0.1062,
+          "brandConfidence": 0.1167,
+          "areaShare": 12.26,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "global_background×3, major_container×2, status_chip×1"
+        },
+        {
+          "hex": "#f77463",
+          "designSystemScore": 0.078,
+          "brandConfidence": 0.0833,
+          "areaShare": 0.21,
+          "isNeutral": false,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "chart×2, major_container×2"
+        },
+        {
+          "hex": "#2a9d99",
+          "designSystemScore": 0.078,
+          "brandConfidence": 0.0833,
+          "areaShare": 0.21,
+          "isNeutral": false,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "chart×2, major_container×2"
+        }
+      ]
+    },
+    {
+      "site": "Slack",
+      "url": "https://slack.com/",
+      "extractionStats": {
+        "samples": 2327,
+        "sections": 17,
+        "totalArea": 45839226,
+        "productDemoShare": 0.0008594757198109154
+      },
+      "finalPalette": [
+        {
+          "hex": "#f9edff",
+          "role": "foundation",
+          "hsl": {
+            "h": 280,
+            "s": 100,
+            "l": 96
+          },
+          "score": 0.222,
+          "brandConfidence": 0.181,
+          "areaShare": 20.1,
+          "isUtility": false,
+          "whySelected": [
+            "Dominant neutral surface (20.1% area share, 14 sections)",
+            "Sources: repeated_section_bg×24, major_container×13, promo_content×6",
+            "Curator hint: neutral",
+            "designSystemScore=0.222, brandConfidence=0.181"
+          ]
+        },
+        {
+          "hex": "#3d0157",
+          "role": "primary",
+          "hsl": {
+            "h": 282,
+            "s": 98,
+            "l": 17
+          },
+          "score": 0.295,
+          "brandConfidence": 0.42,
+          "areaShare": 0.2,
+          "isUtility": false,
+          "whySelected": [
+            "Highest brand-confidence chromatic in curated set",
+            "Linked to CTA/button context",
+            "Sources: primary_button×52",
+            "Curator hint: accent",
+            "designSystemScore=0.295, brandConfidence=0.42"
+          ]
+        },
+        {
+          "hex": "#611f69",
+          "role": "secondary",
+          "hsl": {
+            "h": 294,
+            "s": 54,
+            "l": 27
+          },
+          "score": 0.317,
+          "brandConfidence": 0.417,
+          "areaShare": 0.4,
+          "isUtility": false,
+          "whySelected": [
+            "Additional chromatic hue family after primary deduplication",
+            "Sources: promo_content×17, navigation×17, default×5",
+            "Curator hint: primary",
+            "designSystemScore=0.317, brandConfidence=0.417"
+          ]
+        },
+        {
+          "hex": "#1264a3",
+          "role": "secondary",
+          "hsl": {
+            "h": 206,
+            "s": 80,
+            "l": 35
+          },
+          "score": 0.154,
+          "brandConfidence": 0.168,
+          "areaShare": 0.9,
+          "isUtility": false,
+          "whySelected": [
+            "Additional chromatic hue family after primary deduplication",
+            "Sources: promo_content×51, card×21, default×10",
+            "Curator hint: secondary",
+            "designSystemScore=0.154, brandConfidence=0.168"
+          ]
+        },
+        {
+          "hex": "#f6bbc1",
+          "role": "secondary",
+          "hsl": {
+            "h": 354,
+            "s": 77,
+            "l": 85
+          },
+          "score": 0.033,
+          "brandConfidence": 0.04,
+          "areaShare": 0.4,
+          "isUtility": false,
+          "whySelected": [
+            "Additional chromatic hue family after primary deduplication",
+            "Sources: promo_content×2",
+            "Curator hint: secondary",
+            "designSystemScore=0.033, brandConfidence=0.04"
+          ]
+        },
+        {
+          "hex": "#000000",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 0
+          },
+          "score": 1.007,
+          "brandConfidence": 1.017,
+          "areaShare": 43.4,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (43.4%) and design-system score",
+            "Sources: navigation×617, illustration×466, default×150",
+            "Curator hint: neutral",
+            "designSystemScore=1.007, brandConfidence=1.017"
+          ]
+        },
+        {
+          "hex": "#1d1d1d",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 11
+          },
+          "score": 0.641,
+          "brandConfidence": 0.967,
+          "areaShare": 2,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (2%) and design-system score",
+            "Sources: navigation×187, default×49, illustration×7",
+            "Curator hint: neutral",
+            "designSystemScore=0.641, brandConfidence=0.967"
+          ]
+        },
+        {
+          "hex": "#ffffff",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 100
+          },
+          "score": 0.612,
+          "brandConfidence": 1,
+          "areaShare": 11.7,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (11.7%) and design-system score",
+            "Sources: navigation×41, promo_content×14, default×13",
+            "Curator hint: neutral",
+            "designSystemScore=0.612, brandConfidence=1"
+          ]
+        }
+      ],
+      "paletteMode": "brand",
+      "top10RawColors": [
+        {
+          "hex": "#000000",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 0
+          },
+          "totalArea": 19889682,
+          "hits": 1618,
+          "topSources": [
+            "navigation(617)",
+            "illustration(466)",
+            "default(150)",
+            "promo_content(143)"
+          ]
+        },
+        {
+          "hex": "#f9edff",
+          "hsl": {
+            "h": 280,
+            "s": 100,
+            "l": 96
+          },
+          "totalArea": 8839992,
+          "hits": 24,
+          "topSources": [
+            "repeated_section_bg(24)"
+          ]
+        },
+        {
+          "hex": "#ffffff",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 100
+          },
+          "totalArea": 5341744,
+          "hits": 98,
+          "topSources": [
+            "navigation(41)",
+            "promo_content(14)",
+            "default(13)",
+            "card(13)"
+          ]
+        },
+        {
+          "hex": "#4a154b",
+          "hsl": {
+            "h": 299,
+            "s": 56,
+            "l": 19
+          },
+          "totalArea": 5162400,
+          "hits": 7,
+          "topSources": [
+            "repeated_section_bg(5)",
+            "major_container(2)"
+          ]
+        },
+        {
+          "hex": "#481a54",
+          "hsl": {
+            "h": 288,
+            "s": 53,
+            "l": 22
+          },
+          "totalArea": 3685334,
+          "hits": 33,
+          "topSources": [
+            "default(23)",
+            "major_container(5)",
+            "marketing_banner(4)",
+            "navigation(1)"
+          ]
+        },
+        {
+          "hex": "#1d1c1d",
+          "hsl": {
+            "h": 300,
+            "s": 2,
+            "l": 11
+          },
+          "totalArea": 575417,
+          "hits": 55,
+          "topSources": [
+            "default(48)",
+            "illustration(7)"
+          ]
+        },
+        {
+          "hex": "#1264a3",
+          "hsl": {
+            "h": 206,
+            "s": 80,
+            "l": 35
+          },
+          "totalArea": 397794,
+          "hits": 88,
+          "topSources": [
+            "promo_content(51)",
+            "card(21)",
+            "default(10)",
+            "logo(4)"
+          ]
+        },
+        {
+          "hex": "#f9f0ff",
+          "hsl": {
+            "h": 276,
+            "s": 100,
+            "l": 97
+          },
+          "totalArea": 360147,
+          "hits": 19,
+          "topSources": [
+            "major_container(13)",
+            "promo_content(6)"
+          ]
+        },
+        {
+          "hex": "#1d1d1d",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 11
+          },
+          "totalArea": 333388,
+          "hits": 189,
+          "topSources": [
+            "navigation(187)",
+            "hero_cta(1)",
+            "default(1)"
+          ]
+        },
+        {
+          "hex": "#611f69",
+          "hsl": {
+            "h": 294,
+            "s": 54,
+            "l": 27
+          },
+          "totalArea": 178642,
+          "hits": 42,
+          "topSources": [
+            "promo_content(17)",
+            "navigation(17)",
+            "default(5)",
+            "major_container(3)"
+          ]
+        }
+      ],
+      "top10ScoredColors": [
+        {
+          "hex": "#000000",
+          "designSystemScore": 1.0075,
+          "brandConfidence": 1.0167,
+          "areaShare": 43.39,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": true,
+          "hasCta": true,
+          "hasNav": true,
+          "topSources": "navigation×617, illustration×466, default×150"
+        },
+        {
+          "hex": "#1d1d1d",
+          "designSystemScore": 0.641,
+          "brandConfidence": 0.9667,
+          "areaShare": 1.98,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": true,
+          "hasCta": true,
+          "hasNav": true,
+          "topSources": "navigation×187, default×49, illustration×7"
+        },
+        {
+          "hex": "#ffffff",
+          "designSystemScore": 0.6119,
+          "brandConfidence": 1,
+          "areaShare": 11.65,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": true,
+          "hasCta": true,
+          "hasNav": true,
+          "topSources": "navigation×41, promo_content×14, default×13"
+        },
+        {
+          "hex": "#611f69",
+          "designSystemScore": 0.3171,
+          "brandConfidence": 0.4167,
+          "areaShare": 0.39,
+          "isNeutral": false,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "promo_content×17, navigation×17, default×5"
+        },
+        {
+          "hex": "#481a54",
+          "designSystemScore": 0.3161,
+          "brandConfidence": 0.398,
+          "areaShare": 19.3,
+          "isNeutral": false,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "default×23, major_container×7, repeated_section_bg×5"
+        },
+        {
+          "hex": "#3d0157",
+          "designSystemScore": 0.2948,
+          "brandConfidence": 0.4196,
+          "areaShare": 0.19,
+          "isNeutral": false,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": true,
+          "hasNav": false,
+          "topSources": "primary_button×52"
+        },
+        {
+          "hex": "#ebeaeb",
+          "designSystemScore": 0.2648,
+          "brandConfidence": 0.5569,
+          "areaShare": 0.01,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": true,
+          "hasCta": true,
+          "hasNav": false,
+          "topSources": "hero_cta×2, card×1"
+        },
+        {
+          "hex": "#f9f0ff",
+          "designSystemScore": 0.222,
+          "brandConfidence": 0.1814,
+          "areaShare": 20.07,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "repeated_section_bg×24, major_container×13, promo_content×6"
+        },
+        {
+          "hex": "#f2defe",
+          "designSystemScore": 0.2085,
+          "brandConfidence": 0.349,
+          "areaShare": 0.07,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": true,
+          "hasNav": false,
+          "topSources": "primary_button×7"
+        },
+        {
+          "hex": "#eac8fe",
+          "designSystemScore": 0.1682,
+          "brandConfidence": 0.1696,
+          "areaShare": 0.03,
+          "isNeutral": false,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "default×13"
+        }
+      ]
+    },
+    {
+      "site": "Spotify",
+      "url": "https://www.spotify.com/",
+      "extractionStats": {
+        "samples": 375,
+        "sections": 1,
+        "totalArea": 8086324,
+        "productDemoShare": 0
+      },
+      "finalPalette": [
+        {
+          "hex": "#000000",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 0
+          },
+          "score": 0.88,
+          "brandConfidence": 0.733,
+          "areaShare": 45.6,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (45.6%) and design-system score",
+            "Sources: illustration×143, navigation×27, primary_button×16",
+            "Curator hint: neutral",
+            "designSystemScore=0.88, brandConfidence=0.733"
+          ]
+        },
+        {
+          "hex": "#b3b3b3",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 70
+          },
+          "score": 0.629,
+          "brandConfidence": 0.75,
+          "areaShare": 3.9,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (3.9%) and design-system score",
+            "Sources: default×34, illustration×20, navigation×15",
+            "Curator hint: neutral",
+            "designSystemScore=0.629, brandConfidence=0.75"
+          ]
+        },
+        {
+          "hex": "#ffffff",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 100
+          },
+          "score": 0.461,
+          "brandConfidence": 0.5,
+          "areaShare": 5.2,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (5.2%) and design-system score",
+            "Sources: major_container×43, navigation×10, illustration×7",
+            "Curator hint: neutral",
+            "designSystemScore=0.461, brandConfidence=0.5"
+          ]
+        },
+        {
+          "hex": "#1f1f1f",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 12
+          },
+          "score": 0.458,
+          "brandConfidence": 0.683,
+          "areaShare": 1.4,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (1.4%) and design-system score",
+            "Sources: navigation×3, primary_button×1, major_container×1",
+            "Curator hint: neutral",
+            "designSystemScore=0.458, brandConfidence=0.683"
+          ]
+        },
+        {
+          "hex": "#121212",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 7
+          },
+          "score": 0.381,
+          "brandConfidence": 0.417,
+          "areaShare": 35.6,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (35.6%) and design-system score",
+            "Sources: major_container×10, global_background×2, navigation×1",
+            "Curator hint: neutral",
+            "designSystemScore=0.381, brandConfidence=0.417"
+          ]
+        },
+        {
+          "hex": "#0000ee",
+          "role": "neutral",
+          "hsl": {
+            "h": 240,
+            "s": 100,
+            "l": 47
+          },
+          "score": 0.316,
+          "brandConfidence": 0.417,
+          "areaShare": 0,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (0%) and design-system score",
+            "Sources: default×1, navigation×1",
+            "Curator hint: secondary",
+            "designSystemScore=0.316, brandConfidence=0.417"
+          ]
+        },
+        {
+          "hex": "#7c7c7c",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 49
+          },
+          "score": 0.308,
+          "brandConfidence": 0.417,
+          "areaShare": 0,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (0%) and design-system score",
+            "Sources: navigation×1",
+            "Curator hint: neutral",
+            "designSystemScore=0.308, brandConfidence=0.417"
+          ]
+        },
+        {
+          "hex": "#333333",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 20
+          },
+          "score": 0.226,
+          "brandConfidence": 0.217,
+          "areaShare": 3.1,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (3.1%) and design-system score",
+            "Sources: major_container×10",
+            "Curator hint: neutral",
+            "designSystemScore=0.226, brandConfidence=0.217"
+          ]
+        }
+      ],
+      "paletteMode": "foundation",
+      "top10RawColors": [
+        {
+          "hex": "#000000",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 0
+          },
+          "totalArea": 3687885,
+          "hits": 200,
+          "topSources": [
+            "illustration(143)",
+            "navigation(27)",
+            "primary_button(16)",
+            "default(9)"
+          ]
+        },
+        {
+          "hex": "#121212",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 7
+          },
+          "totalArea": 2363664,
+          "hits": 3,
+          "topSources": [
+            "global_background(2)",
+            "navigation(1)"
+          ]
+        },
+        {
+          "hex": "#181818",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 9
+          },
+          "totalArea": 515635,
+          "hits": 10,
+          "topSources": [
+            "major_container(10)"
+          ]
+        },
+        {
+          "hex": "#ffffff",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 100
+          },
+          "totalArea": 422007,
+          "hits": 66,
+          "topSources": [
+            "major_container(43)",
+            "navigation(10)",
+            "illustration(7)",
+            "default(4)"
+          ]
+        },
+        {
+          "hex": "#b3b3b3",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 70
+          },
+          "totalArea": 318471,
+          "hits": 76,
+          "topSources": [
+            "default(34)",
+            "illustration(20)",
+            "navigation(15)",
+            "primary_button(6)"
+          ]
+        },
+        {
+          "hex": "#535353",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 33
+          },
+          "totalArea": 277760,
+          "hits": 1,
+          "topSources": [
+            "major_container(1)"
+          ]
+        },
+        {
+          "hex": "#333333",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 20
+          },
+          "totalArea": 254074,
+          "hits": 10,
+          "topSources": [
+            "major_container(10)"
+          ]
+        },
+        {
+          "hex": "#eeeeee",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 93
+          },
+          "totalArea": 133920,
+          "hits": 1,
+          "topSources": [
+            "marketing_banner(1)"
+          ]
+        },
+        {
+          "hex": "#1f1f1f",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 12
+          },
+          "totalArea": 110701,
+          "hits": 5,
+          "topSources": [
+            "navigation(3)",
+            "primary_button(1)",
+            "major_container(1)"
+          ]
+        },
+        {
+          "hex": "#0000ee",
+          "hsl": {
+            "h": 240,
+            "s": 100,
+            "l": 47
+          },
+          "totalArea": 1941,
+          "hits": 2,
+          "topSources": [
+            "default(1)",
+            "navigation(1)"
+          ]
+        }
+      ],
+      "top10ScoredColors": [
+        {
+          "hex": "#000000",
+          "designSystemScore": 0.88,
+          "brandConfidence": 0.7333,
+          "areaShare": 45.61,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": true,
+          "hasNav": true,
+          "topSources": "illustration×143, navigation×27, primary_button×16"
+        },
+        {
+          "hex": "#b3b3b3",
+          "designSystemScore": 0.6292,
+          "brandConfidence": 0.75,
+          "areaShare": 3.94,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": true,
+          "hasNav": true,
+          "topSources": "default×34, illustration×20, navigation×15"
+        },
+        {
+          "hex": "#ffffff",
+          "designSystemScore": 0.4612,
+          "brandConfidence": 0.5,
+          "areaShare": 5.22,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "major_container×43, navigation×10, illustration×7"
+        },
+        {
+          "hex": "#1f1f1f",
+          "designSystemScore": 0.4585,
+          "brandConfidence": 0.6833,
+          "areaShare": 1.37,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": true,
+          "hasNav": true,
+          "topSources": "navigation×3, primary_button×1, major_container×1"
+        },
+        {
+          "hex": "#121212",
+          "designSystemScore": 0.3813,
+          "brandConfidence": 0.4167,
+          "areaShare": 35.61,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "major_container×10, global_background×2, navigation×1"
+        },
+        {
+          "hex": "#0000ee",
+          "designSystemScore": 0.3158,
+          "brandConfidence": 0.4167,
+          "areaShare": 0.02,
+          "isNeutral": false,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "default×1, navigation×1"
+        },
+        {
+          "hex": "#7c7c7c",
+          "designSystemScore": 0.3079,
+          "brandConfidence": 0.4167,
+          "areaShare": 0,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "navigation×1"
+        },
+        {
+          "hex": "#333333",
+          "designSystemScore": 0.2256,
+          "brandConfidence": 0.2167,
+          "areaShare": 3.14,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "major_container×10"
+        },
+        {
+          "hex": "#535353",
+          "designSystemScore": 0.2238,
+          "brandConfidence": 0.2167,
+          "areaShare": 3.43,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "major_container×1"
+        },
+        {
+          "hex": "#eeeeee",
+          "designSystemScore": 0.2205,
+          "brandConfidence": 0.2167,
+          "areaShare": 1.66,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "marketing_banner×1"
+        }
+      ]
+    },
+    {
+      "site": "Stripe",
+      "url": "https://stripe.com/",
+      "extractionStats": {
+        "samples": 3012,
+        "sections": 23,
+        "totalArea": 114545816,
+        "productDemoShare": 0
+      },
+      "finalPalette": [
+        {
+          "hex": "#ffffff",
+          "role": "foundation",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 100
+          },
+          "score": 0.413,
+          "brandConfidence": 0.414,
+          "areaShare": 79.5,
+          "isUtility": false,
+          "whySelected": [
+            "Dominant neutral surface (79.5% area share, 15 sections)",
+            "Sources: illustration×100, chart×47, repeated_section_bg×20",
+            "Curator hint: neutral",
+            "designSystemScore=0.413, brandConfidence=0.414"
+          ]
+        },
+        {
+          "hex": "#533afd",
+          "role": "primary",
+          "hsl": {
+            "h": 248,
+            "s": 98,
+            "l": 61
+          },
+          "score": 0.302,
+          "brandConfidence": 0.561,
+          "areaShare": 0,
+          "isUtility": false,
+          "whySelected": [
+            "Highest brand-confidence chromatic in curated set",
+            "Appears in hero region",
+            "Present in website navigation",
+            "Sources: illustration×16, default×6, navigation×2",
+            "Curator hint: primary",
+            "designSystemScore=0.302, brandConfidence=0.561"
+          ]
+        },
+        {
+          "hex": "#c2c8f1",
+          "role": "secondary",
+          "hsl": {
+            "h": 232,
+            "s": 63,
+            "l": 85
+          },
+          "score": 0.138,
+          "brandConfidence": 0.284,
+          "areaShare": 0,
+          "isUtility": false,
+          "whySelected": [
+            "Additional chromatic hue family after primary deduplication",
+            "Sources: primary_button×2",
+            "Curator hint: secondary",
+            "designSystemScore=0.138, brandConfidence=0.284"
+          ]
+        },
+        {
+          "hex": "#ff6118",
+          "role": "secondary",
+          "hsl": {
+            "h": 19,
+            "s": 100,
+            "l": 55
+          },
+          "score": 0.075,
+          "brandConfidence": 0.093,
+          "areaShare": 0,
+          "isUtility": false,
+          "whySelected": [
+            "Additional chromatic hue family after primary deduplication",
+            "Sources: chart×10, illustration×9, card×8",
+            "Curator hint: secondary",
+            "designSystemScore=0.075, brandConfidence=0.093"
+          ]
+        },
+        {
+          "hex": "#000000",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 0
+          },
+          "score": 0.822,
+          "brandConfidence": 0.75,
+          "areaShare": 14.7,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (14.7%) and design-system score",
+            "Sources: chart×922, illustration×508, promo_content×155",
+            "Curator hint: neutral",
+            "designSystemScore=0.822, brandConfidence=0.75"
+          ]
+        },
+        {
+          "hex": "#061b31",
+          "role": "neutral",
+          "hsl": {
+            "h": 211,
+            "s": 78,
+            "l": 11
+          },
+          "score": 0.276,
+          "brandConfidence": 0.353,
+          "areaShare": 0.5,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (0.5%) and design-system score",
+            "Sources: chart×132, card×54, navigation×15",
+            "Curator hint: neutral",
+            "designSystemScore=0.276, brandConfidence=0.353"
+          ]
+        },
+        {
+          "hex": "#031323",
+          "role": "neutral",
+          "hsl": {
+            "h": 210,
+            "s": 84,
+            "l": 7
+          },
+          "score": 0.109,
+          "brandConfidence": 0.225,
+          "areaShare": 0,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (0%) and design-system score",
+            "Sources: navigation×1",
+            "Curator hint: neutral",
+            "designSystemScore=0.109, brandConfidence=0.225"
+          ]
+        },
+        {
+          "hex": "#e5edf5",
+          "role": "neutral",
+          "hsl": {
+            "h": 210,
+            "s": 44,
+            "l": 93
+          },
+          "score": 0.015,
+          "brandConfidence": 0.111,
+          "areaShare": 4.1,
+          "isUtility": true,
+          "whySelected": [
+            "Neutral cluster ranked by area (4.1%) and design-system score",
+            "Sources: chart×66, major_container×12, illustration×5",
+            "Utility-heavy (36% utility sources)",
+            "Curator hint: neutral",
+            "designSystemScore=0.015, brandConfidence=0.111"
+          ]
+        }
+      ],
+      "paletteMode": "brand",
+      "top10RawColors": [
+        {
+          "hex": "#ffffff",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 100
+          },
+          "totalArea": 89574925,
+          "hits": 156,
+          "topSources": [
+            "illustration(79)",
+            "chart(27)",
+            "repeated_section_bg(20)",
+            "major_container(18)"
+          ]
+        },
+        {
+          "hex": "#000000",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 0
+          },
+          "totalArea": 16795274,
+          "hits": 1823,
+          "topSources": [
+            "chart(922)",
+            "illustration(506)",
+            "promo_content(155)",
+            "default(150)"
+          ]
+        },
+        {
+          "hex": "#e5edf5",
+          "hsl": {
+            "h": 210,
+            "s": 44,
+            "l": 93
+          },
+          "totalArea": 4648757,
+          "hits": 77,
+          "topSources": [
+            "chart(58)",
+            "major_container(12)",
+            "illustration(3)",
+            "logo(2)"
+          ]
+        },
+        {
+          "hex": "#f8fafd",
+          "hsl": {
+            "h": 216,
+            "s": 56,
+            "l": 98
+          },
+          "totalArea": 1454708,
+          "hits": 13,
+          "topSources": [
+            "chart(13)"
+          ]
+        },
+        {
+          "hex": "#061b31",
+          "hsl": {
+            "h": 211,
+            "s": 78,
+            "l": 11
+          },
+          "totalArea": 569143,
+          "hits": 226,
+          "topSources": [
+            "chart(132)",
+            "card(54)",
+            "navigation(15)",
+            "illustration(13)"
+          ]
+        },
+        {
+          "hex": "#64748d",
+          "hsl": {
+            "h": 217,
+            "s": 17,
+            "l": 47
+          },
+          "totalArea": 255548,
+          "hits": 99,
+          "topSources": [
+            "chart(46)",
+            "default(29)",
+            "card(18)",
+            "illustration(6)"
+          ]
+        },
+        {
+          "hex": "#81b81a",
+          "hsl": {
+            "h": 81,
+            "s": 75,
+            "l": 41
+          },
+          "totalArea": 207591,
+          "hits": 2,
+          "topSources": [
+            "promo_content(2)"
+          ]
+        },
+        {
+          "hex": "#000eff",
+          "hsl": {
+            "h": 237,
+            "s": 100,
+            "l": 50
+          },
+          "totalArea": 207591,
+          "hits": 2,
+          "topSources": [
+            "promo_content(2)"
+          ]
+        },
+        {
+          "hex": "#50617a",
+          "hsl": {
+            "h": 216,
+            "s": 21,
+            "l": 40
+          },
+          "totalArea": 173615,
+          "hits": 158,
+          "topSources": [
+            "chart(108)",
+            "card(49)",
+            "default(1)"
+          ]
+        },
+        {
+          "hex": "#7d8ba4",
+          "hsl": {
+            "h": 218,
+            "s": 18,
+            "l": 57
+          },
+          "totalArea": 66883,
+          "hits": 11,
+          "topSources": [
+            "default(11)"
+          ]
+        }
+      ],
+      "top10ScoredColors": [
+        {
+          "hex": "#000000",
+          "designSystemScore": 0.8223,
+          "brandConfidence": 0.75,
+          "areaShare": 14.66,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": true,
+          "hasNav": true,
+          "topSources": "chart×922, illustration×508, promo_content×155"
+        },
+        {
+          "hex": "#ffffff",
+          "designSystemScore": 0.4127,
+          "brandConfidence": 0.4138,
+          "areaShare": 79.51,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "illustration×100, chart×47, repeated_section_bg×20"
+        },
+        {
+          "hex": "#533afd",
+          "designSystemScore": 0.3022,
+          "brandConfidence": 0.5609,
+          "areaShare": 0.04,
+          "isNeutral": false,
+          "isUtility": false,
+          "hasHero": true,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "illustration×16, default×6, navigation×2"
+        },
+        {
+          "hex": "#061b31",
+          "designSystemScore": 0.2762,
+          "brandConfidence": 0.3529,
+          "areaShare": 0.5,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "chart×132, card×54, navigation×15"
+        },
+        {
+          "hex": "#c2c8f1",
+          "designSystemScore": 0.1384,
+          "brandConfidence": 0.2841,
+          "areaShare": 0,
+          "isNeutral": false,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": true,
+          "hasNav": false,
+          "topSources": "primary_button×2"
+        },
+        {
+          "hex": "#031323",
+          "designSystemScore": 0.1085,
+          "brandConfidence": 0.2254,
+          "areaShare": 0,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "navigation×1"
+        },
+        {
+          "hex": "#e5edf5",
+          "designSystemScore": 0.1021,
+          "brandConfidence": 0.1109,
+          "areaShare": 4.11,
+          "isNeutral": true,
+          "isUtility": true,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "chart×66, major_container×12, illustration×5"
+        },
+        {
+          "hex": "#64748d",
+          "designSystemScore": 0.0985,
+          "brandConfidence": 0.0942,
+          "areaShare": 0.23,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "chart×50, default×29, card×22"
+        },
+        {
+          "hex": "#50617a",
+          "designSystemScore": 0.0917,
+          "brandConfidence": 0.0601,
+          "areaShare": 0.16,
+          "isNeutral": false,
+          "isUtility": true,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "chart×117, card×63, default×1"
+        },
+        {
+          "hex": "#ff6201",
+          "designSystemScore": 0.075,
+          "brandConfidence": 0.0935,
+          "areaShare": 0.03,
+          "isNeutral": false,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "chart×10, illustration×9, card×8"
+        }
+      ]
+    },
+    {
+      "site": "Vercel",
+      "url": "https://vercel.com/",
+      "extractionStats": {
+        "samples": 2193,
+        "sections": 3,
+        "totalArea": 36095264,
+        "productDemoShare": 0
+      },
+      "finalPalette": [
+        {
+          "hex": "#fafafa",
+          "role": "foundation",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 98
+          },
+          "score": 0.651,
+          "brandConfidence": 0.983,
+          "areaShare": 68.2,
+          "isUtility": false,
+          "whySelected": [
+            "Dominant neutral surface (68.2% area share, 3 sections)",
+            "Sources: default×18, major_container×8, global_background×7",
+            "designSystemScore=0.651, brandConfidence=0.983"
+          ]
+        },
+        {
+          "hex": "#00dc82",
+          "role": "primary",
+          "hsl": {
+            "h": 155,
+            "s": 100,
+            "l": 43
+          },
+          "score": 0.309,
+          "brandConfidence": 0.417,
+          "areaShare": 0,
+          "isUtility": false,
+          "whySelected": [
+            "Highest brand-confidence chromatic in curated set",
+            "Present in website navigation",
+            "Sources: navigation×3",
+            "Curator hint: primary",
+            "designSystemScore=0.309, brandConfidence=0.417"
+          ]
+        },
+        {
+          "hex": "#ff3e00",
+          "role": "secondary",
+          "hsl": {
+            "h": 15,
+            "s": 100,
+            "l": 50
+          },
+          "score": 0.309,
+          "brandConfidence": 0.417,
+          "areaShare": 0,
+          "isUtility": false,
+          "whySelected": [
+            "Additional chromatic hue family after primary deduplication",
+            "Sources: navigation×3",
+            "Curator hint: secondary",
+            "designSystemScore=0.309, brandConfidence=0.417"
+          ]
+        },
+        {
+          "hex": "#7820bc",
+          "role": "secondary",
+          "hsl": {
+            "h": 274,
+            "s": 71,
+            "l": 43
+          },
+          "score": 0.148,
+          "brandConfidence": 0.15,
+          "areaShare": 0,
+          "isUtility": false,
+          "whySelected": [
+            "Additional chromatic hue family after primary deduplication",
+            "Sources: default×2",
+            "Curator hint: secondary",
+            "designSystemScore=0.148, brandConfidence=0.15"
+          ]
+        },
+        {
+          "hex": "#000000",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 0
+          },
+          "score": 0.929,
+          "brandConfidence": 0.967,
+          "areaShare": 20.4,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (20.4%) and design-system score",
+            "Sources: navigation×700, illustration×317, default×16",
+            "Curator hint: neutral",
+            "designSystemScore=0.929, brandConfidence=0.967"
+          ]
+        },
+        {
+          "hex": "#171717",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 9
+          },
+          "score": 0.71,
+          "brandConfidence": 1,
+          "areaShare": 8,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (8%) and design-system score",
+            "Sources: navigation×242, default×211, illustration×13",
+            "Curator hint: neutral",
+            "designSystemScore=0.71, brandConfidence=1"
+          ]
+        },
+        {
+          "hex": "#4d4d4d",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 30
+          },
+          "score": 0.563,
+          "brandConfidence": 0.483,
+          "areaShare": 3.1,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (3.1%) and design-system score",
+            "Sources: navigation×447, default×11, promo_content×6",
+            "Curator hint: neutral",
+            "designSystemScore=0.563, brandConfidence=0.483"
+          ]
+        },
+        {
+          "hex": "#ededed",
+          "role": "neutral",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 93
+          },
+          "score": 0.317,
+          "brandConfidence": 0.433,
+          "areaShare": 0,
+          "isUtility": false,
+          "whySelected": [
+            "Neutral cluster ranked by area (0%) and design-system score",
+            "Sources: default×7, navigation×4",
+            "Curator hint: neutral",
+            "designSystemScore=0.317, brandConfidence=0.433"
+          ]
+        }
+      ],
+      "paletteMode": "brand",
+      "top10RawColors": [
+        {
+          "hex": "#fafafa",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 98
+          },
+          "totalArea": 22955474,
+          "hits": 11,
+          "topSources": [
+            "global_background(6)",
+            "marketing_banner(4)",
+            "illustration(1)"
+          ]
+        },
+        {
+          "hex": "#000000",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 0
+          },
+          "totalArea": 7354104,
+          "hits": 1069,
+          "topSources": [
+            "navigation(700)",
+            "illustration(317)",
+            "default(16)",
+            "blog_card(14)"
+          ]
+        },
+        {
+          "hex": "#171717",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 9
+          },
+          "totalArea": 2895878,
+          "hits": 492,
+          "topSources": [
+            "navigation(241)",
+            "default(211)",
+            "illustration(13)",
+            "blog_card(10)"
+          ]
+        },
+        {
+          "hex": "#ffffff",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 100
+          },
+          "totalArea": 1674288,
+          "hits": 42,
+          "topSources": [
+            "default(18)",
+            "major_container(8)",
+            "illustration(5)",
+            "navigation(4)"
+          ]
+        },
+        {
+          "hex": "#4d4d4d",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 30
+          },
+          "totalArea": 1112428,
+          "hits": 469,
+          "topSources": [
+            "navigation(447)",
+            "default(11)",
+            "promo_content(6)",
+            "blog_card(5)"
+          ]
+        },
+        {
+          "hex": "#666666",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 40
+          },
+          "totalArea": 77832,
+          "hits": 63,
+          "topSources": [
+            "navigation(61)",
+            "blog_card(2)"
+          ]
+        },
+        {
+          "hex": "#ebebeb",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 92
+          },
+          "totalArea": 7553,
+          "hits": 7,
+          "topSources": [
+            "default(7)"
+          ]
+        },
+        {
+          "hex": "#7820bc",
+          "hsl": {
+            "h": 274,
+            "s": 71,
+            "l": 43
+          },
+          "totalArea": 6751,
+          "hits": 2,
+          "topSources": [
+            "default(2)"
+          ]
+        },
+        {
+          "hex": "#8f8f8f",
+          "hsl": {
+            "h": 0,
+            "s": 0,
+            "l": 56
+          },
+          "totalArea": 2547,
+          "hits": 6,
+          "topSources": [
+            "navigation(6)"
+          ]
+        },
+        {
+          "hex": "#0070f3",
+          "hsl": {
+            "h": 212,
+            "s": 100,
+            "l": 48
+          },
+          "totalArea": 2289,
+          "hits": 2,
+          "topSources": [
+            "success_state(2)"
+          ]
+        }
+      ],
+      "top10ScoredColors": [
+        {
+          "hex": "#000000",
+          "designSystemScore": 0.9289,
+          "brandConfidence": 0.9667,
+          "areaShare": 20.37,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": true,
+          "hasCta": true,
+          "hasNav": true,
+          "topSources": "navigation×700, illustration×317, default×16"
+        },
+        {
+          "hex": "#171717",
+          "designSystemScore": 0.7105,
+          "brandConfidence": 1,
+          "areaShare": 8.02,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": true,
+          "hasCta": true,
+          "hasNav": true,
+          "topSources": "navigation×242, default×211, illustration×13"
+        },
+        {
+          "hex": "#fafafa",
+          "designSystemScore": 0.6512,
+          "brandConfidence": 0.9833,
+          "areaShare": 68.24,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": true,
+          "hasCta": true,
+          "hasNav": true,
+          "topSources": "default×18, major_container×8, global_background×7"
+        },
+        {
+          "hex": "#4d4d4d",
+          "designSystemScore": 0.5628,
+          "brandConfidence": 0.4833,
+          "areaShare": 3.08,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "navigation×447, default×11, promo_content×6"
+        },
+        {
+          "hex": "#ebebeb",
+          "designSystemScore": 0.317,
+          "brandConfidence": 0.4333,
+          "areaShare": 0.02,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "default×7, navigation×4"
+        },
+        {
+          "hex": "#00dc82",
+          "designSystemScore": 0.309,
+          "brandConfidence": 0.4167,
+          "areaShare": 0,
+          "isNeutral": false,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "navigation×3"
+        },
+        {
+          "hex": "#ff3e00",
+          "designSystemScore": 0.309,
+          "brandConfidence": 0.4167,
+          "areaShare": 0,
+          "isNeutral": false,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "navigation×3"
+        },
+        {
+          "hex": "#dbdbdb",
+          "designSystemScore": 0.2179,
+          "brandConfidence": 0.2167,
+          "areaShare": 0,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "illustration×3"
+        },
+        {
+          "hex": "#a8a8a8",
+          "designSystemScore": 0.2176,
+          "brandConfidence": 0.2167,
+          "areaShare": 0,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": false,
+          "topSources": "default×12"
+        },
+        {
+          "hex": "#666666",
+          "designSystemScore": 0.2053,
+          "brandConfidence": 0.3,
+          "areaShare": 0.22,
+          "isNeutral": true,
+          "isUtility": false,
+          "hasHero": false,
+          "hasCta": false,
+          "hasNav": true,
+          "topSources": "navigation×61, blog_card×2"
+        }
+      ]
+    }
+  ]
+}

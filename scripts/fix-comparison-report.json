@@ -1,0 +1,331 @@
+{
+  "generatedAt": "2026-05-29T16:39:07.654Z",
+  "fix1_foundationFromBackgrounds": [
+    {
+      "site": "Linear",
+      "beforeFoundation": "#000000",
+      "afterFoundation": "#08090a",
+      "foundationOnOldExtractionOnly": "#08090a",
+      "oldFoundationAreaShare": 99.3
+    },
+    {
+      "site": "Stripe",
+      "beforeFoundation": "#000000",
+      "afterFoundation": "#ffffff",
+      "foundationOnOldExtractionOnly": "#ffffff",
+      "oldFoundationAreaShare": 95.7
+    },
+    {
+      "site": "Spotify"
+    },
+    {
+      "site": "Vercel",
+      "beforeFoundation": "#000000",
+      "afterFoundation": "#fafafa",
+      "foundationOnOldExtractionOnly": "#fafafa",
+      "oldFoundationAreaShare": 74.1
+    },
+    {
+      "site": "Notion",
+      "beforeFoundation": "#000000",
+      "afterFoundation": "#ffffff",
+      "foundationOnOldExtractionOnly": "#ffffff",
+      "oldFoundationAreaShare": 74.3
+    },
+    {
+      "site": "Framer",
+      "beforeFoundation": "#000000",
+      "afterFoundation": "#000000",
+      "foundationOnOldExtractionOnly": "#000000",
+      "oldFoundationAreaShare": 99.2
+    },
+    {
+      "site": "Apple",
+      "beforeFoundation": "#000000",
+      "afterFoundation": "#ffffff",
+      "foundationOnOldExtractionOnly": "#ffffff",
+      "oldFoundationAreaShare": 74.2
+    },
+    {
+      "site": "Netflix",
+      "beforeFoundation": "#000000",
+      "afterFoundation": "#000000",
+      "foundationOnOldExtractionOnly": "#000000",
+      "oldFoundationAreaShare": 96.6
+    },
+    {
+      "site": "Slack",
+      "beforeFoundation": "#000000",
+      "afterFoundation": "#f9edff",
+      "foundationOnOldExtractionOnly": "#f9edff",
+      "oldFoundationAreaShare": 97.6
+    }
+  ],
+  "fix2_svgAreaReduction": [
+    {
+      "site": "Linear",
+      "svgAreaPctBefore": 63.2,
+      "svgAreaPctAfter": 1.7,
+      "svgReduction": 61.5,
+      "foundationBefore": "#08090a",
+      "foundationAfter": "#08090a"
+    },
+    {
+      "site": "Stripe",
+      "svgAreaPctBefore": 95.4,
+      "svgAreaPctAfter": 10,
+      "svgReduction": 85.4,
+      "foundationBefore": "#ffffff",
+      "foundationAfter": "#ffffff"
+    },
+    {
+      "site": "Spotify",
+      "svgAreaPctBefore": 75.3,
+      "svgAreaPctAfter": 24.3,
+      "svgReduction": 51
+    },
+    {
+      "site": "Vercel",
+      "svgAreaPctBefore": 75.4,
+      "svgAreaPctAfter": 20.6,
+      "svgReduction": 54.8,
+      "foundationBefore": "#fafafa",
+      "foundationAfter": "#fafafa"
+    },
+    {
+      "site": "Notion",
+      "svgAreaPctBefore": 73,
+      "svgAreaPctAfter": 4.5,
+      "svgReduction": 68.5,
+      "foundationBefore": "#ffffff",
+      "foundationAfter": "#ffffff"
+    },
+    {
+      "site": "Framer",
+      "svgAreaPctBefore": 67.4,
+      "svgAreaPctAfter": 2.5,
+      "svgReduction": 64.9,
+      "foundationBefore": "#000000",
+      "foundationAfter": "#000000"
+    },
+    {
+      "site": "Apple",
+      "svgAreaPctBefore": 73,
+      "svgAreaPctAfter": 4.1,
+      "svgReduction": 68.9,
+      "foundationBefore": "#ffffff",
+      "foundationAfter": "#ffffff"
+    },
+    {
+      "site": "Netflix",
+      "svgAreaPctBefore": 72.6,
+      "svgAreaPctAfter": 8.7,
+      "svgReduction": 63.9,
+      "foundationBefore": "#000000",
+      "foundationAfter": "#000000"
+    },
+    {
+      "site": "Slack",
+      "svgAreaPctBefore": 96.9,
+      "svgAreaPctAfter": 27.3,
+      "svgReduction": 69.6,
+      "foundationBefore": "#f9edff",
+      "foundationAfter": "#f9edff"
+    }
+  ],
+  "fix3_browserDefaultLinks": [
+    {
+      "site": "Spotify",
+      "beforePrimary": "#0000ee",
+      "fixed": true
+    },
+    {
+      "site": "Framer",
+      "beforePrimary": "#0000ee",
+      "afterPrimary": "#0099ff",
+      "fixed": true
+    }
+  ],
+  "summary": {
+    "improved": [
+      "Linear",
+      "Stripe",
+      "Spotify",
+      "Vercel",
+      "Notion",
+      "Framer",
+      "Apple",
+      "Slack"
+    ],
+    "regressed": [],
+    "unchanged": [
+      "Netflix"
+    ]
+  },
+  "finalPalettes": [
+    {
+      "site": "Linear",
+      "palette": {
+        "foundation": "#08090a",
+        "primary": "#d0d6e0",
+        "neutral": "#2e2e32"
+      },
+      "extraction": {
+        "samples": 3766,
+        "sections": 17,
+        "totalArea": 821216916,
+        "productDemoShare": 0.5090281465746149
+      }
+    },
+    {
+      "site": "Stripe",
+      "palette": {
+        "foundation": "#ffffff",
+        "primary": "#533afd",
+        "secondary": "#ff6118",
+        "neutral": "#e5edf5"
+      },
+      "extraction": {
+        "samples": 3012,
+        "sections": 23,
+        "totalArea": 114545816,
+        "productDemoShare": 0
+      }
+    },
+    {
+      "site": "Spotify",
+      "palette": {
+        "neutral": "#333333"
+      },
+      "extraction": {
+        "samples": 375,
+        "sections": 1,
+        "totalArea": 8086324,
+        "productDemoShare": 0
+      }
+    },
+    {
+      "site": "Vercel",
+      "palette": {
+        "foundation": "#fafafa",
+        "primary": "#00dc82",
+        "secondary": "#7820bc",
+        "neutral": "#ededed"
+      },
+      "extraction": {
+        "samples": 2193,
+        "sections": 3,
+        "totalArea": 36095264,
+        "productDemoShare": 0
+      }
+    },
+    {
+      "site": "Notion",
+      "palette": {
+        "foundation": "#ffffff",
+        "primary": "#0075de",
+        "secondary": "#f77463",
+        "neutral": "#191918"
+      },
+      "extraction": {
+        "samples": 2962,
+        "sections": 12,
+        "totalArea": 266095349,
+        "productDemoShare": 0.04287643484132343
+      }
+    },
+    {
+      "site": "Framer",
+      "palette": {
+        "foundation": "#000000",
+        "primary": "#0099ff",
+        "secondary": "#fd5d5c",
+        "neutral": "#222222"
+      },
+      "extraction": {
+        "samples": 5376,
+        "sections": 19,
+        "totalArea": 757812425,
+        "productDemoShare": 0
+      }
+    },
+    {
+      "site": "Apple",
+      "palette": {
+        "foundation": "#ffffff",
+        "primary": "#0071e3",
+        "secondary": "#a4618d",
+        "neutral": "#6e6e73"
+      },
+      "extraction": {
+        "samples": 4972,
+        "sections": 16,
+        "totalArea": 356145738,
+        "productDemoShare": 0
+      }
+    },
+    {
+      "site": "Netflix",
+      "palette": {
+        "foundation": "#000000",
+        "primary": "#e50914",
+        "neutral": "#3f3f3f"
+      },
+      "extraction": {
+        "samples": 770,
+        "sections": 5,
+        "totalArea": 54338041,
+        "productDemoShare": 0
+      }
+    },
+    {
+      "site": "Slack",
+      "palette": {
+        "foundation": "#f9edff",
+        "primary": "#3d0157",
+        "secondary": "#f6bbc1",
+        "neutral": "#ffffff"
+      },
+      "extraction": {
+        "samples": 2327,
+        "sections": 17,
+        "totalArea": 45839226,
+        "productDemoShare": 0.0008594757198109154
+      }
+    }
+  ],
+  "remainingFailurePatterns": [
+    {
+      "pattern": "foundation_not_dominant_raw_color",
+      "sites": [
+        "Slack"
+      ],
+      "note": "Foundation role assigned to a neutral that is not the largest raw area color (often #000000 from SVG fills)"
+    },
+    {
+      "pattern": "no_chromatic_primary",
+      "sites": [
+        "Air India",
+        "Spotify"
+      ],
+      "note": "No chromatic color received primary role — brand color may be missing from palette"
+    },
+    {
+      "pattern": "top_scored_chroma_excluded",
+      "sites": [
+        "Notion"
+      ],
+      "note": "Highest-scored chromatic cluster not in final 8-color palette"
+    },
+    {
+      "pattern": "heavy_product_demo_pages",
+      "sites": [
+        {
+          "site": "Linear",
+          "demoShare": 50.9
+        }
+      ],
+      "note": "Marketing pages with large embedded product UI — demo detection heavily influences scoring"
+    }
+  ]
+}
