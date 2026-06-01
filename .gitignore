@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Store build output
+dist/
+
 # Environment / secrets
 .env
 .env.*

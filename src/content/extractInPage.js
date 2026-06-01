@@ -1,10 +1,9 @@
 /**
  * Full-page visual identity extraction (injected, self-contained).
- * Auto-scrolls, maps sections, collects rendered colors with importance + context.
+ * Virtual section scan (no page scroll) — maps document bands, collects rendered colors.
  */
 window.__prismExtractPalette = async function extractPaletteInPage(options = {}) {
   const maxMillis = options.maxMillis || 18000;
-  const scrollPauseMs = options.scrollPauseMs || 180;
   const startedAt = performance.now();
   const colorCache = new Map();
 
@@ -442,10 +441,11 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
     return { l: 100, a: 0, b: 0 };
   }
 
-  function scanViewport(sectionId, sectionIndex) {
+  function scanVirtualSection(virtualScrollY, sectionId, sectionIndex) {
     const nodes = document.querySelectorAll("*");
     const limit = options.maxElementsPerSection || 1800;
     let count = 0;
+    const pageScrollY = window.scrollY;
 
     for (const el of nodes) {
       if (performance.now() - startedAt > maxMillis) return;
@@ -457,11 +457,26 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
 
       const rect = el.getBoundingClientRect();
       if (!rect.width || !rect.height) continue;
-      if (rect.bottom < 0 || rect.top > vh || rect.right < 0 || rect.left > vw) continue;
+      if (rect.right < 0 || rect.left > vw) continue;
+
+      const docTop = rect.top + pageScrollY;
+      const docBottom = rect.bottom + pageScrollY;
+      const virtualTop = docTop - virtualScrollY;
+      const virtualBottom = docBottom - virtualScrollY;
+      if (virtualBottom < 0 || virtualTop > vh) continue;
+
+      const virtualRect = {
+        top: virtualTop,
+        bottom: virtualBottom,
+        left: rect.left,
+        right: rect.right,
+        width: rect.width,
+        height: rect.height
+      };
 
       const contentZone = detectContentZone(el);
-      const importance = getImportance(el, rect, sectionIndex, vh, contentZone);
-      const dedupeKey = `${sectionId}:${el.tagName}:${Math.round(rect.top)}:${Math.round(rect.left)}:${Math.round(rect.width)}`;
+      const importance = getImportance(el, virtualRect, sectionIndex, vh, contentZone);
+      const dedupeKey = `${sectionId}:${el.tagName}:${Math.round(docTop)}:${Math.round(rect.left)}:${Math.round(rect.width)}`;
 
       for (const { js, css } of props) {
         if (isSyntax(el) && (js === "color" || js === "fill" || js === "stroke")) continue;
@@ -469,7 +484,7 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
         const rgba = rgbaFromCssColor(styles.getPropertyValue(css) || styles[js]);
         if (!rgba) continue;
 
-        const area = computeColorArea(el, styles, rect, js);
+        const area = computeColorArea(el, styles, virtualRect, js);
         if (area <= 0) continue;
 
         const hex = toHex(rgba);
@@ -481,7 +496,7 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
         areaContributions.set(contribKey, existing);
 
         const context = getContext(el, js);
-        const sourceCategory = classifySource(el, rect, sectionIndex, vh, js, context, contentZone);
+        const sourceCategory = classifySource(el, virtualRect, sectionIndex, vh, js, context, contentZone);
         const brandWeight = SOURCE_WEIGHT[sourceCategory] || SOURCE_WEIGHT.default;
         const propImportance = js === "borderTopColor" ? 3 : importance;
         const weightedImportance = propImportance * brandWeight;
@@ -510,27 +525,19 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
     }
   }
 
-  const originalScroll = window.scrollY;
-  window.scrollTo(0, 0);
-  await new Promise((r) => setTimeout(r, scrollPauseMs));
-
   while (scrollY <= maxScroll && performance.now() - startedAt < maxMillis * 0.92) {
     const sectionId = `section-${sectionIndex}`;
     const startY = scrollY;
     const endY = Math.min(scrollY + vh, maxScroll);
     sections.push({ sectionId, startY, endY });
     seenPerSection.clear();
-    scanViewport(sectionId, sectionIndex);
+    scanVirtualSection(scrollY, sectionId, sectionIndex);
 
     if (scrollY + vh >= maxScroll) break;
     scrollY += step;
-    window.scrollTo(0, scrollY);
-    await new Promise((r) => setTimeout(r, scrollPauseMs));
     sectionIndex += 1;
     if (sectionIndex > 25) break;
   }
-
-  window.scrollTo(0, originalScroll);
 
   return {
     sampledElements: samples.length,

@@ -6,11 +6,11 @@ Chrome extension that extracts a curated **8-color design palette** from any liv
 
 ## Features
 
-- Full-page scroll extraction with importance weighting (not just CSS variables)
+- Full-page virtual section scan with importance weighting (not just CSS variables)
 - Semantic role assignment for design-system-style palettes
-- Bento-style preview in the popup
+- Bento-style preview in the panel
 - Copy palette as a PNG image to the clipboard
-- Offline — all processing runs locally in the browser; nothing is sent to a server
+- Palette extraction runs locally in the browser; extracted colors are not sent to our servers
 
 ## Install (development)
 
@@ -24,6 +24,25 @@ Chrome extension that extracts a curated **8-color design palette** from any liv
 2. Click the **Prism Palette** extension icon.
 3. Click **Extract palette** and wait for the scan to finish (~10–20 seconds on long pages).
 4. Click the copy button to paste the palette image into Figma (or another design tool).
+
+## Chrome Web Store package
+
+Build a upload-ready ZIP (runtime files only — no tests, scripts, or `node_modules`):
+
+```bash
+npm run package:store
+```
+
+Output: `dist/prism-palette-extractor-0.1.0.zip`
+
+**Privacy policy:** See [PRIVACY.md](./PRIVACY.md). Host it at a public URL (for example GitHub Pages on this repo) and paste that link into the Chrome Web Store listing.
+
+**Permission justification (for the store form):**
+
+- `activeTab` — Access only the tab where the user clicked the Prism icon, to sample colors when they click Extract.
+- `scripting` — Inject a short-lived, self-contained script on that tab to read rendered styles.
+- `clipboardWrite` — Copy the generated palette PNG when the user clicks Copy palette.
+- `web_accessible_resources` — Load the extension panel UI inside an iframe on the page the user is viewing; does not grant background access to all sites.
 
 ## Development
 
@@ -42,26 +61,28 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for the extraction pipeline and module 
 
 ```
 manifest.json          Chrome extension manifest (MV3)
+icons/                 Extension icons (required for store)
 src/
+  background/          Toolbar click → panel injection
   content/             In-page color extraction
   core/                Clustering, scoring, role assignment
   popup/               Extension UI
 tests/                 Node test runner suites
 benchmark/             Frozen 9-site regression baseline
-scripts/               Benchmark runners and dev tooling
+scripts/               Benchmark runners and store packaging
 ```
 
-## Permissions
+## Permissions and network
 
 | Permission | Why |
 |------------|-----|
-| `activeTab` | Run extraction on the current tab when you click Extract |
-| `scripting` | Inject the extraction script into the page |
+| `activeTab` | Access the tab you invoked Prism on, only while you use it |
+| `scripting` | Inject the extraction script into that tab |
 | `clipboardWrite` | Copy the palette PNG |
-| `downloads` | Optional palette download support |
-| `<all_urls>` | Read computed styles on whichever site you choose to scan |
 
-No background service worker, no analytics, and no network requests from the extension runtime.
+**Network:** Extraction does not use the network. The panel UI loads [Google Fonts](https://fonts.google.com/) (Google Sans and Material Symbols) from `fonts.googleapis.com` / `fonts.gstatic.com` when you open Prism; see [PRIVACY.md](./PRIVACY.md).
+
+No analytics. No remote palette storage.
 
 ## License
 
