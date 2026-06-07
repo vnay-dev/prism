@@ -1,6 +1,6 @@
 # Palette Extraction Benchmark
 
-Frozen baseline for the 9-site reference benchmark. Future algorithm changes must pass `tests/benchmark.test.js` before merge.
+Frozen baseline for the 9-site reference **color palette** benchmark. Typography curation is covered by `tests/fonts.test.js` but is not yet part of this lockfile. Future color algorithm changes must pass `tests/benchmark.test.js` before merge.
 
 ## Sites
 

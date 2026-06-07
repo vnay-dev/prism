@@ -9,6 +9,8 @@ export const ERROR_MESSAGES = {
     "This page took too long to scan. Try a shorter page, or click Extract palette again.",
   NO_PALETTE:
     "No usable brand colors were found on this page. Try a homepage or marketing page with richer design, then click Extract palette again.",
+  NO_FONTS:
+    "No font families were found on this page. Try a homepage or marketing page with more text, then click Extract font families again.",
   EXTRACTION_FAILED:
     "Something unexpected went wrong. Refresh the page and click Extract palette again.",
   COPY_FAILED:
@@ -57,6 +59,7 @@ export function classifyExtractionError(error, context = {}) {
   if (context.unsupportedPage) return ERROR_MESSAGES.UNSUPPORTED_PAGE;
   if (context.noTab) return ERROR_MESSAGES.NO_TAB;
   if (context.noPalette) return ERROR_MESSAGES.NO_PALETTE;
+  if (context.noFonts) return ERROR_MESSAGES.NO_FONTS;
   if (context.injectionFailed) return ERROR_MESSAGES.INJECTION_FAILED;
   if (context.timedOut) return ERROR_MESSAGES.TIMEOUT;
 
@@ -91,6 +94,12 @@ export function classifyExtractionError(error, context = {}) {
 export function isExtractionResultEmpty(result) {
   if (!result || typeof result !== "object") return true;
   if (!Array.isArray(result.samples) || result.samples.length === 0) return true;
+  return false;
+}
+
+export function isFontExtractionEmpty(result) {
+  if (!result || typeof result !== "object") return true;
+  if (!Array.isArray(result.fontSamples) || result.fontSamples.length === 0) return true;
   return false;
 }
 

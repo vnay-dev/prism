@@ -385,6 +385,93 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
     return "other";
   }
 
+  const GENERIC_FAMILIES = new Set([
+    "serif",
+    "sans-serif",
+    "monospace",
+    "cursive",
+    "fantasy",
+    "system-ui",
+    "ui-serif",
+    "ui-sans-serif",
+    "ui-monospace",
+    "ui-rounded",
+    "inherit",
+    "initial",
+    "unset"
+  ]);
+
+  function parseFontStack(fontFamily) {
+    if (!fontFamily || typeof fontFamily !== "string") return [];
+    return fontFamily
+      .split(",")
+      .map((part) => part.trim().replace(/^['"]|['"]$/g, ""))
+      .filter(Boolean);
+  }
+
+  function resolvePrimaryFont(families) {
+    if (!families.length) return "";
+    for (const family of families) {
+      if (!GENERIC_FAMILIES.has(family.toLowerCase())) return family;
+    }
+    return families[0];
+  }
+
+  function normalizeFontWeight(weight) {
+    if (weight == null || weight === "") return 400;
+    const value = String(weight).trim().toLowerCase();
+    if (value === "normal") return 400;
+    if (value === "bold") return 700;
+    const parsed = parseInt(value, 10);
+    return Number.isFinite(parsed) ? parsed : 400;
+  }
+
+  function getHeadingLevel(el) {
+    const match = (el.tagName || "").match(/^H([1-6])$/i);
+    return match ? parseInt(match[1], 10) : null;
+  }
+
+  function getViewportVisibility(virtualRect, vh) {
+    const visibleTop = Math.max(virtualRect.top, 0);
+    const visibleBottom = Math.min(virtualRect.bottom, vh);
+    const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+    const ratio = visibleHeight / Math.max(virtualRect.height, 1);
+    return {
+      viewportVisible: ratio >= 0.2,
+      visibilityRatio: Math.min(1, ratio)
+    };
+  }
+
+  function collectFontTokens() {
+    const tokens = [];
+    const seen = new Set();
+    const root = getComputedStyle(document.documentElement);
+    const varNames = [
+      "--font-family",
+      "--font-sans",
+      "--font-serif",
+      "--font-mono",
+      "--font-body",
+      "--font-heading",
+      "--font-display",
+      "--font-ui",
+      "--typography-font-family",
+      "--default-font-family"
+    ];
+
+    for (const name of varNames) {
+      const value = root.getPropertyValue(name).trim();
+      if (!value) continue;
+      const family = resolvePrimaryFont(parseFontStack(value));
+      const key = family.toLowerCase();
+      if (!family || seen.has(key)) continue;
+      seen.add(key);
+      tokens.push({ family, source: name });
+    }
+
+    return tokens;
+  }
+
   function getImportance(el, rect, sectionIndex, vh, contentZone) {
     const tag = el.tagName;
     const role = el.getAttribute("role") || "";
@@ -413,6 +500,8 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
   }
 
   const samples = [];
+  const fontSamples = [];
+  const fontTokens = collectFontTokens();
   const areaContributions = new Map();
   const sections = [];
   const seenPerSection = new Set();
@@ -522,6 +611,55 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
           contrast
         });
       }
+
+      if (isSyntax(el)) continue;
+
+      const textArea = measureTextArea(el, styles);
+      if (textArea <= 0) continue;
+
+      const family = resolvePrimaryFont(parseFontStack(styles.fontFamily));
+      if (!family) continue;
+
+      const textContext = getContext(el, "color");
+      const fontOnceKey = `${dedupeKey}:font`;
+      if (seenPerSection.has(fontOnceKey)) continue;
+      seenPerSection.add(fontOnceKey);
+
+      const fontSourceCategory = classifySource(
+        el,
+        virtualRect,
+        sectionIndex,
+        vh,
+        "color",
+        textContext,
+        contentZone
+      );
+      const fontBrandWeight = SOURCE_WEIGHT[fontSourceCategory] || SOURCE_WEIGHT.default;
+      const fontImportance = getImportance(el, virtualRect, sectionIndex, vh, contentZone);
+      const weightedFontImportance = fontImportance * fontBrandWeight;
+      const headingLevel = getHeadingLevel(el);
+      const visibility = getViewportVisibility(virtualRect, vh);
+      const textLength = (el.textContent || "").trim().length;
+
+      fontSamples.push({
+        family,
+        stack: styles.fontFamily,
+        fontSize: parsePx(styles.fontSize) || 16,
+        weight: normalizeFontWeight(styles.fontWeight),
+        style: styles.fontStyle || "normal",
+        textLength,
+        headingLevel,
+        viewportVisible: visibility.viewportVisible,
+        visibilityRatio: visibility.visibilityRatio,
+        area: textArea,
+        importance: weightedFontImportance,
+        rawImportance: fontImportance,
+        brandWeight: fontBrandWeight,
+        sourceCategory: fontSourceCategory,
+        contentZone,
+        sectionId,
+        context: textContext
+      });
     }
   }
 
@@ -544,6 +682,8 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
     sectionCount: sections.length,
     sections,
     samples,
+    fontSamples,
+    fontTokens,
     areaContributions: [...areaContributions.values()]
       .map((c) => ({ hex: c.hex, sourceType: c.sourceType, area: Math.round(c.area), count: c.count }))
       .sort((a, b) => b.area - a.area)

@@ -1,16 +1,19 @@
 # Prism Palette Extraction — Architecture
 
-Prism is a Chrome extension that extracts a **design-system palette** from live web pages. It produces an 8-color palette with semantic roles (foundation, primary, secondary, accent, neutral) derived from rendered DOM colors, not CSS variables alone.
+Prism is a Chrome extension that extracts **design-system colors** and **typography** from live web pages.
 
-The pipeline has two phases:
+- **Colors** — an 8-color palette with semantic roles (foundation, primary, secondary, accent, neutral) derived from rendered DOM colors, not CSS variables alone.
+- **Fonts** — ranked font families with meaningful CSS weights, derived from computed styles on visible text.
 
-1. **In-page extraction** — scroll, sample, classify (`src/content/extractInPage.js`)
-2. **Core curation** — cluster, score, curate, assign roles (`src/core/`)
+The panel has two tabs (**Color palette** / **Font families**). Each tab runs the same in-page scan but curates a different slice of the extraction output.
+
+### Color pipeline
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                         extractInPage.js (content script)               │
-│  Auto-scroll → scan viewport → classify source/zone → emit samples[]    │
+│  Virtual section scan → classify source/zone → emit samples[]           │
+│                      + fontSamples[] + fontTokens[]                     │
 └───────────────────────────────────┬─────────────────────────────────────┘
                                     │ samples[]
                                     ▼
@@ -26,7 +29,19 @@ The pipeline has two phases:
 └───────────────────────────────────┬─────────────────────────────────────┘
                                     │ swatches[8]
                                     ▼
-                              Popup / export
+                         Color tab / PNG export
+```
+
+### Font pipeline
+
+```
+extractInPage.js  →  fontSamples[] + fontTokens[]
+        │
+        ▼
+curateFonts.js    →  aggregate by family · score weights · filter noise
+        │
+        ▼
+Popup (Font families tab)  →  cards with family name + weights · per-card clipboard copy
 ```
 
 ---
@@ -35,9 +50,10 @@ The pipeline has two phases:
 
 | Module | Responsibility |
 |--------|----------------|
-| `src/content/extractInPage.js` | Full-page scroll extraction, area measurement, source/zone tagging |
-| `src/content/extractPalette.js` | Legacy single-viewport candidate collector (CSS tokens + visible elements) |
+| `src/content/extractInPage.js` | Full-page virtual section scan, area measurement, color + font sampling |
 | `src/core/sourceClassification.js` | Source categories, weights, product demo detection, utility classification, scoring |
+| `src/core/curateFonts.js` | Font family curation and weight significance filtering |
+| `src/core/fontUtils.js` | Font weight snapping and emoji-font filtering |
 | `src/core/scoreAndCluster.js` | LAB clustering, palette curation, quality adjustment |
 | `src/core/assignRoles.js` | Semantic role assignment on curated colors |
 | `src/core/paletteSafeguards.js` | Foundation surface filter, browser link exclusion, legacy sample inference |
@@ -53,10 +69,9 @@ The pipeline has two phases:
 
 ### 1.1 Page traversal
 
-- Scrolls the page in viewport-sized steps (max 25 sections, ~18s budget)
-- At each scroll position, scans up to 1,800 visible DOM nodes
-- Restores original scroll position when done
-- Each viewport pass is a **section** (`section-0`, `section-1`, …)
+- Maps the document in viewport-sized **virtual sections** (no page scroll; max 25 sections, ~18s budget)
+- At each section, scans up to 1,800 visible DOM nodes
+- Each pass is a **section** (`section-0`, `section-1`, …)
 
 ### 1.2 Color properties sampled
 
@@ -122,6 +137,41 @@ Samples are deduplicated per section by element position + context + hex.
 | Default | 3 |
 
 Final sample importance: `rawImportance × SOURCE_WEIGHT[sourceCategory]`.
+
+### 1.6 Font sampling
+
+Alongside color samples, each text-bearing element may emit a **font sample**:
+
+```js
+{
+  family,              // resolved primary face from font-family stack
+  stack,               // raw computed font-family
+  fontSize, weight,    // normalized weight (400, 500, 600, …)
+  textLength,
+  headingLevel,        // 1–6 for H1–H6, else null
+  viewportVisible,
+  contentZone,
+  sectionId,
+  importance,          // same zone/source weighting as colors
+  sourceCategory,
+  context              // heading | button | link | text | …
+}
+```
+
+**CSS token hints:** `collectFontTokens()` reads `--font-family`, `--font-sans`, `--font-body`, etc. from `:root` to boost families declared in design tokens.
+
+Font samples are deduplicated per section by element geometry + family.
+
+### 1.7 Extraction output
+
+```js
+{
+  samples, fontSamples, fontTokens,
+  sectionCount, sections,
+  sampledElements,
+  areaContributions
+}
+```
 
 ---
 
@@ -381,15 +431,55 @@ Browser default link colors demoted from primary/secondary/accent → neutral.
 
 ---
 
-## 9. Benchmark system
+## 9. Font curation
+
+**Module:** `curateFonts.js` (helpers in `fontUtils.js`)
+
+Runs in the extension popup when the user extracts on the **Font families** tab. Input: `fontSamples[]` and `fontTokens[]` from extraction.
+
+### 9.1 Aggregation
+
+- Groups samples by resolved **family** name (first non-generic face in the stack)
+- Sums a **sample score** per family using area, importance, content zone, heading level, font size, and visibility
+- Tracks per-family **weight buckets** with frequency, heading prominence, and section spread
+
+### 9.2 Weight filtering (`fontUtils.js`)
+
+- **Snap** computed weights to standard CSS values (100–900)
+- Drop insignificant outlier weights (e.g. 401, 437) unless they have enough supporting text area
+- Filter **emoji fonts** (`Apple Color Emoji`, `Segoe UI Emoji`, …) and deprioritize generic **system fallbacks**
+
+### 9.3 Family selection
+
+Up to three distinct families, chosen by heading score, body text score, and UI/chrome score:
+
+1. Primary — strongest heading/hero signal
+2. Secondary — dominant body text face
+3. Tertiary — nav/UI chrome face (when distinct)
+
+CSS custom-property **token hints** can fill gaps when samples under-represent a declared token family.
+
+### 9.4 Popup output
+
+Each family card shows:
+
+- Family name (rendered in the panel UI font, not the extracted typeface)
+- `Weights: 400, 500, 600` — comma-separated list of meaningful weights
+- Copy icon — writes the family name to the clipboard
+
+PNG export includes **colors only**; typography is clipboard-only per family.
+
+---
+
+## 10. Benchmark system
 
 The extraction algorithm is **frozen** behind a 9-site regression benchmark.
 
-### 9.1 Reference sites
+### 10.1 Reference sites
 
 Linear, Stripe, Spotify, Vercel, Notion, Framer, Apple, Netflix, Slack
 
-### 9.2 Artifacts
+### 10.2 Artifacts
 
 | File | Contents |
 |------|----------|
@@ -400,14 +490,14 @@ Linear, Stripe, Spotify, Vercel, Notion, Framer, Apple, Netflix, Slack
 
 **Current baseline averages:** brand accuracy **8.6/10**, designer usefulness **8.3/10**
 
-### 9.3 Benchmark scoring
+### 10.3 Benchmark scoring
 
 Per-site scores (0–10) computed against known brand reference colors:
 
 - **brandAccuracy** — foundation match, primary match, browser-link penalty
 - **designerUsefulness** — chromatic primary present, palette completeness, foundation present
 
-### 9.4 Regression workflow
+### 10.4 Regression workflow
 
 ```bash
 npm test                 # All tests including benchmark
@@ -425,7 +515,7 @@ Regressed:  test FAIL — score drop or unintended palette drift
 
 Regressions block merge unless the lockfile is deliberately regenerated.
 
-### 9.5 Updating the baseline
+### 10.5 Updating the baseline
 
 When algorithm changes are intentional and validated:
 
@@ -435,7 +525,7 @@ When algorithm changes are intentional and validated:
 
 ---
 
-## 10. Data flow summary
+## 11. Data flow summary
 
 ```
 DOM element
@@ -446,26 +536,31 @@ DOM element
   → scores { brandConfidence, designSystemScore }
   → curated palette [8 colors with roleHints]
   → assigned roles { foundation, primary, secondary, accent, neutral }
-  → benchmark lockfile comparison
+  → benchmark lockfile comparison (colors only)
+
+fontSamples[] + fontTokens[]
+  → curateFonts → ranked families + weight labels
+  → Font families tab + clipboard copy
 ```
 
 ---
 
-## 11. Extension integration
+## 12. Extension integration
 
 | Component | Role |
 |-----------|------|
-| `src/content/extractInPage.js` | Injected into page tab; returns raw extraction JSON |
+| `src/content/extractInPage.js` | Injected into page tab; returns raw extraction JSON (colors + fonts) |
 | `src/core/scoreAndCluster.js` | `curatePalette(extraction)` → curated colors |
 | `src/core/assignRoles.js` | `assignRoles(curated)` → final swatches |
-| `src/popup/App.js` | UI display and export trigger |
-| `src/popup/exportPaletteImage.js` | Palette image generation |
+| `src/core/curateFonts.js` | `curateFonts(extraction)` → ranked families + weights |
+| `src/popup/App.js` | Tabbed UI — separate color/font extract, render, and copy flows |
+| `src/popup/exportPaletteImage.js` | Palette PNG generation (color tab only) |
 
-The popup receives extraction output from the content script and runs curation + role assignment in the extension context using the shared core modules.
+The popup injects `extractInPage.js` via `chrome.scripting.executeScript`, then runs color or font curation in the extension context using shared core modules.
 
 ---
 
-## 12. Known limitations
+## 13. Known limitations
 
 Documented by the frozen benchmark (not bugs — baseline expectations):
 
@@ -477,5 +572,7 @@ Documented by the frozen benchmark (not bugs — baseline expectations):
 | Warm foundation vs white extraction | Notion |
 | Browser link in neutral slot | Framer, Spotify |
 | No chromatic primary | Spotify |
+| Font benchmark | Not yet in frozen lockfile — color regression only today |
+| Lazy-loaded below-fold content | May be under-sampled without real scroll |
 
 These represent the current accuracy ceiling. Future work should improve scores via the benchmark workflow without silent regressions on the 8 sites that pass today.
