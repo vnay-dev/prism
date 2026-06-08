@@ -1,5 +1,16 @@
 # Release notes
 
+## 0.2.1 — Rename to Prism
+
+**Date:** June 2026
+
+### Changed
+
+- Extension name is now **Prism** everywhere (store listing, toolbar, panel, privacy policy).
+- Store package output: `dist/prism-0.2.1.zip`
+
+---
+
 ## 0.2.0 — Font families
 
 **Date:** June 2026
