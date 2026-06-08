@@ -29,7 +29,7 @@
 
 ```bash
 npm run package:store
-# → dist/prism-palette-extractor-0.2.0.zip
+# → dist/prism-0.2.0.zip
 ```
 
 ---

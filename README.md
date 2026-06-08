@@ -33,7 +33,7 @@ Chrome extension that extracts a curated **8-color design palette** and **font f
 ## Usage
 
 1. Open a tab with the site you want to sample.
-2. Click the **Prism Palette** extension icon to open the panel.
+2. Click the **Prism** extension icon to open the panel.
 3. Choose a tab:
    - **Color palette** — click **Extract color palette**, then **Copy palette** to paste the PNG into Figma or another tool.
    - **Font families** — click **Extract font families**, then use the copy icon on any card to copy that family name.
@@ -49,7 +49,7 @@ Build an upload-ready ZIP (runtime files only — no tests, scripts, or `node_mo
 npm run package:store
 ```
 
-Output: `dist/prism-palette-extractor-0.2.0.zip`
+Output: `dist/prism-0.2.0.zip`
 
 **Privacy policy:** See [PRIVACY.md](./PRIVACY.md). Host it at a public URL (for example GitHub Pages on this repo) and paste that link into the Chrome Web Store listing.
 

@@ -1,9 +1,9 @@
-# Privacy Policy — Prism Palette Extractor
+# Privacy Policy — Prism
 
 **Last updated:** June 6, 2026  
 **Version:** 0.2.0
 
-Prism Palette Extractor (“Prism”, “the extension”) is a Chrome extension that helps designers extract color palettes and font families from web pages. This policy describes what the extension accesses and how that information is handled.
+Prism (“the extension”) is a Chrome extension that helps designers extract color palettes and font families from web pages. This policy describes what the extension accesses and how that information is handled.
 
 ## Summary
 

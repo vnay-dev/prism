@@ -1,4 +1,4 @@
-# Prism Palette Extraction — Architecture
+# Prism — Architecture
 
 Prism is a Chrome extension that extracts **design-system colors** and **typography** from live web pages.
 

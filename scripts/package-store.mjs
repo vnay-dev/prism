@@ -1,6 +1,6 @@
 /**
  * Build a Chrome Web Store upload ZIP (runtime files only).
- * Output: dist/prism-palette-extractor-<version>.zip
+ * Output: dist/prism-<version>.zip
  */
 import { spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, statSync } from "node:fs";
@@ -11,7 +11,7 @@ const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const manifest = JSON.parse(readFileSync(join(root, "manifest.json"), "utf8"));
 const version = manifest.version || "0.0.0";
 const stagingDir = join(root, "dist", "store");
-const zipPath = join(root, "dist", `prism-palette-extractor-${version}.zip`);
+const zipPath = join(root, "dist", `prism-${version}.zip`);
 
 const REQUIRED_PATHS = ["manifest.json", "icons", "src"];
 const ICON_FILES = ["icon16.png", "icon32.png", "icon48.png", "icon128.png"];

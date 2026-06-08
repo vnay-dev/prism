@@ -19,7 +19,7 @@
   const iframe = document.createElement("iframe");
   iframe.className = "prism-panel-frame";
   iframe.src = panelUrl;
-  iframe.title = "Prism Palette";
+  iframe.title = "Prism";
   iframe.setAttribute("allow", "clipboard-write");
 
   shell.appendChild(iframe);
