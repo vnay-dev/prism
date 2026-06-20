@@ -51,6 +51,8 @@ Popup (Font families tab)  →  cards with family name + weights · per-card cli
 | Module | Responsibility |
 |--------|----------------|
 | `src/content/extractInPage.js` | Full-page virtual section scan, area measurement, color + font sampling |
+| `src/content/highlightFont.js` | On-page highlighting of text matching a selected font family (CSS Highlight API, viewport-first, span-wrap fallback) |
+| `src/popup/paletteLayout.js` | Shared bento geometry used by both the popup render and the PNG export |
 | `src/core/sourceClassification.js` | Source categories, weights, product demo detection, utility classification, scoring |
 | `src/core/curateFonts.js` | Font family curation and weight significance filtering |
 | `src/core/fontUtils.js` | Font weight snapping and emoji-font filtering |
@@ -466,6 +468,7 @@ Each family card shows:
 - Family name (rendered in the panel UI font, not the extracted typeface)
 - `Weights: 400, 500, 600` — comma-separated list of meaningful weights
 - Copy icon — writes the family name to the clipboard
+- Select control — injects `highlightFont.js` to highlight every visible run of that family on the page (viewport-first, revealed on scroll); cleared on deselect or panel close
 
 PNG export includes **colors only**; typography is clipboard-only per family.
 
@@ -553,10 +556,12 @@ fontSamples[] + fontTokens[]
 | `src/core/scoreAndCluster.js` | `curatePalette(extraction)` → curated colors |
 | `src/core/assignRoles.js` | `assignRoles(curated)` → final swatches |
 | `src/core/curateFonts.js` | `curateFonts(extraction)` → ranked families + weights |
-| `src/popup/App.js` | Tabbed UI — separate color/font extract, render, and copy flows |
-| `src/popup/exportPaletteImage.js` | Palette PNG generation (color tab only) |
+| `src/popup/App.js` | Tabbed UI — separate color/font extract, render, copy, and font-highlight flows |
+| `src/popup/exportPaletteImage.js` | Palette PNG generation (color tab only), using `paletteLayout.js` geometry |
+| `src/popup/paletteLayout.js` | Shared bento layout for popup render and PNG export |
+| `src/content/highlightFont.js` | Injected on demand to highlight visible text matching a selected font family |
 
-The popup injects `extractInPage.js` via `chrome.scripting.executeScript`, then runs color or font curation in the extension context using shared core modules.
+The popup injects `extractInPage.js` via `chrome.scripting.executeScript`, then runs color or font curation in the extension context using shared core modules. The Font families tab additionally injects `highlightFont.js` to mark on-page text in the selected family.
 
 ---
 

@@ -1,0 +1,6 @@
+Update version to 0.3.0 in manifest, package, and README; add release notes
+
+- Bump version to 0.3.0 (manifest.json, package.json, README version strings).
+- Add the 0.3.0 release-notes entry (on-page font highlighting, richer export).
+- Document on-page font highlighting and the new highlightFont.js /
+  paletteLayout.js modules in README and ARCHITECTURE.

@@ -31,7 +31,7 @@ body {
 }
 
 body {
-  background: #ffffff;
+  background: #fefefe;
   color: #1a1d26;
 }
 
@@ -41,7 +41,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  background: #ffffff;
+  background: #fefefe;
 }
 
 .app.is-loading {
@@ -54,7 +54,7 @@ body.standalone-window .panel-header {
 }
 
 body.standalone-window {
-  background: #ffffff;
+  background: #fefefe;
 }
 
 body.standalone-window .app.state-guidance {
@@ -146,6 +146,43 @@ body.standalone-window .app.state-guidance #intro {
   justify-content: space-between;
   gap: 12px;
   flex-shrink: 0;
+}
+
+body.embedded .panel-header {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  /* Chrome's built-in grab cursor renders with no white outline and nearly
+     disappears on light backgrounds, so we ship outlined hand cursor images
+     and cascade down to the native keyword as a fallback. */
+  cursor: move;
+  cursor: url("assets/openhand.cur"), -webkit-grab;
+  cursor: url("assets/openhand.cur"), grab;
+}
+
+body.embedded .panel-header.is-dragging {
+  cursor: move;
+  cursor: url("assets/closedhand.cur"), -webkit-grabbing;
+  cursor: url("assets/closedhand.cur"), grabbing;
+}
+
+.drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: -4px;
+  color: #b4bccb;
+  transition: color 120ms ease;
+}
+
+.panel-header:hover .drag-handle,
+.panel-header.is-dragging .drag-handle {
+  color: #5c6478;
+}
+
+.drag-handle .material-symbols-outlined {
+  font-size: 20px;
 }
 
 .panel-header h1 {

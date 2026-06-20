@@ -69,6 +69,10 @@ export function isSystemFont(family) {
   return SYSTEM_FONTS.has(normalizeFontKey(family));
 }
 
+export function isGenericFamily(family) {
+  return GENERIC_FAMILIES.has(normalizeFontKey(family));
+}
+
 export function isEmojiFont(family) {
   const key = normalizeFontKey(family);
   return /emoji/.test(key) || key === "apple color emoji" || key === "segoe ui emoji";

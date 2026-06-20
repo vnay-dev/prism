@@ -43,6 +43,8 @@ const fontsEl = document.getElementById("fonts");
 const tabBarEl = document.getElementById("tabBar");
 const tabColorsBtn = document.getElementById("tabColors");
 const tabFontsBtn = document.getElementById("tabFonts");
+const panelHeaderEl = document.querySelector(".panel-header");
+const dragHandleEl = document.getElementById("dragHandle");
 
 const isEmbedded = window.parent !== window;
 const EXTRACTION_TIMEOUT_MS = 22000;
@@ -111,12 +113,67 @@ function resizeStandaloneWindow() {
   });
 }
 
+function initPanelDrag() {
+  if (!panelHeaderEl) return;
+
+  if (dragHandleEl) dragHandleEl.hidden = false;
+
+  let dragging = false;
+  let lastScreenX = 0;
+  let lastScreenY = 0;
+
+  panelHeaderEl.addEventListener("pointerdown", (event) => {
+    // Only start dragging on a primary-button press over the header itself,
+    // never over the close button or other interactive controls.
+    if (event.button !== 0 || event.target.closest("button")) return;
+
+    dragging = true;
+    lastScreenX = event.screenX;
+    lastScreenY = event.screenY;
+    panelHeaderEl.classList.add("is-dragging");
+    // Pointer capture keeps move/up events flowing to the iframe even when the
+    // cursor travels over the host page outside the panel bounds.
+    panelHeaderEl.setPointerCapture?.(event.pointerId);
+    window.parent.postMessage({ type: "prism-drag-start" }, "*");
+    event.preventDefault();
+  });
+
+  panelHeaderEl.addEventListener("pointermove", (event) => {
+    if (!dragging) return;
+    // Screen coordinates are frame-independent, so moving the panel does not
+    // feed back into the delta.
+    const dx = event.screenX - lastScreenX;
+    const dy = event.screenY - lastScreenY;
+    lastScreenX = event.screenX;
+    lastScreenY = event.screenY;
+    if (dx !== 0 || dy !== 0) {
+      window.parent.postMessage({ type: "prism-drag-move", dx, dy }, "*");
+    }
+  });
+
+  const stopDrag = (event) => {
+    if (!dragging) return;
+    dragging = false;
+    panelHeaderEl.classList.remove("is-dragging");
+    try {
+      panelHeaderEl.releasePointerCapture?.(event.pointerId);
+    } catch {
+      /* pointer already released */
+    }
+    window.parent.postMessage({ type: "prism-drag-end" }, "*");
+  };
+
+  panelHeaderEl.addEventListener("pointerup", stopDrag);
+  panelHeaderEl.addEventListener("pointercancel", stopDrag);
+}
+
 if (isEmbedded) {
   document.body.classList.add("embedded");
   closeBtn.hidden = false;
   closeBtn.addEventListener("click", () => {
     window.parent.postMessage({ type: "prism-close" }, "*");
   });
+  initPanelDrag();
   if (appEl) new ResizeObserver(reportHeight).observe(appEl);
   window.addEventListener("load", reportHeight);
   window.addEventListener("message", (event) => {

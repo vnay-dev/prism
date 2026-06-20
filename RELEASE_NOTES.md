@@ -1,5 +1,35 @@
 # Release notes
 
+## 0.2.2 — On-page font highlighting
+
+**Date:** June 20, 2026
+
+### New
+
+- **Font highlighting on the page** — select a family in the **Font families** tab to highlight every visible run of text that uses it, directly on the live page. Matches in the viewport appear first and more reveal as you scroll; the highlight clears when you deselect or close the panel.
+
+### Improved
+
+- **Palette image export** — the copied PNG now includes the site's logo and name as a header, renders at 4× (retina) resolution, and mirrors the on-screen bento layout exactly so the image matches what you see.
+- **Panel motion** — the panel opens and resizes with a smooth height animation that respects `prefers-reduced-motion`.
+- **Copy feedback** — the color copy button now reads **Copy to clipboard** and confirms with **Copied! Paste in Figma**.
+- **Dev build clarity** — unpacked development builds show a red **DEV** badge on the toolbar icon.
+
+### Technical
+
+- New `src/content/highlightFont.js` — CSS Highlight API with a span-wrap fallback for older engines.
+- New shared `src/popup/paletteLayout.js` — single source of bento geometry used by both the popup and the PNG export.
+- New release workflow: `bump-extension-version` skill, `scripts/sync-version.mjs`, and a blocking `pre-push` hook auto-installed via `npm prepare`.
+
+### Package
+
+```bash
+npm run package:store
+# → dist/prism-0.2.2.zip
+```
+
+---
+
 ## 0.2.1 — Rename to Prism
 
 **Date:** June 2026

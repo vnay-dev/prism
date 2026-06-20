@@ -322,7 +322,13 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
     }
     if (area > 0) return area;
 
-    const text = (el.textContent || "").trim();
+    // Fall back to an estimate, but only for this element's OWN text. Using
+    // el.textContent here would attribute descendant text — which child
+    // elements render in their own fonts — to this element, fabricating
+    // phantom font families for containers that merely set a font-family
+    // their children override (e.g. a button styled "Arial" whose label span
+    // actually renders in "Inter").
+    const text = textNodes.map((node) => node.textContent).join("").trim();
     if (!text.length) return 0;
 
     const fontSize = parsePx(styles.fontSize) || 16;
@@ -431,6 +437,12 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
     return match ? parseInt(match[1], 10) : null;
   }
 
+  function getAncestorHeadingLevel(el) {
+    if (!el || typeof el.closest !== "function") return null;
+    const heading = el.closest("h1, h2, h3, h4, h5, h6");
+    return heading ? getHeadingLevel(heading) : null;
+  }
+
   function getViewportVisibility(virtualRect, vh) {
     const visibleTop = Math.max(virtualRect.top, 0);
     const visibleBottom = Math.min(virtualRect.bottom, vh);
@@ -505,6 +517,7 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
   const areaContributions = new Map();
   const sections = [];
   const seenPerSection = new Set();
+  const panelHost = document.getElementById("prism-panel-host");
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   const maxScroll = Math.max(document.documentElement.scrollHeight, document.body?.scrollHeight || 0);
@@ -539,6 +552,10 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
     for (const el of nodes) {
       if (performance.now() - startedAt > maxMillis) return;
       if (count++ > limit) break;
+
+      // Never analyze Prism's own injected panel — its chrome (e.g. the host's
+      // `system-ui` font and white background) would otherwise pollute results.
+      if (panelHost && panelHost.contains(el)) continue;
 
       const styles = getComputedStyle(el);
       if (styles.display === "none" || styles.visibility === "hidden") continue;
@@ -635,9 +652,22 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
         contentZone
       );
       const fontBrandWeight = SOURCE_WEIGHT[fontSourceCategory] || SOURCE_WEIGHT.default;
-      const fontImportance = getImportance(el, virtualRect, sectionIndex, vh, contentZone);
+
+      // Display fonts are often applied to inline accents inside a heading
+      // (e.g. an <em> styled with a serif inside an <h1>). Such text is not a
+      // heading *tag*, so without this it scores like low-priority body copy
+      // and gets dropped from the curated set. Treat it as the heading it lives
+      // in so its distinct family surfaces.
+      const ownHeadingLevel = getHeadingLevel(el);
+      const headingLevel = ownHeadingLevel || getAncestorHeadingLevel(el);
+      const fontContext = headingLevel ? "heading" : textContext;
+
+      let fontImportance = getImportance(el, virtualRect, sectionIndex, vh, contentZone);
+      if (headingLevel && !ownHeadingLevel) {
+        const headingFloor = headingLevel <= 2 ? 60 : headingLevel <= 4 ? 10 : 3;
+        fontImportance = Math.max(fontImportance, headingFloor);
+      }
       const weightedFontImportance = fontImportance * fontBrandWeight;
-      const headingLevel = getHeadingLevel(el);
       const visibility = getViewportVisibility(virtualRect, vh);
       const textLength = (el.textContent || "").trim().length;
 
@@ -658,7 +688,7 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
         sourceCategory: fontSourceCategory,
         contentZone,
         sectionId,
-        context: textContext
+        context: fontContext
       });
     }
   }

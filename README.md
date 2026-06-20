@@ -2,7 +2,7 @@
 
 Chrome extension that extracts a curated **8-color design palette** and **font families** from any live web page. Colors are sampled from rendered DOM styles (backgrounds, text, borders, icons), clustered, scored, and assigned semantic roles. Typography is sampled from computed `font-family` and `font-weight` on visible text, then ranked and filtered so you get the families and weights that actually matter on the page.
 
-**Version:** 0.2.1 · [Release notes](./RELEASE_NOTES.md)
+**Version:** 0.2.2 · [Release notes](./RELEASE_NOTES.md)
 
 ## Features
 
@@ -10,7 +10,7 @@ Chrome extension that extracts a curated **8-color design palette** and **font f
 - Full-page virtual section scan with importance weighting (not just CSS variables)
 - Semantic role assignment — foundation, primary, secondary, accent, and neutral
 - Bento-style 8-swatch preview
-- Copy palette as a PNG image to the clipboard
+- Copy palette as a PNG image to the clipboard — includes the site logo and name, at retina resolution, matching the on-screen layout
 
 ### Font families
 - Same virtual section scan collects typography from visible text elements
@@ -18,6 +18,7 @@ Chrome extension that extracts a curated **8-color design palette** and **font f
 - Snaps weights to standard CSS values (400, 500, 600, …) and filters insignificant outliers
 - Filters emoji and generic system fallbacks where possible
 - Per-family copy button (family name to clipboard)
+- Highlight a family on the live page — select a font card to mark every visible run of text that uses it (more reveal as you scroll)
 
 ### Panel
 - Two tabs: **Color palette** and **Font families** — separate extract and reset flows per tab
@@ -36,7 +37,7 @@ Chrome extension that extracts a curated **8-color design palette** and **font f
 2. Click the **Prism** extension icon to open the panel.
 3. Choose a tab:
    - **Color palette** — click **Extract color palette**, then **Copy palette** to paste the PNG into Figma or another tool.
-   - **Font families** — click **Extract font families**, then use the copy icon on any card to copy that family name.
+   - **Font families** — click **Extract font families**, then use the copy icon on any card to copy that family name, or select a card to highlight that font's text on the page.
 4. Wait for the scan to finish (~10–20 seconds on long pages).
 
 See [RELEASE_NOTES.md](./RELEASE_NOTES.md) for version history and store publish notes.
@@ -49,7 +50,7 @@ Build an upload-ready ZIP (runtime files only — no tests, scripts, or `node_mo
 npm run package:store
 ```
 
-Output: `dist/prism-0.2.1.zip`
+Output: `dist/prism-0.2.2.zip`
 
 **Privacy policy:** See [PRIVACY.md](./PRIVACY.md). Host it at a public URL (for example GitHub Pages on this repo) and paste that link into the Chrome Web Store listing.
 

@@ -51,11 +51,16 @@
       pointer-events: auto;
       border-radius: 12px;
       overflow: hidden;
-      background: #ffffff;
+      background: #fefefe;
       box-shadow:
         0 8px 28px rgba(15, 23, 42, 0.14),
         0 2px 8px rgba(15, 23, 42, 0.08);
       border: 1px solid rgba(15, 23, 42, 0.06);
+    }
+    #${HOST_ID} .prism-panel-shell.is-dragging {
+      box-shadow:
+        0 18px 48px rgba(15, 23, 42, 0.22),
+        0 6px 16px rgba(15, 23, 42, 0.12);
     }
     #${HOST_ID} .prism-panel-frame {
       display: block;
@@ -63,7 +68,7 @@
       height: 0;
       border: 0;
       border-radius: 12px;
-      background: #ffffff;
+      background: #fefefe;
       vertical-align: top;
       transition: height 220ms cubic-bezier(0.4, 0, 0.2, 1);
       will-change: height;
@@ -89,12 +94,76 @@
 
   let hasSized = false;
 
+  // Dragging state. The panel opens pinned to the top-right via `right`/`top`.
+  // On the first drag we switch to explicit `left`/`top` coordinates so the
+  // user can move it anywhere and keep their extraction results visible.
+  const EDGE_GAP = 8;
+  let dragLeft = null;
+  let dragTop = null;
+
+  function clampToViewport(left, top) {
+    const width = shell.offsetWidth || 380;
+    const height = shell.offsetHeight || 0;
+    const maxLeft = Math.max(window.innerWidth - width - EDGE_GAP, EDGE_GAP);
+    const maxTop = Math.max(window.innerHeight - height - EDGE_GAP, EDGE_GAP);
+    return {
+      left: Math.min(Math.max(left, EDGE_GAP), maxLeft),
+      top: Math.min(Math.max(top, EDGE_GAP), maxTop)
+    };
+  }
+
+  function applyDragPosition() {
+    if (dragLeft === null || dragTop === null) return;
+    const { left, top } = clampToViewport(dragLeft, dragTop);
+    dragLeft = left;
+    dragTop = top;
+    shell.style.left = `${left}px`;
+    shell.style.top = `${top}px`;
+    shell.style.right = "auto";
+  }
+
+  function beginDrag() {
+    const rect = shell.getBoundingClientRect();
+    dragLeft = rect.left;
+    dragTop = rect.top;
+    shell.classList.add("is-dragging");
+    applyDragPosition();
+  }
+
+  function moveDrag(dx, dy) {
+    if (dragLeft === null || dragTop === null) return;
+    dragLeft += dx;
+    dragTop += dy;
+    applyDragPosition();
+  }
+
+  function endDrag() {
+    shell.classList.remove("is-dragging");
+  }
+
+  window.addEventListener("resize", () => {
+    // Keep a dragged panel on-screen when the viewport changes.
+    applyDragPosition();
+  });
+
   window.addEventListener("message", (event) => {
     if (event.source !== iframe.contentWindow) return;
-    const { type, height } = event.data || {};
+    const { type, height, dx, dy } = event.data || {};
     if (type === "prism-close") {
       window.__prismClearFontHighlight?.();
       host.remove();
+      return;
+    }
+    if (type === "prism-drag-start") {
+      beginDrag();
+      return;
+    }
+    if (type === "prism-drag-move") {
+      moveDrag(typeof dx === "number" ? dx : 0, typeof dy === "number" ? dy : 0);
+      return;
+    }
+    if (type === "prism-drag-end") {
+      endDrag();
       return;
     }
     if (type === "prism-resize" && typeof height === "number") {
@@ -112,6 +181,10 @@
       }
 
       iframe.style.height = nextHeight;
+
+      // If the user has dragged the panel, re-clamp so a taller panel does not
+      // grow off the bottom of the screen.
+      requestAnimationFrame(applyDragPosition);
     }
   });
 })();

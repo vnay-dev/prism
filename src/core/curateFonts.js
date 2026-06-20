@@ -3,6 +3,7 @@ import {
   formatFontRole,
   formatWeightsList,
   isEmojiFont,
+  isGenericFamily,
   isSystemFont,
   normalizeFontKey,
   normalizeFontWeight,
@@ -35,6 +36,14 @@ const HEADING_LEVEL_WEIGHT = {
 
 const HEADING_SOURCES = new Set(["hero_cta", "hero_background", "navigation", "logo", "primary_button"]);
 const UI_SOURCES = new Set(["navigation", "primary_button", "hero_cta"]);
+
+// A page commonly uses more than three distinct fonts (e.g. a display heading,
+// body, a mono/code face, and an accent). Cap the surfaced set generously and
+// keep any family that holds a meaningful share of on-page text so distinct
+// fonts aren't silently dropped.
+const MAX_FONTS = 6;
+const MIN_AREA_SHARE = 0.01;
+const MIN_SCORE_SHARE = 0.02;
 
 function sampleScore(sample) {
   const contextWeight = CONTEXT_WEIGHT[sample.context] || CONTEXT_WEIGHT.other;
@@ -197,6 +206,21 @@ function selectSignificantWeights(entry) {
   return significant.map((bucket) => bucket.weight);
 }
 
+function selectSignificantFamilies(aggregated) {
+  if (!aggregated.length) return [];
+
+  const totalArea = aggregated.reduce((sum, entry) => sum + (entry.totalArea || 0), 0) || 1;
+  const topScore = aggregated.reduce((max, entry) => Math.max(max, entry.totalScore || 0), 0);
+
+  const significant = aggregated.filter((entry) => {
+    const areaShare = (entry.totalArea || 0) / totalArea;
+    const scoreShare = topScore ? (entry.totalScore || 0) / topScore : 0;
+    return areaShare >= MIN_AREA_SHARE || scoreShare >= MIN_SCORE_SHARE;
+  });
+
+  return significant.length ? significant : aggregated.slice(0, 1);
+}
+
 function pickDistinct(candidates, usedKeys, scoreFn) {
   for (const entry of [...candidates].sort((a, b) => scoreFn(b) - scoreFn(a))) {
     const key = normalizeFontKey(entry.family);
@@ -236,19 +260,23 @@ export function curateFonts(extraction) {
       family: sample.family || resolvePrimaryFont(parseFontStackFallback(sample.stack || sample.fontFamily)),
       weight: normalizeFontWeight(sample.weight)
     }))
-    .filter((sample) => sample.family && !isEmojiFont(sample.family));
+    .filter(
+      (sample) =>
+        sample.family && !isEmojiFont(sample.family) && !isGenericFamily(sample.family)
+    );
 
   if (!fontSamples.length && !tokenHints.length) {
     return { fonts: [], hasFonts: false };
   }
 
   const aggregated = aggregateFamilies(fontSamples, sectionCount);
+  const significant = selectSignificantFamilies(aggregated);
   const usedKeys = new Set();
   const fonts = [];
 
   const primary =
-    pickDistinct(aggregated, usedKeys, (entry) => entry.headingScore || entry.totalScore) ||
-    pickDistinct(aggregated, usedKeys, (entry) => entry.totalScore);
+    pickDistinct(significant, usedKeys, (entry) => entry.headingScore || entry.totalScore) ||
+    pickDistinct(significant, usedKeys, (entry) => entry.totalScore);
 
   if (primary) {
     usedKeys.add(normalizeFontKey(primary.family));
@@ -257,10 +285,10 @@ export function curateFonts(extraction) {
 
   const secondary =
     pickDistinct(
-      aggregated.filter((entry) => entry.textScore > 0),
+      significant.filter((entry) => entry.textScore > 0),
       usedKeys,
       (entry) => entry.textScore
-    ) || pickDistinct(aggregated, usedKeys, (entry) => entry.totalScore);
+    ) || pickDistinct(significant, usedKeys, (entry) => entry.totalScore);
 
   if (secondary) {
     usedKeys.add(normalizeFontKey(secondary.family));
@@ -268,7 +296,7 @@ export function curateFonts(extraction) {
   }
 
   const tertiary = pickDistinct(
-    aggregated.filter((entry) => entry.uiScore > 0),
+    significant.filter((entry) => entry.uiScore > 0),
     usedKeys,
     (entry) => entry.uiScore
   );
@@ -277,18 +305,27 @@ export function curateFonts(extraction) {
     fonts.push(buildFontResult(tertiary, "tertiary"));
   }
 
+  // Include every remaining significant family so genuinely-used fonts (a code
+  // face, a second display font, etc.) aren't dropped just because the first
+  // three roles were already filled.
+  for (const entry of [...significant].sort((a, b) => b.totalScore - a.totalScore)) {
+    if (fonts.length >= MAX_FONTS) break;
+    const key = normalizeFontKey(entry.family);
+    if (usedKeys.has(key)) continue;
+    usedKeys.add(key);
+    fonts.push(buildFontResult(entry, "supporting"));
+  }
+
   for (const token of tokenHints) {
+    if (fonts.length >= MAX_FONTS) break;
     const key = normalizeFontKey(token.family);
-    if (!key || usedKeys.has(key)) continue;
+    if (!key || usedKeys.has(key) || isGenericFamily(token.family)) continue;
 
     const match = aggregated.find((entry) => normalizeFontKey(entry.family) === key);
     if (!match || match.totalScore < 1) continue;
 
-    const role = fonts.length === 0 ? "primary" : fonts.length === 1 ? "secondary" : "tertiary";
-    if (fonts.length >= 3) break;
-
     usedKeys.add(key);
-    fonts.push(buildFontResult(match, role));
+    fonts.push(buildFontResult(match, "supporting"));
   }
 
   return {
