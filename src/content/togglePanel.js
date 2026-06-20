@@ -2,6 +2,7 @@
   const HOST_ID = "prism-panel-host";
   const existing = document.getElementById(HOST_ID);
   if (existing) {
+    window.__prismClearFontHighlight?.();
     existing.remove();
     return;
   }
@@ -64,27 +65,53 @@
       border-radius: 12px;
       background: #ffffff;
       vertical-align: top;
+      transition: height 220ms cubic-bezier(0.4, 0, 0.2, 1);
+      will-change: height;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #${HOST_ID} .prism-panel-frame {
+        transition: none;
+      }
     }
   `;
 
   host.appendChild(style);
   document.documentElement.appendChild(host);
 
-  backdrop.addEventListener("click", () => host.remove());
+  backdrop.addEventListener("click", () => {
+    window.__prismClearFontHighlight?.();
+    host.remove();
+  });
 
   iframe.addEventListener("load", () => {
     iframe.contentWindow?.postMessage({ type: "prism-request-resize" }, "*");
   });
 
+  let hasSized = false;
+
   window.addEventListener("message", (event) => {
     if (event.source !== iframe.contentWindow) return;
     const { type, height } = event.data || {};
     if (type === "prism-close") {
+      window.__prismClearFontHighlight?.();
       host.remove();
       return;
     }
     if (type === "prism-resize" && typeof height === "number") {
-      iframe.style.height = `${Math.min(Math.max(height, 1), 720)}px`;
+      const nextHeight = `${Math.min(Math.max(height, 1), 720)}px`;
+
+      if (!hasSized) {
+        // Apply the initial size instantly so the panel opens at its natural
+        // height instead of animating up from zero.
+        hasSized = true;
+        iframe.style.transition = "none";
+        iframe.style.height = nextHeight;
+        void iframe.offsetHeight;
+        iframe.style.transition = "";
+        return;
+      }
+
+      iframe.style.height = nextHeight;
     }
   });
 })();

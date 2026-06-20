@@ -2,6 +2,7 @@ import { curatePalette } from "../core/scoreAndCluster.js";
 import { assignRoles } from "../core/assignRoles.js";
 import { curateFonts } from "../core/curateFonts.js";
 import { copyPaletteImage, readPageMetaFromTab } from "./exportPaletteImage.js";
+import { buildBentoRows, isLightSwatch } from "./paletteLayout.js";
 import { getTargetTab } from "./tabs.js";
 import {
   ERROR_MESSAGES,
@@ -52,7 +53,7 @@ const MODE_COPY = {
   colors: {
     extractLabel: "Extract color palette",
     extractIcon: "palette",
-    copyLabel: "Copy palette",
+    copyLabel: "Copy to clipboard",
     intro: "Extract the color palette used on this webpage",
     loadingStart: "Scanning colors on the page…",
     loadingBuild: "Creating the color palette…"
@@ -69,10 +70,11 @@ const MODE_COPY = {
 let activeMode = "colors";
 let currentPalette = [];
 let currentFonts = [];
-let exportPageMeta = { title: "", siteName: "", hostname: "", url: "" };
+let highlightedFontFamily = null;
+let exportPageMeta = { title: "", siteName: "", hostname: "", url: "", iconDataUrl: "" };
 let copyFeedbackTimer = null;
 
-const COPY_LABEL_COPIED = "Copied!";
+const COPY_LABEL_COPIED = "Copied! Paste in Figma";
 const COPY_LABEL_FAILED = "Copy failed";
 const COPY_ICON_DEFAULT = "content_copy";
 const COPY_ICON_COPIED = "check";
@@ -151,7 +153,7 @@ function flashCopyFeedback(success) {
   );
   copyFeedbackTimer = setTimeout(() => {
     setCopyButtonState(modeConfig().copyLabel, COPY_ICON_DEFAULT);
-  }, 2200);
+  }, 3500);
 }
 
 function applyTabVisuals() {
@@ -199,19 +201,6 @@ function updateFooterForMode() {
 
 function hasResultsForMode(mode) {
   return mode === "colors" ? currentPalette.length > 0 : currentFonts.length > 0;
-}
-
-const ROLE_ORDER = ["foundation", "primary", "secondary", "accent", "neutral"];
-const HERO_HEIGHT = 100;
-const ROW_HEIGHT = HERO_HEIGHT / 2;
-
-function isLightSwatch(hex) {
-  const value = hex.replace("#", "");
-  if (value.length !== 6) return false;
-  const r = parseInt(value.slice(0, 2), 16);
-  const g = parseInt(value.slice(2, 4), 16);
-  const b = parseInt(value.slice(4, 6), 16);
-  return r >= 248 && g >= 248 && b >= 248;
 }
 
 function clearError() {
@@ -317,6 +306,10 @@ function resetCurrentMode() {
   clearTimeout(copyFeedbackTimer);
   setCopyButtonState(modeConfig().copyLabel, COPY_ICON_DEFAULT);
 
+  if (activeMode === "fonts") {
+    clearFontHighlightOnPage();
+  }
+
   if (activeMode === "colors") {
     currentPalette = [];
     swatchesEl.innerHTML = "";
@@ -332,37 +325,6 @@ function resetCurrentMode() {
     setIntroState();
   }
   reportHeight();
-}
-
-function buildBentoRows(swatches) {
-  const byRole = {};
-  for (const role of ROLE_ORDER) byRole[role] = swatches.filter((s) => s.role === role);
-
-  const rows = [];
-
-  if (byRole.foundation.length) {
-    rows.push({ tiles: byRole.foundation, height: HERO_HEIGHT });
-  }
-
-  if (byRole.primary.length) {
-    rows.push({ tiles: byRole.primary, height: HERO_HEIGHT });
-  }
-
-  const loneTiles = [];
-  for (const role of ROLE_ORDER.filter((r) => r !== "foundation" && r !== "primary")) {
-    const tiles = byRole[role];
-    if (tiles.length >= 2) {
-      rows.push({ tiles, height: ROW_HEIGHT });
-    } else if (tiles.length === 1) {
-      loneTiles.push(tiles[0]);
-    }
-  }
-
-  for (let i = 0; i < loneTiles.length; i += 4) {
-    rows.push({ tiles: loneTiles.slice(i, i + 4), height: ROW_HEIGHT });
-  }
-
-  return rows;
 }
 
 function renderSwatches(swatches) {
@@ -388,14 +350,111 @@ function renderSwatches(swatches) {
 }
 
 function flashFontCopyFeedback(button, success) {
-  const icon = button.querySelector(".material-symbols-outlined");
-  if (!icon) return;
+  if (!button) return;
 
-  const previous = icon.textContent;
-  icon.textContent = success ? COPY_ICON_COPIED : COPY_ICON_FAILED;
-  window.setTimeout(() => {
-    icon.textContent = previous;
+  clearTimeout(button._copyFeedbackTimer);
+
+  const previousHtml = button.innerHTML;
+  const previousTitle = button.title;
+  const label = success ? COPY_LABEL_COPIED : COPY_LABEL_FAILED;
+
+  button.innerHTML = `<span class="font-copy-label">${label}</span>`;
+  button.classList.add("is-feedback");
+  button.title = label;
+
+  button._copyFeedbackTimer = window.setTimeout(() => {
+    button.innerHTML = previousHtml;
+    button.title = previousTitle;
+    button.classList.remove("is-feedback");
+    button._copyFeedbackTimer = null;
   }, 2000);
+}
+
+async function runHighlightScript(callback, args = []) {
+  const tab = await getTargetTab();
+  if (!tab?.id || isUnsupportedPageUrl(tab.url || "")) return null;
+
+  await chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    files: ["src/content/highlightFont.js"]
+  });
+
+  const [injection] = await chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    func: callback,
+    args
+  });
+
+  return injection?.result ?? null;
+}
+
+async function clearFontHighlightOnPage() {
+  try {
+    await runHighlightScript(() => window.__prismClearFontHighlight());
+  } catch {
+    /* tab may be unavailable */
+  }
+  setHighlightedFontCard(null);
+}
+
+function setHighlightedFontCard(family) {
+  highlightedFontFamily = family || null;
+  fontsEl?.querySelectorAll(".font-card").forEach((card) => {
+    const active = Boolean(family && card.dataset.fontFamily === family);
+    const checkbox = card.querySelector(".font-select-checkbox");
+    if (checkbox) checkbox.checked = active;
+  });
+}
+
+async function selectFontHighlight(family, selected) {
+  if (!selected) {
+    if (highlightedFontFamily === family) {
+      await clearFontHighlightOnPage();
+    }
+    return;
+  }
+
+  if (highlightedFontFamily === family) return;
+
+  const previousFamily = highlightedFontFamily;
+
+  try {
+    const result = await runHighlightScript((fontFamily) => window.__prismHighlightFont(fontFamily), [family]);
+    if (!result || result.count === 0) {
+      const card = fontsEl?.querySelector(`[data-font-family="${CSS.escape(family)}"]`);
+      const checkbox = card?.querySelector(".font-select-checkbox");
+      if (checkbox) checkbox.checked = false;
+
+      if (previousFamily) {
+        await runHighlightScript((fontFamily) => window.__prismHighlightFont(fontFamily), [previousFamily]);
+        setHighlightedFontCard(previousFamily);
+      } else {
+        await clearFontHighlightOnPage();
+      }
+
+      showBanner(`No visible text found for “${family}” on this page.`, { guidance: false });
+      return;
+    }
+    setHighlightedFontCard(family);
+  } catch (error) {
+    const card = fontsEl?.querySelector(`[data-font-family="${CSS.escape(family)}"]`);
+    const checkbox = card?.querySelector(".font-select-checkbox");
+    if (checkbox) checkbox.checked = false;
+
+    if (previousFamily) {
+      try {
+        await runHighlightScript((fontFamily) => window.__prismHighlightFont(fontFamily), [previousFamily]);
+        setHighlightedFontCard(previousFamily);
+      } catch {
+        await clearFontHighlightOnPage();
+      }
+    } else {
+      await clearFontHighlightOnPage();
+    }
+
+    const message = normalizeUserMessage(error?.message) || ERROR_MESSAGES.INJECTION_FAILED;
+    showBanner(message, { guidance: false });
+  }
 }
 
 async function copyFontFamily(family, button) {
@@ -411,10 +470,24 @@ async function copyFontFamily(family, button) {
 
 function renderFonts(fonts) {
   fontsEl.innerHTML = "";
+  const activeHighlight = highlightedFontFamily;
 
   for (const font of fonts) {
     const card = document.createElement("article");
     card.className = "font-card";
+    card.dataset.fontFamily = font.family;
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.className = "font-select-checkbox";
+    checkbox.checked = activeHighlight === font.family;
+    checkbox.setAttribute("aria-label", `Highlight text using ${font.family}`);
+    checkbox.addEventListener("change", () => {
+      selectFontHighlight(font.family, checkbox.checked);
+    });
+
+    const titleRow = document.createElement("div");
+    titleRow.className = "font-title-row";
 
     const copyButton = document.createElement("button");
     copyButton.type = "button";
@@ -422,7 +495,9 @@ function renderFonts(fonts) {
     copyButton.setAttribute("aria-label", `Copy ${font.family}`);
     copyButton.title = "Copy font family";
     copyButton.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">content_copy</span>';
-    copyButton.addEventListener("click", () => copyFontFamily(font.family, copyButton));
+    copyButton.addEventListener("click", () => {
+      copyFontFamily(font.family, copyButton);
+    });
 
     const sample = document.createElement("p");
     sample.className = "font-sample";
@@ -432,13 +507,20 @@ function renderFonts(fonts) {
     weights.className = "font-weights";
     weights.textContent = `Weights: ${font.weightsLabel || font.weight || 400}`;
 
-    card.append(copyButton, sample, weights);
+    titleRow.append(checkbox, sample);
+    card.append(copyButton, titleRow, weights);
     fontsEl.appendChild(card);
   }
 }
 
 function switchMode(mode) {
   if ((mode !== "colors" && mode !== "fonts") || mode === activeMode) return;
+
+  appEl.classList.add("is-switching");
+
+  if (activeMode === "fonts" && mode === "colors") {
+    clearFontHighlightOnPage();
+  }
 
   activeMode = mode;
   applyTabVisuals();
@@ -457,6 +539,12 @@ function switchMode(mode) {
   }
 
   updateFooterForMode();
+
+  // Commit the new footer styles with transitions disabled so the shared
+  // reset/copy buttons swap instantly instead of animating (flicker).
+  void appEl.offsetWidth;
+  appEl.classList.remove("is-switching");
+
   reportHeight();
 }
 

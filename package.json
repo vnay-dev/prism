@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "prepare": "node scripts/install-hooks.mjs",
     "test": "node --test",
     "test:benchmark": "node --test tests/benchmark.test.js",
     "benchmark:lock": "node scripts/generate-benchmark-lockfile.mjs",

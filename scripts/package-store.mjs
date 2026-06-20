@@ -3,9 +3,19 @@
  * Output: dist/prism-<version>.zip
  */
 import { spawnSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, statSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync
+} from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+
+const PROD_NAME = "Prism";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const manifest = JSON.parse(readFileSync(join(root, "manifest.json"), "utf8"));
@@ -38,7 +48,15 @@ function stageFiles() {
   rmSync(stagingDir, { recursive: true, force: true });
   mkdirSync(stagingDir, { recursive: true });
 
-  cpSync(join(root, "manifest.json"), join(stagingDir, "manifest.json"));
+  const prodManifest = { ...manifest, name: PROD_NAME };
+  if (prodManifest.action) {
+    prodManifest.action = { ...prodManifest.action, default_title: PROD_NAME };
+  }
+  writeFileSync(
+    join(stagingDir, "manifest.json"),
+    `${JSON.stringify(prodManifest, null, 2)}\n`
+  );
+
   cpSync(join(root, "icons"), join(stagingDir, "icons"), { recursive: true });
   cpSync(join(root, "src"), join(stagingDir, "src"), { recursive: true });
 }
