@@ -42,6 +42,66 @@
     return families[0];
   }
 
+  // Detect whether a declared family is actually installed/loaded. Mirrors the
+  // canvas detection used during extraction so the font we highlight matches
+  // the font we reported, even when the page lists an unavailable brand font
+  // ahead of the one the browser really renders.
+  const fontAvailabilityCache = new Map();
+  const FONT_DETECT_BASELINES = ["monospace", "sans-serif", "serif"];
+  const FONT_DETECT_STRING = "mmmmmmmmmmlliWWWaaaggg0123456789";
+  const FONT_DETECT_PX = "72px";
+  let fontDetectCtx = null;
+  let fontBaselineWidths = null;
+
+  function ensureFontDetect() {
+    if (fontDetectCtx) return true;
+    try {
+      const canvas = document.createElement("canvas");
+      fontDetectCtx = canvas.getContext("2d");
+      if (!fontDetectCtx) return false;
+      fontBaselineWidths = {};
+      for (const base of FONT_DETECT_BASELINES) {
+        fontDetectCtx.font = `${FONT_DETECT_PX} ${base}`;
+        fontBaselineWidths[base] = fontDetectCtx.measureText(FONT_DETECT_STRING).width;
+      }
+      return true;
+    } catch (_err) {
+      fontDetectCtx = null;
+      return false;
+    }
+  }
+
+  function isFontAvailable(family) {
+    if (!family) return false;
+    const key = family.toLowerCase();
+    if (GENERIC_FAMILIES.has(key)) return true;
+    if (fontAvailabilityCache.has(key)) return fontAvailabilityCache.get(key);
+    if (!ensureFontDetect()) {
+      fontAvailabilityCache.set(key, true);
+      return true;
+    }
+    let available = false;
+    const escaped = family.replace(/(['"\\])/g, "\\$1");
+    for (const base of FONT_DETECT_BASELINES) {
+      fontDetectCtx.font = `${FONT_DETECT_PX} "${escaped}", ${base}`;
+      if (fontDetectCtx.measureText(FONT_DETECT_STRING).width !== fontBaselineWidths[base]) {
+        available = true;
+        break;
+      }
+    }
+    fontAvailabilityCache.set(key, available);
+    return available;
+  }
+
+  function resolveRenderedFont(families) {
+    if (!families.length) return "";
+    for (const family of families) {
+      if (GENERIC_FAMILIES.has(family.toLowerCase())) continue;
+      if (isFontAvailable(family)) return family;
+    }
+    return resolvePrimaryFont(families);
+  }
+
   function normalizeFontKey(family) {
     return (family || "").trim().toLowerCase();
   }
@@ -49,11 +109,12 @@
   function fontMatchesTarget(computedFamily, targetKey) {
     const stack = parseFontStack(computedFamily);
     if (!stack.length) return false;
-    // Match only the rendered (primary) font, not fallbacks further down the
-    // stack. A declaration like `Inter, "Inter Fallback Arial", Arial` renders
-    // as Inter, so it must not also match a separate "Arial" selection — that
-    // would highlight the same text for two different families.
-    return normalizeFontKey(resolvePrimaryFont(stack)) === targetKey;
+    // Match only the rendered font, not fallbacks further down the stack, and
+    // not a leading brand font the browser can't actually display. A
+    // declaration like `Inter, "Inter Fallback Arial", Arial` renders as Inter,
+    // so it must not also match a separate "Arial" selection — that would
+    // highlight the same text for two different families.
+    return normalizeFontKey(resolveRenderedFont(stack)) === targetKey;
   }
 
   function supportsHighlightApi() {

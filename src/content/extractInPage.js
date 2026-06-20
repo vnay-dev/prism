@@ -423,6 +423,73 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
     return families[0];
   }
 
+  // Canvas-based detection of whether a font family is actually installed or
+  // loaded. A declared family is only rendered if the browser actually has it;
+  // otherwise the glyph metrics fall back to the generic baseline and match it.
+  const fontAvailabilityCache = new Map();
+  const FONT_DETECT_BASELINES = ["monospace", "sans-serif", "serif"];
+  const FONT_DETECT_STRING = "mmmmmmmmmmlliWWWaaaggg0123456789";
+  const FONT_DETECT_PX = "72px";
+  let fontDetectCtx = null;
+  let fontBaselineWidths = null;
+
+  function ensureFontDetect() {
+    if (fontDetectCtx) return true;
+    try {
+      const canvas = document.createElement("canvas");
+      fontDetectCtx = canvas.getContext("2d");
+      if (!fontDetectCtx) return false;
+      fontBaselineWidths = {};
+      for (const base of FONT_DETECT_BASELINES) {
+        fontDetectCtx.font = `${FONT_DETECT_PX} ${base}`;
+        fontBaselineWidths[base] = fontDetectCtx.measureText(FONT_DETECT_STRING).width;
+      }
+      return true;
+    } catch (_err) {
+      fontDetectCtx = null;
+      return false;
+    }
+  }
+
+  function isFontAvailable(family) {
+    if (!family) return false;
+    const key = family.toLowerCase();
+    if (GENERIC_FAMILIES.has(key)) return true;
+    if (fontAvailabilityCache.has(key)) return fontAvailabilityCache.get(key);
+    if (!ensureFontDetect()) {
+      // Detection unavailable — assume present so we don't drop real fonts.
+      fontAvailabilityCache.set(key, true);
+      return true;
+    }
+    let available = false;
+    const escaped = family.replace(/(['"\\])/g, "\\$1");
+    for (const base of FONT_DETECT_BASELINES) {
+      fontDetectCtx.font = `${FONT_DETECT_PX} "${escaped}", ${base}`;
+      if (fontDetectCtx.measureText(FONT_DETECT_STRING).width !== fontBaselineWidths[base]) {
+        available = true;
+        break;
+      }
+    }
+    fontAvailabilityCache.set(key, available);
+    return available;
+  }
+
+  // Resolve the family the browser *actually renders* rather than the first
+  // name declared in the CSS stack. Pages frequently list a brand font that the
+  // visitor doesn't have installed (e.g. "Mona Sans", "Segoe UI", sans-serif);
+  // the browser silently falls back to the next available family, so reporting
+  // the first declared name would be wrong.
+  function resolveRenderedFont(families) {
+    if (!families.length) return "";
+    for (const family of families) {
+      if (GENERIC_FAMILIES.has(family.toLowerCase())) continue;
+      if (isFontAvailable(family)) return family;
+    }
+    // Nothing in the stack is installed/loaded — fall back to the page's
+    // intended primary so we at least surface what it was reaching for.
+    return resolvePrimaryFont(families);
+  }
+
   function normalizeFontWeight(weight) {
     if (weight == null || weight === "") return 400;
     const value = String(weight).trim().toLowerCase();
@@ -474,7 +541,7 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
     for (const name of varNames) {
       const value = root.getPropertyValue(name).trim();
       if (!value) continue;
-      const family = resolvePrimaryFont(parseFontStack(value));
+      const family = resolveRenderedFont(parseFontStack(value));
       const key = family.toLowerCase();
       if (!family || seen.has(key)) continue;
       seen.add(key);
@@ -634,7 +701,7 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
       const textArea = measureTextArea(el, styles);
       if (textArea <= 0) continue;
 
-      const family = resolvePrimaryFont(parseFontStack(styles.fontFamily));
+      const family = resolveRenderedFont(parseFontStack(styles.fontFamily));
       if (!family) continue;
 
       const textContext = getContext(el, "color");
