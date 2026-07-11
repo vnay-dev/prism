@@ -38,6 +38,7 @@ body {
 .app {
   width: 380px;
   padding: 16px;
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -85,6 +86,10 @@ body.standalone-window .app.state-guidance #intro {
   background: #f4f6fa;
   flex-shrink: 0;
   isolation: isolate;
+}
+
+.app.state-results .tab-bar {
+  margin-bottom: 8px;
 }
 
 .tab-indicator {
@@ -302,6 +307,14 @@ body.embedded .panel-header.is-dragging {
   flex: 1;
 }
 
+.app.mode-fonts #shuffleBtn {
+  display: none;
+}
+
+#shuffleBtn.is-shuffling .material-symbols-outlined {
+  animation: prism-spin 0.5s linear infinite;
+}
+
 .material-symbols-outlined {
   font-family: "Material Symbols Outlined";
   font-weight: normal;
@@ -502,6 +515,55 @@ button:focus-visible {
   display: none;
 }
 
+.results-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.results-toolbar .status {
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-toolbar {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid #d8dde8;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #3d4455;
+  font-family: "Google Sans", sans-serif;
+  font-size: 11px;
+  font-weight: var(--btn-font-weight);
+  padding: 5px 11px 5px 9px;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, transform 80ms ease, opacity 120ms ease;
+}
+
+.btn-toolbar .material-symbols-outlined {
+  font-size: 15px;
+}
+
+.btn-toolbar:hover:not(:disabled) {
+  background: #f4f6fa;
+  border-color: #c5ccd9;
+}
+
+.btn-toolbar:active:not(:disabled) {
+  background: #ebeef5;
+  transform: scale(0.96);
+}
+
+.btn-toolbar[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .swatches {
   display: flex;
   flex-direction: column;
@@ -517,7 +579,7 @@ button:focus-visible {
 .swatch {
   flex: 1;
   border-radius: 6px;
-  overflow: hidden;
+  overflow: visible;
   border: 0;
   position: relative;
   cursor: default;
@@ -528,29 +590,337 @@ button:focus-visible {
   border: 1px solid #e4e7ee;
 }
 
-.swatch::after {
-  content: attr(data-tooltip);
+.swatch-tooltip {
   position: absolute;
-  left: 8px;
-  bottom: 8px;
+  left: 50%;
+  bottom: calc(100% + 4px);
+  transform: translateX(-50%) translateY(4px) scale(0.96);
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: 4px;
+  background: rgba(18, 20, 28, 0.92);
+  color: #f5f7fb;
   font-size: 11px;
+  font-weight: 500;
   font-family: inherit;
-  line-height: 1.2;
-  background: rgba(12, 15, 24, 0.9);
-  color: #f4f7ff;
-  border: 1px solid rgba(120, 133, 171, 0.45);
+  letter-spacing: 0.04em;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  z-index: 5;
+  box-shadow: none;
+  will-change: opacity, transform;
+  transition:
+    opacity 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0ms linear 240ms;
+}
+
+.swatch-dark .swatch-tooltip {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+}
+
+.swatch:hover .swatch-tooltip,
+.swatch:focus-within .swatch-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0) scale(1);
+  transition:
+    opacity 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0ms linear 0ms;
+}
+
+.swatch.is-editing .swatch-tooltip {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-50%) translateY(4px) scale(0.98);
+  transition:
+    opacity 180ms cubic-bezier(0.4, 0, 1, 1),
+    transform 200ms cubic-bezier(0.4, 0, 1, 1),
+    visibility 0ms linear 180ms;
+}
+
+.swatch-meta {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
   opacity: 0;
   transform: translateY(4px);
   pointer-events: none;
   transition: opacity 120ms ease, transform 120ms ease;
-  white-space: nowrap;
+  z-index: 2;
 }
 
-.swatch:hover::after {
+.swatch:hover .swatch-meta,
+.swatch:focus-within .swatch-meta,
+.swatch.is-editing .swatch-meta {
   opacity: 1;
   transform: translateY(0);
+  pointer-events: auto;
+}
+
+.swatch-edit-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(12, 15, 24, 0.55);
+  color: #f4f7ff;
+  cursor: pointer;
+  transition: background 120ms ease, box-shadow 120ms ease;
+}
+
+.swatch-dark .swatch-edit-btn {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+}
+
+.swatch-edit-btn:hover {
+  background: rgba(12, 15, 24, 0.82);
+}
+
+.swatch-dark .swatch-edit-btn:hover {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.72);
+}
+
+.swatch-edit-btn .material-symbols-outlined {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.color-picker {
+  position: absolute;
+  z-index: 40;
+  width: 240px;
+  padding: 8px 12px 12px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e6e9f0;
+  box-shadow: 0 12px 32px rgba(20, 24, 36, 0.16), 0 2px 8px rgba(20, 24, 36, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  user-select: none;
+  cursor: pointer;
+}
+
+.cp-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin: 0 -4px -4px;
+  min-height: 24px;
+}
+
+.cp-close {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #6b7285;
+  cursor: pointer;
+  padding: 0;
+}
+
+.cp-close:hover {
+  background: #f3f5f8;
+  color: #1a1d26;
+}
+
+.cp-close .material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-size: 18px;
+  font-variation-settings: "FILL" 0, "wght" var(--icon-weight), "GRAD" 0, "opsz" 20;
+  line-height: 1;
+}
+
+.cp-sv-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.cp-sv {
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  /* Single painted surface — avoids Chrome's jagged overflow+radius clipping
+     that stacked gradient layers used to cause on the corners. */
+  background-image:
+    linear-gradient(to top, #000, transparent),
+    linear-gradient(to right, #fff, transparent);
+  background-color: #ff0000;
+  cursor: pointer;
+}
+
+.cp-sv-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  cursor: pointer;
+  touch-action: none;
+  border-radius: 8px;
+}
+
+.cp-sv-thumb,
+.cp-slider-thumb {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2.5px solid #ffffff;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.18),
+    0 1px 4px rgba(0, 0, 0, 0.28);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.cp-sv-thumb {
+  top: 0;
+  left: 0;
+}
+
+.cp-controls {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 2px 0;
+}
+
+.cp-eyedropper {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: #f3f5f8;
+  color: #1a1d26;
+  cursor: pointer;
+  padding: 0;
+}
+
+.cp-eyedropper:hover {
+  background: #e8ebf1;
+}
+
+.cp-eyedropper .material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-size: var(--icon-size);
+  font-variation-settings: "FILL" 0, "wght" var(--icon-weight), "GRAD" 0, "opsz" 20;
+  line-height: 1;
+}
+
+.cp-slider {
+  position: relative;
+  width: 100%;
+  height: 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.cp-slider::after {
+  content: "";
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  top: 50%;
+  height: 28px;
+  transform: translateY(-50%);
+  z-index: 3;
+}
+
+.cp-hue {
+  background: linear-gradient(
+    to right,
+    #ff0000,
+    #ffff00,
+    #00ff00,
+    #00ffff,
+    #0000ff,
+    #ff00ff,
+    #ff0000
+  );
+}
+
+.cp-slider-thumb {
+  top: 50%;
+  left: 0;
+}
+
+.cp-fields {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.cp-hex-field {
+  height: 32px;
+  border-radius: 8px;
+  background: #f3f5f8;
+  border: 0;
+  color: #1a1d26;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  padding: 0 10px;
+  gap: 1px;
+  cursor: text;
+}
+
+.cp-hex-prefix {
+  flex-shrink: 0;
+  color: #6b7285;
+  user-select: none;
+}
+
+.cp-hex {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: #1a1d26;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  outline: none;
+  padding: 0;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
+}
+
+.cp-hex-field:focus-within {
+  box-shadow: inset 0 0 0 1.5px rgba(186, 64, 147, 0.45);
+}
+
+.cp-hex:focus {
+  outline: none;
 }
 
 .fonts {

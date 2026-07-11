@@ -50,6 +50,82 @@ export function rgbToHsl({ r, g, b }) {
   return { h: Math.round(h), s: Math.round((s || 0) * 100), l: Math.round(l * 100) };
 }
 
+export function hslToRgb({ h, s, l }) {
+  const hh = ((h % 360) + 360) % 360;
+  const ss = Math.max(0, Math.min(100, s)) / 100;
+  const ll = Math.max(0, Math.min(100, l)) / 100;
+  const c = (1 - Math.abs(2 * ll - 1)) * ss;
+  const x = c * (1 - Math.abs(((hh / 60) % 2) - 1));
+  const m = ll - c / 2;
+  let rp = 0;
+  let gp = 0;
+  let bp = 0;
+  if (hh < 60) {
+    rp = c;
+    gp = x;
+  } else if (hh < 120) {
+    rp = x;
+    gp = c;
+  } else if (hh < 180) {
+    gp = c;
+    bp = x;
+  } else if (hh < 240) {
+    gp = x;
+    bp = c;
+  } else if (hh < 300) {
+    rp = x;
+    bp = c;
+  } else {
+    rp = c;
+    bp = x;
+  }
+  return {
+    r: Math.round((rp + m) * 255),
+    g: Math.round((gp + m) * 255),
+    b: Math.round((bp + m) * 255)
+  };
+}
+
+export function rgbToHex({ r, g, b }) {
+  const toHex = (n) => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, "0");
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+export function hexToRgb(hex) {
+  const value = String(hex || "").replace("#", "").trim();
+  if (!/^[0-9a-fA-F]{6}$/.test(value)) return null;
+  return {
+    r: parseInt(value.slice(0, 2), 16),
+    g: parseInt(value.slice(2, 4), 16),
+    b: parseInt(value.slice(4, 6), 16)
+  };
+}
+
+/**
+ * Returns a lighter/darker sibling of `color` by shifting HSL lightness.
+ * Clamps away from pure black/white so curated palettes stay useful.
+ */
+export function shadeColor(color, lightnessDelta) {
+  const baseHsl = color.hsl || (color.rgb ? rgbToHsl(color.rgb) : null);
+  if (!baseHsl) return null;
+
+  const hsl = {
+    h: baseHsl.h,
+    s: baseHsl.s,
+    l: Math.max(8, Math.min(92, baseHsl.l + lightnessDelta))
+  };
+  const rgb = hslToRgb(hsl);
+  const hex = rgbToHex(rgb);
+  if (isPureBlackOrWhite(hex)) return null;
+  return { hex, rgb, hsl };
+}
+
 export function isNeutralHsl(hsl) {
   return hsl.s <= 18 || hsl.l <= 12 || hsl.l >= 90;
+}
+
+/** Literal pure black/white carry no design value in a curated palette. */
+export function isPureBlackOrWhite(hex) {
+  const h = (hex || "").toLowerCase();
+  return h === "#000000" || h === "#ffffff";
 }

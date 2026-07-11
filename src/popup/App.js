@@ -1,8 +1,10 @@
 import { curatePalette } from "../core/scoreAndCluster.js";
 import { assignRoles } from "../core/assignRoles.js";
 import { curateFonts } from "../core/curateFonts.js";
+import { shadeColor, hexToRgb, rgbToHsl, rgbToHex, isPureBlackOrWhite } from "../core/colorLab.js";
+import { openColorPicker, closeColorPicker } from "./colorPicker.js";
 import { copyPaletteImage, readPageMetaFromTab } from "./exportPaletteImage.js";
-import { buildBentoRows, isLightSwatch } from "./paletteLayout.js";
+import { buildBentoRows, isLightSwatch, isDarkSwatch } from "./paletteLayout.js";
 import { getTargetTab } from "./tabs.js";
 import {
   ERROR_MESSAGES,
@@ -36,6 +38,7 @@ const copyBtn = document.getElementById("copyBtn");
 const copyBtnLabel = document.getElementById("copyBtnLabel");
 const copyBtnIcon = document.getElementById("copyBtnIcon");
 const resetBtn = document.getElementById("resetBtn");
+const shuffleBtn = document.getElementById("shuffleBtn");
 const closeBtn = document.getElementById("closeBtn");
 const statusEl = document.getElementById("status");
 const swatchesEl = document.getElementById("swatches");
@@ -77,16 +80,34 @@ let exportPageMeta = { title: "", siteName: "", hostname: "", url: "", iconDataU
 let copyFeedbackTimer = null;
 
 const COPY_LABEL_COPIED = "Copied! Paste in Figma";
+const FONT_COPY_LABEL_COPIED = "Copied!";
 const COPY_LABEL_FAILED = "Copy failed";
 const COPY_ICON_DEFAULT = "content_copy";
 const COPY_ICON_COPIED = "check";
 const COPY_ICON_FAILED = "error";
 
+// Shuffle: re-curate the same page extraction with a fresh random seed so the
+// user can keep browsing alternate palettes without a full page re-scan.
+let lastRawExtraction = null;
+let shuffleSeedCounter = 0;
+const SHUFFLE_MAX_ATTEMPTS = 60;
+
+function measureAppHeight(app) {
+  if (!app) return document.body.offsetHeight;
+  let height = Math.ceil(app.getBoundingClientRect().height);
+  const picker = app.querySelector(".color-picker");
+  if (picker) {
+    const appTop = app.getBoundingClientRect().top;
+    const pickerBottom = picker.getBoundingClientRect().bottom;
+    height = Math.max(height, Math.ceil(pickerBottom - appTop + 16));
+  }
+  return height;
+}
+
 function reportHeight() {
   if (isEmbedded) {
     const app = document.querySelector(".app");
-    const height = app ? Math.ceil(app.getBoundingClientRect().height) : document.body.offsetHeight;
-    window.parent.postMessage({ type: "prism-resize", height }, "*");
+    window.parent.postMessage({ type: "prism-resize", height: measureAppHeight(app) }, "*");
     return;
   }
   resizeStandaloneWindow();
@@ -99,7 +120,7 @@ function resizeStandaloneWindow() {
       if (!app) return;
 
       const windowWidth = Math.ceil(app.offsetWidth) + STANDALONE_WINDOW_CHROME_X;
-      const windowHeight = Math.ceil(app.offsetHeight) + STANDALONE_WINDOW_CHROME_Y;
+      const windowHeight = measureAppHeight(app) + STANDALONE_WINDOW_CHROME_Y;
 
       chrome.windows.getCurrent((win) => {
         if (win?.id) {
@@ -244,14 +265,33 @@ function updateModeChrome() {
 
 function updateFooterForMode() {
   const inResults = appEl.classList.contains("state-results");
+  const toolbar = colorResultsEl?.querySelector(".results-toolbar");
 
-  if (activeMode === "fonts" && inResults) {
-    copyBtn.hidden = true;
-    resetBtn.classList.add("btn-primary");
-    resetBtn.classList.remove("btn-secondary");
-  } else {
+  if (activeMode === "colors") {
+    // Colors: Reset lives in the results toolbar; Shuffle sits in the footer.
+    if (toolbar && resetBtn.parentElement !== toolbar) {
+      toolbar.appendChild(resetBtn);
+    }
+    resetBtn.className = "btn-toolbar";
+    resetBtn.title = "Reset color palette";
+    resetBtn.setAttribute("aria-label", "Reset color palette");
+    shuffleBtn.hidden = false;
     copyBtn.hidden = false;
-    resetBtn.classList.remove("btn-primary");
+    return;
+  }
+
+  // Fonts: Reset returns to the footer; Shuffle is colors-only.
+  if (resultsFooterEl && resetBtn.parentElement !== resultsFooterEl) {
+    resultsFooterEl.insertBefore(resetBtn, copyBtn);
+  }
+  shuffleBtn.hidden = true;
+  copyBtn.hidden = true;
+  resetBtn.className = "btn";
+  resetBtn.title = "Reset";
+  resetBtn.setAttribute("aria-label", "Reset");
+  if (inResults) {
+    resetBtn.classList.add("btn-primary");
+  } else {
     resetBtn.classList.add("btn-secondary");
   }
 }
@@ -371,6 +411,7 @@ function resetCurrentMode() {
     currentPalette = [];
     swatchesEl.innerHTML = "";
     statusEl.textContent = "";
+    lastRawExtraction = null;
   } else {
     currentFonts = [];
     fontsEl.innerHTML = "";
@@ -384,7 +425,186 @@ function resetCurrentMode() {
   reportHeight();
 }
 
+function normalizePickerColor(hex) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return null;
+  const hsl = rgbToHsl(rgb);
+  let outHex = rgbToHex(rgb).toLowerCase();
+  if (isPureBlackOrWhite(outHex)) {
+    const nudged = shadeColor({ hex: outHex, rgb, hsl }, outHex === "#000000" ? 10 : -10);
+    if (nudged) return nudged;
+  }
+  return { hex: outHex, rgb, hsl };
+}
+
+function withSlotMeta(swatches) {
+  return swatches.map((s, i) => ({
+    ...s,
+    id: s.id || `slot-${i}`,
+    locked: Boolean(s.locked)
+  }));
+}
+
+function lockedSwatches(palette = currentPalette) {
+  return palette.filter((s) => s.locked);
+}
+
+/** Inject user-locked colors into the extraction so shuffle builds around them. */
+function extractionWithLockedColors(rawExtraction, locked) {
+  if (!locked.length) return rawExtraction;
+  const extras = locked.map((s, i) => {
+    const chromatic = s.hsl?.s > 18 && s.hsl?.l > 12 && s.hsl?.l < 90;
+    return {
+      hex: s.hex,
+      rgb: s.rgb,
+      hsl: s.hsl,
+      area: 90000,
+      importance: 220,
+      rawImportance: 110,
+      brandWeight: 3,
+      sourceCategory: chromatic
+        ? s.role === "accent"
+          ? "hero_cta"
+          : "primary_button"
+        : "hero_background",
+      sectionId: `user-locked-${i}`,
+      context: chromatic ? "button" : "surface",
+      contrast: 0.75,
+      areaSourceType: "background"
+    };
+  });
+  return {
+    ...rawExtraction,
+    samples: [...(rawExtraction.samples || []), ...extras]
+  };
+}
+
+/**
+ * Keeps locked colors in the shuffled result (matched by role first, then any
+ * remaining open slot) so edits survive shuffle while unlocked tiles refresh.
+ */
+function mergeLockedIntoPalette(nextSwatches, previousPalette) {
+  const locked = lockedSwatches(previousPalette);
+  if (!locked.length) return withSlotMeta(nextSwatches);
+
+  const queues = new Map();
+  for (const s of locked) {
+    if (!queues.has(s.role)) queues.set(s.role, []);
+    queues.get(s.role).push(s);
+  }
+
+  const merged = nextSwatches.map((s, i) => {
+    const queue = queues.get(s.role);
+    if (queue?.length) {
+      const lock = queue.shift();
+      return {
+        ...s,
+        hex: lock.hex,
+        rgb: lock.rgb,
+        hsl: lock.hsl,
+        locked: true,
+        id: lock.id || `slot-${i}`
+      };
+    }
+    return { ...s, locked: false, id: s.id || `slot-${i}` };
+  });
+
+  const leftovers = [];
+  for (const queue of queues.values()) leftovers.push(...queue);
+  for (let i = 0; i < merged.length && leftovers.length; i++) {
+    if (merged[i].locked) continue;
+    const lock = leftovers.shift();
+    merged[i] = {
+      ...merged[i],
+      hex: lock.hex,
+      rgb: lock.rgb,
+      hsl: lock.hsl,
+      locked: true,
+      id: lock.id || merged[i].id
+    };
+  }
+  return merged;
+}
+
+function applyColorToSwatchState(swatchId, hex) {
+  const parsed = normalizePickerColor(hex);
+  if (!parsed) return null;
+  currentPalette = currentPalette.map((s) =>
+    s.id === swatchId
+      ? { ...s, hex: parsed.hex, rgb: parsed.rgb, hsl: parsed.hsl, locked: true }
+      : s
+  );
+  return parsed;
+}
+
+function paintSwatchTile(tile, swatch) {
+  if (!tile || !swatch) return;
+  tile.style.backgroundColor = swatch.hex;
+  tile.classList.toggle("swatch-light", isLightSwatch(swatch.hex));
+  tile.classList.toggle("swatch-dark", isDarkSwatch(swatch.hex));
+  tile.setAttribute("aria-label", swatch.hex);
+  tile.dataset.hex = swatch.hex;
+  const tip = tile.querySelector(".swatch-tooltip");
+  if (tip) tip.textContent = swatch.hex.toUpperCase();
+  const editBtn = tile.querySelector(".swatch-edit-btn");
+  if (editBtn) {
+    editBtn.setAttribute("aria-label", `Edit ${swatch.hex}`);
+    editBtn.title = "Edit color";
+  }
+}
+
+function updateSwatchColor(swatchId, hex, { commit = false, tile = null } = {}) {
+  const parsed = applyColorToSwatchState(swatchId, hex);
+  if (!parsed) return;
+
+  const swatch = currentPalette.find((s) => s.id === swatchId);
+  if (commit) {
+    const liveTile =
+      tile ||
+      [...swatchesEl.querySelectorAll(".swatch")].find((el) => {
+        const btn = el.querySelector(".swatch-edit-btn");
+        return btn?.dataset.swatchId === swatchId;
+      });
+    if (liveTile) paintSwatchTile(liveTile, swatch);
+    reportHeight();
+    return;
+  }
+
+  if (tile) paintSwatchTile(tile, swatch);
+}
+
+let activePickerSwatchId = null;
+
+function openSwatchColorPicker(swatch, tile) {
+  if (activePickerSwatchId === swatch.id) {
+    closeColorPicker();
+    return;
+  }
+
+  activePickerSwatchId = swatch.id;
+  tile.classList.add("is-editing");
+  openColorPicker({
+    hex: currentPalette.find((s) => s.id === swatch.id)?.hex || swatch.hex,
+    anchorEl: tile,
+    container: appEl,
+    onInput: (color) => {
+      updateSwatchColor(swatch.id, color.hex, { tile });
+    },
+    onCommit: (color) => {
+      updateSwatchColor(swatch.id, color.hex, { commit: true, tile });
+    },
+    onClose: () => {
+      activePickerSwatchId = null;
+      tile.classList.remove("is-editing");
+      reportHeight();
+    }
+  });
+  reportHeight();
+}
+
 function renderSwatches(swatches) {
+  closeColorPicker();
+  activePickerSwatchId = null;
   swatchesEl.innerHTML = "";
 
   for (const { tiles, height } of buildBentoRows(swatches)) {
@@ -396,13 +616,142 @@ function renderSwatches(swatches) {
       const tile = document.createElement("article");
       tile.className = `swatch role-${swatch.role}`;
       if (isLightSwatch(swatch.hex)) tile.classList.add("swatch-light");
-      tile.dataset.tooltip = swatch.hex;
+      if (isDarkSwatch(swatch.hex)) tile.classList.add("swatch-dark");
       tile.setAttribute("aria-label", swatch.hex);
+      tile.dataset.hex = swatch.hex;
       tile.style.backgroundColor = swatch.hex;
+
+      const tooltip = document.createElement("div");
+      tooltip.className = "swatch-tooltip";
+      tooltip.textContent = swatch.hex.toUpperCase();
+      tooltip.setAttribute("role", "tooltip");
+
+      const meta = document.createElement("div");
+      meta.className = "swatch-meta";
+
+      const editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "swatch-edit-btn";
+      editBtn.dataset.swatchId = swatch.id;
+      editBtn.title = "Edit color";
+      editBtn.setAttribute("aria-label", `Edit ${swatch.hex}`);
+      editBtn.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">edit</span>';
+      editBtn.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        openSwatchColorPicker(swatch, tile);
+      });
+
+      meta.appendChild(editBtn);
+      tile.append(tooltip, meta);
       row.appendChild(tile);
     }
 
     swatchesEl.appendChild(row);
+  }
+}
+
+function paletteSignature(swatches) {
+  return swatches
+    .map((s) => `${s.locked ? "L" : "U"}:${s.hex.toLowerCase()}`)
+    .sort()
+    .join("|");
+}
+
+function nextShuffleSeed() {
+  shuffleSeedCounter += 1;
+  // Mix counter with a large odd constant so consecutive clicks explore
+  // distant regions of the PRNG space (Date.now alone is too sticky).
+  return Math.imul(shuffleSeedCounter, 2654435761) >>> 0;
+}
+
+function createLocalRng(seed) {
+  let state = seed >>> 0 || 1;
+  return function rng() {
+    state |= 0;
+    state = (state + 0x6d2b79f5) | 0;
+    let t = Math.imul(state ^ (state >>> 15), 1 | state);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** Guaranteed visual change: nudge unlocked swatches to darker/lighter siblings. */
+function forceShadedPalette(swatches, seed) {
+  const rng = createLocalRng(seed);
+  const deltas = [-28, -20, -14, -8, 8, 14, 20, 28];
+  return swatches.map((swatch) => {
+    if (swatch.locked) return swatch;
+    for (let attempt = 0; attempt < 12; attempt++) {
+      const delta = deltas[Math.floor(rng() * deltas.length)];
+      const variant = shadeColor(swatch, delta);
+      if (variant && variant.hex.toLowerCase() !== String(swatch.hex).toLowerCase()) {
+        return { ...swatch, hex: variant.hex, rgb: variant.rgb, hsl: variant.hsl };
+      }
+    }
+    return swatch;
+  });
+}
+
+function buildPaletteAttempt(rawExtraction, seed, avoidHexes) {
+  let curated;
+  try {
+    curated = curatePalette(rawExtraction, {
+      seed,
+      avoidHexes: avoidHexes || []
+    });
+  } catch {
+    return null;
+  }
+  const assigned = assignRoles(curated);
+  const swatches = assigned?.swatches?.slice(0, 8) || [];
+  if (!swatches.length) return null;
+  return { swatches, signature: paletteSignature(swatches) };
+}
+
+/**
+ * Always returns a palette that looks different from what's on screen.
+ * Locked colors are injected into the extraction so new shades grow from them,
+ * then re-applied so they stay put while unlocked tiles refresh.
+ */
+function buildShuffledPalette(rawExtraction) {
+  const locked = lockedSwatches();
+  const seededExtraction = extractionWithLockedColors(rawExtraction, locked);
+  const currentSignature = paletteSignature(currentPalette);
+  const avoidHexes = currentPalette.filter((s) => !s.locked).map((s) => s.hex);
+
+  for (let i = 0; i < SHUFFLE_MAX_ATTEMPTS; i++) {
+    const avoid = i < SHUFFLE_MAX_ATTEMPTS / 2 ? avoidHexes : [];
+    const attempt = buildPaletteAttempt(seededExtraction, nextShuffleSeed(), avoid);
+    if (!attempt) continue;
+    const merged = mergeLockedIntoPalette(attempt.swatches, currentPalette);
+    if (paletteSignature(merged) !== currentSignature) {
+      return { swatches: merged, signature: paletteSignature(merged) };
+    }
+  }
+
+  const shaded = mergeLockedIntoPalette(
+    forceShadedPalette(currentPalette, nextShuffleSeed()),
+    currentPalette
+  );
+  return { swatches: shaded, signature: paletteSignature(shaded) };
+}
+
+async function shufflePalette() {
+  if (activeMode !== "colors" || !lastRawExtraction || shuffleBtn.disabled) return;
+
+  shuffleBtn.disabled = true;
+  shuffleBtn.classList.add("is-shuffling");
+  try {
+    const attempt = buildShuffledPalette(lastRawExtraction);
+    if (!attempt?.swatches?.length) return;
+
+    currentPalette = withSlotMeta(attempt.swatches);
+    renderSwatches(currentPalette);
+    reportHeight();
+  } finally {
+    shuffleBtn.disabled = false;
+    shuffleBtn.classList.remove("is-shuffling");
   }
 }
 
@@ -413,7 +762,7 @@ function flashFontCopyFeedback(button, success) {
 
   const previousHtml = button.innerHTML;
   const previousTitle = button.title;
-  const label = success ? COPY_LABEL_COPIED : COPY_LABEL_FAILED;
+  const label = success ? FONT_COPY_LABEL_COPIED : COPY_LABEL_FAILED;
 
   button.innerHTML = `<span class="font-copy-label">${label}</span>`;
   button.classList.add("is-feedback");
@@ -694,7 +1043,8 @@ async function extractColors() {
     return;
   }
 
-  currentPalette = assigned.swatches.slice(0, 8);
+  currentPalette = withSlotMeta(assigned.swatches.slice(0, 8));
+  lastRawExtraction = result;
   setResultsState();
   renderSwatches(currentPalette);
   statusEl.textContent = "";
@@ -793,6 +1143,7 @@ bindTabSwitch(tabColorsBtn, "colors");
 bindTabSwitch(tabFontsBtn, "fonts");
 extractBtn.addEventListener("click", runExtraction);
 resetBtn.addEventListener("click", resetCurrentMode);
+shuffleBtn.addEventListener("click", shufflePalette);
 
 copyBtn.addEventListener("click", async () => {
   if (!currentPalette.length) {

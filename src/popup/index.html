@@ -159,7 +159,22 @@
 
         <section id="colorResults" class="tab-panel state-results" hidden>
 
-          <p id="status" class="status"></p>
+          <div class="results-toolbar">
+
+            <p id="status" class="status"></p>
+
+            <button
+              id="resetBtn"
+              class="btn-toolbar"
+              type="button"
+              aria-label="Reset color palette"
+              title="Reset color palette"
+            >
+              <span class="material-symbols-outlined" aria-hidden="true">restart_alt</span>
+              <span>Reset</span>
+            </button>
+
+          </div>
 
           <div id="swatches" class="swatches"></div>
 
@@ -189,12 +204,15 @@
 
         <div id="resultsFooter" class="footer-row">
 
-          <button id="resetBtn" class="btn btn-secondary" type="button">
-
-            <span class="material-symbols-outlined" aria-hidden="true">restart_alt</span>
-
-            <span>Reset</span>
-
+          <button
+            id="shuffleBtn"
+            class="btn btn-secondary"
+            type="button"
+            aria-label="Shuffle color palette"
+            title="Generate a new palette from this page"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">shuffle</span>
+            <span>Shuffle</span>
           </button>
 
           <button id="copyBtn" class="btn btn-primary" type="button">

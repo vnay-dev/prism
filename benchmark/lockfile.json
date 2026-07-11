@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "frozenAt": "2026-05-29T16:58:39.078Z",
+  "frozenAt": "2026-07-11T07:05:28.472Z",
   "description": "Frozen palette extraction baseline. Regenerate only when intentionally accepting benchmark changes.",
   "extractionsSource": "scripts/benchmark-extractions/",
   "sites": [
@@ -55,17 +55,14 @@
       "slug": "stripe",
       "name": "Stripe",
       "url": "https://stripe.com/",
-      "foundation": "#ffffff",
+      "foundation": null,
       "primary": "#533afd",
       "secondaries": [
         "#c2c8f1",
+        "#273951",
         "#ff6118"
       ],
       "palette": [
-        {
-          "role": "foundation",
-          "hex": "#ffffff"
-        },
         {
           "role": "primary",
           "hex": "#533afd"
@@ -76,11 +73,11 @@
         },
         {
           "role": "secondary",
-          "hex": "#ff6118"
+          "hex": "#273951"
         },
         {
-          "role": "neutral",
-          "hex": "#000000"
+          "role": "secondary",
+          "hex": "#ff6118"
         },
         {
           "role": "neutral",
@@ -88,7 +85,11 @@
         },
         {
           "role": "neutral",
-          "hex": "#031323"
+          "hex": "#667691"
+        },
+        {
+          "role": "neutral",
+          "hex": "#f6f9fc"
         },
         {
           "role": "neutral",
@@ -97,8 +98,8 @@
       ],
       "paletteMode": "brand",
       "scores": {
-        "brandAccuracy": 10,
-        "designerUsefulness": 9
+        "brandAccuracy": 8,
+        "designerUsefulness": 8
       }
     },
     {
@@ -111,15 +112,7 @@
       "palette": [
         {
           "role": "neutral",
-          "hex": "#000000"
-        },
-        {
-          "role": "neutral",
           "hex": "#b3b3b3"
-        },
-        {
-          "role": "neutral",
-          "hex": "#ffffff"
         },
         {
           "role": "neutral",
@@ -140,6 +133,14 @@
         {
           "role": "neutral",
           "hex": "#333333"
+        },
+        {
+          "role": "neutral",
+          "hex": "#535353"
+        },
+        {
+          "role": "neutral",
+          "hex": "#eeeeee"
         }
       ],
       "paletteMode": "foundation",
@@ -177,10 +178,6 @@
         },
         {
           "role": "neutral",
-          "hex": "#000000"
-        },
-        {
-          "role": "neutral",
           "hex": "#171717"
         },
         {
@@ -189,7 +186,11 @@
         },
         {
           "role": "neutral",
-          "hex": "#ededed"
+          "hex": "#666666"
+        },
+        {
+          "role": "neutral",
+          "hex": "#dbdbdb"
         }
       ],
       "paletteMode": "brand",
@@ -202,17 +203,16 @@
       "slug": "notion",
       "name": "Notion",
       "url": "https://www.notion.so/",
-      "foundation": "#ffffff",
+      "foundation": "#f6f5f4",
       "primary": "#0075de",
       "secondaries": [
         "#455dd3",
-        "#62aef0",
         "#f77463"
       ],
       "palette": [
         {
           "role": "foundation",
-          "hex": "#ffffff"
+          "hex": "#f6f5f4"
         },
         {
           "role": "primary",
@@ -224,15 +224,7 @@
         },
         {
           "role": "secondary",
-          "hex": "#62aef0"
-        },
-        {
-          "role": "secondary",
           "hex": "#f77463"
-        },
-        {
-          "role": "neutral",
-          "hex": "#000000"
         },
         {
           "role": "neutral",
@@ -240,12 +232,20 @@
         },
         {
           "role": "neutral",
+          "hex": "#a39e98"
+        },
+        {
+          "role": "neutral",
           "hex": "#191918"
+        },
+        {
+          "role": "neutral",
+          "hex": "#615d59"
         }
       ],
       "paletteMode": "brand",
       "scores": {
-        "brandAccuracy": 8,
+        "brandAccuracy": 10,
         "designerUsefulness": 9
       }
     },
@@ -253,17 +253,13 @@
       "slug": "framer",
       "name": "Framer",
       "url": "https://www.framer.com/",
-      "foundation": "#000000",
+      "foundation": null,
       "primary": "#0099ff",
       "secondaries": [
         "#0055ff",
         "#fd5d5c"
       ],
       "palette": [
-        {
-          "role": "foundation",
-          "hex": "#000000"
-        },
         {
           "role": "primary",
           "hex": "#0099ff"
@@ -278,10 +274,6 @@
         },
         {
           "role": "neutral",
-          "hex": "#ffffff"
-        },
-        {
-          "role": "neutral",
           "hex": "#0000ee"
         },
         {
@@ -290,29 +282,38 @@
         },
         {
           "role": "neutral",
+          "hex": "#080808"
+        },
+        {
+          "role": "neutral",
           "hex": "#222222"
+        },
+        {
+          "role": "neutral",
+          "hex": "#999999"
         }
       ],
       "paletteMode": "brand",
       "scores": {
-        "brandAccuracy": 10,
-        "designerUsefulness": 9
+        "brandAccuracy": 8,
+        "designerUsefulness": 8
       }
     },
     {
       "slug": "apple",
       "name": "Apple",
       "url": "https://www.apple.com/",
-      "foundation": "#ffffff",
+      "foundation": "#f5f5f7",
       "primary": "#0071e3",
       "secondaries": [
         "#2997ff",
-        "#a4618d"
+        "#a4618d",
+        "#3397d4"
       ],
       "palette": [
         {
           "role": "foundation",
-          "hex": "#ffffff"
+          "hex": "#f5f5f7"
         },
         {
           "role": "primary",
@@ -327,8 +328,8 @@
           "hex": "#a4618d"
         },
         {
-          "role": "neutral",
-          "hex": "#000000"
+          "role": "secondary",
+          "hex": "#3397d4"
         },
         {
           "role": "neutral",
@@ -345,7 +346,7 @@
       ],
       "paletteMode": "brand",
       "scores": {
-        "brandAccuracy": 10,
+        "brandAccuracy": 8,
         "designerUsefulness": 9
       }
     },
@@ -353,13 +354,13 @@
       "slug": "netflix",
       "name": "Netflix",
       "url": "https://www.netflix.com/",
-      "foundation": "#000000",
+      "foundation": "#2d2d2d",
       "primary": "#e50914",
       "secondaries": [],
       "palette": [
         {
           "role": "foundation",
-          "hex": "#000000"
+          "hex": "#2d2d2d"
         },
         {
           "role": "primary",
@@ -367,19 +368,11 @@
         },
         {
           "role": "neutral",
-          "hex": "#ffffff"
-        },
-        {
-          "role": "neutral",
-          "hex": "#161616"
-        },
-        {
-          "role": "neutral",
           "hex": "#232323"
         },
         {
           "role": "neutral",
-          "hex": "#2d2d2d"
+          "hex": "#161616"
         },
         {
           "role": "neutral",
@@ -392,7 +385,7 @@
       ],
       "paletteMode": "brand",
       "scores": {
-        "brandAccuracy": 10,
+        "brandAccuracy": 8,
         "designerUsefulness": 9
       }
     },
@@ -403,7 +396,7 @@
       "foundation": "#f9edff",
       "primary": "#3d0157",
       "secondaries": [
-        "#611f69",
+        "#481a54",
         "#1264a3",
         "#f6bbc1"
       ],
@@ -418,7 +411,7 @@
         },
         {
           "role": "secondary",
-          "hex": "#611f69"
+          "hex": "#481a54"
         },
         {
           "role": "secondary",
@@ -430,15 +423,15 @@
         },
         {
           "role": "neutral",
-          "hex": "#000000"
-        },
-        {
-          "role": "neutral",
           "hex": "#1d1d1d"
         },
         {
           "role": "neutral",
-          "hex": "#ffffff"
+          "hex": "#f2defe"
+        },
+        {
+          "role": "neutral",
+          "hex": "#696969"
         }
       ],
       "paletteMode": "brand",
@@ -449,8 +442,8 @@
     }
   ],
   "averages": {
-    "brandAccuracy": 8.6,
-    "designerUsefulness": 8.3
+    "brandAccuracy": 7.9,
+    "designerUsefulness": 8.1
   },
   "siteSlugs": [
     "linear",

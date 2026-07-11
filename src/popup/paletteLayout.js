@@ -26,6 +26,17 @@ export function isLightSwatch(hex) {
   return r >= 248 && g >= 248 && b >= 248;
 }
 
+/** True when a swatch is dark enough that light chrome needs a visible edge. */
+export function isDarkSwatch(hex) {
+  const value = String(hex || "").replace("#", "");
+  if (value.length !== 6) return false;
+  const r = parseInt(value.slice(0, 2), 16) / 255;
+  const g = parseInt(value.slice(2, 4), 16) / 255;
+  const b = parseInt(value.slice(4, 6), 16) / 255;
+  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return luminance < 0.28;
+}
+
 export function buildBentoRows(swatches) {
   const byRole = {};
   for (const role of ROLE_ORDER) byRole[role] = swatches.filter((s) => s.role === role);

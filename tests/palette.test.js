@@ -236,3 +236,162 @@ test("browser default link blue cannot become primary", async () => {
   assert.notEqual(primary?.hex, "#0000ee");
   assert.equal(primary?.hex, "#1ed760");
 });
+
+test("pure black and pure white never appear in the curated palette", async () => {
+  const { curatePalette } = await import("../src/core/scoreAndCluster.js");
+  const { assignRoles } = await import("../src/core/assignRoles.js");
+  const extraction = {
+    sectionCount: 4,
+    samples: [
+      {
+        hex: "#ffffff",
+        rgb: { r: 255, g: 255, b: 255 },
+        hsl: { h: 0, s: 0, l: 100 },
+        area: 500000,
+        importance: 400,
+        sourceCategory: "global_background",
+        areaSourceType: "Background",
+        sectionId: "section-0",
+        context: "surface"
+      },
+      {
+        hex: "#000000",
+        rgb: { r: 0, g: 0, b: 0 },
+        hsl: { h: 0, s: 0, l: 0 },
+        area: 400000,
+        importance: 380,
+        sourceCategory: "repeated_section_bg",
+        areaSourceType: "Background",
+        sectionId: "section-1",
+        context: "surface"
+      },
+      {
+        hex: "#f4f4f4",
+        rgb: { r: 244, g: 244, b: 244 },
+        hsl: { h: 0, s: 0, l: 96 },
+        area: 100000,
+        importance: 80,
+        sourceCategory: "repeated_section_bg",
+        areaSourceType: "Background",
+        sectionId: "section-2",
+        context: "surface"
+      },
+      {
+        hex: "#5e6ad2",
+        rgb: { r: 94, g: 106, b: 210 },
+        hsl: { h: 234, s: 56, l: 60 },
+        area: 5000,
+        importance: 900,
+        sourceCategory: "hero_cta",
+        areaSourceType: "Background",
+        sectionId: "section-0",
+        context: "button"
+      }
+    ]
+  };
+
+  const curated = curatePalette(extraction);
+  const assigned = assignRoles(curated);
+  const hexes = assigned.swatches.map((s) => s.hex.toLowerCase());
+  assert.ok(!hexes.includes("#000000"), "pure black must be excluded");
+  assert.ok(!hexes.includes("#ffffff"), "pure white must be excluded");
+});
+
+test("shuffling with a seed produces a valid, black/white-free palette", async () => {
+  const fixtures = await loadFixtures();
+  const curated = curatePalette(fixtures[0], { seed: 42 });
+  const assigned = assignRoles(curated);
+  assert.equal(assigned.swatches.length, 8);
+  const hexes = assigned.swatches.map((s) => s.hex.toLowerCase());
+  assert.ok(!hexes.includes("#000000"));
+  assert.ok(!hexes.includes("#ffffff"));
+});
+
+test("different shuffle seeds tend to produce different palettes", async () => {
+  const fixtures = await loadFixtures();
+  const signatures = new Set();
+  for (let seed = 0; seed < 20; seed++) {
+    const curated = curatePalette(fixtures[0], { seed: seed * 97 + 1 });
+    const assigned = assignRoles(curated);
+    signatures.add(
+      assigned.swatches
+        .map((s) => s.hex.toLowerCase())
+        .sort()
+        .join(",")
+    );
+  }
+  assert.ok(signatures.size > 1, "expected shuffle seeds to yield more than one distinct palette");
+});
+
+test("avoidHexes pushes shuffle away from the current palette", async () => {
+  const fixtures = await loadFixtures();
+  const base = assignRoles(curatePalette(fixtures[0]));
+  const baseSig = base.swatches
+    .map((s) => s.hex.toLowerCase())
+    .sort()
+    .join(",");
+  const avoidHexes = base.swatches.map((s) => s.hex);
+
+  let foundDifferent = false;
+  for (let seed = 1; seed <= 40; seed++) {
+    const curated = curatePalette(fixtures[0], { seed: seed * 2654435761, avoidHexes });
+    const assigned = assignRoles(curated);
+    const sig = assigned.swatches
+      .map((s) => s.hex.toLowerCase())
+      .sort()
+      .join(",");
+    if (sig !== baseSig) {
+      foundDifferent = true;
+      break;
+    }
+  }
+  assert.ok(foundDifferent, "expected avoidHexes to produce a palette different from the base");
+});
+
+test("omitting the seed keeps curatePalette fully deterministic", async () => {
+  const fixtures = await loadFixtures();
+  const first = curatePalette(fixtures[0]);
+  const second = curatePalette(fixtures[0]);
+  assert.deepEqual(first.selected.map((c) => c.hex), second.selected.map((c) => c.hex));
+});
+
+test("shadeColor produces darker and lighter siblings without pure black/white", async () => {
+  const { shadeColor } = await import("../src/core/colorLab.js");
+  const base = { hex: "#5e6ad2", rgb: { r: 94, g: 106, b: 210 }, hsl: { h: 234, s: 56, l: 60 } };
+  const darker = shadeColor(base, -20);
+  const lighter = shadeColor(base, 20);
+  assert.ok(darker);
+  assert.ok(lighter);
+  assert.notEqual(darker.hex.toLowerCase(), base.hex.toLowerCase());
+  assert.notEqual(lighter.hex.toLowerCase(), base.hex.toLowerCase());
+  assert.ok(darker.hsl.l < base.hsl.l);
+  assert.ok(lighter.hsl.l > base.hsl.l);
+  assert.notEqual(darker.hex.toLowerCase(), "#000000");
+  assert.notEqual(lighter.hex.toLowerCase(), "#ffffff");
+});
+
+test("hexToRgb parses six-digit hex codes", async () => {
+  const { hexToRgb, rgbToHex } = await import("../src/core/colorLab.js");
+  assert.deepEqual(hexToRgb("#5e6ad2"), { r: 94, g: 106, b: 210 });
+  assert.equal(rgbToHex(hexToRgb("#abcdef")), "#abcdef");
+  assert.equal(hexToRgb("not-a-color"), null);
+});
+
+test("shuffle seeds produce many distinct palettes via shades", async () => {
+  const fixtures = await loadFixtures();
+  const signatures = new Set();
+  for (let seed = 1; seed <= 40; seed++) {
+    const curated = curatePalette(fixtures[0], { seed: seed * 2654435761 });
+    const assigned = assignRoles(curated);
+    signatures.add(
+      assigned.swatches
+        .map((s) => s.hex.toLowerCase())
+        .sort()
+        .join("|")
+    );
+  }
+  assert.ok(
+    signatures.size >= 15,
+    `expected rich shade variety, got ${signatures.size} distinct palettes`
+  );
+});
