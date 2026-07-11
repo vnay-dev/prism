@@ -1,5 +1,35 @@
 # Release notes
 
+## 0.3.0 — Palette shuffle & color editing
+
+**Date:** July 11, 2026
+
+### New
+
+- **Shuffle** — after extracting a palette, generate alternate combinations from the same page (website colors and darker/lighter shades) without re-scanning.
+- **Edit any swatch** — pencil on each tile opens a minimal color picker (hue, saturation, eyedropper, hex). Edited colors stay locked and seed later shuffles.
+- **Hex tooltips** — hover a swatch for a compact hex label; no hex text clutter inside the tiles.
+
+### Improved
+
+- **No pure black or white** in curated palettes — `#000000` / `#ffffff` are excluded as they add little design value.
+- **Color palette controls** — Reset sits above the swatches; Shuffle shares the footer with Copy.
+
+### Technical
+
+- Seeded shuffle path in `scoreAndCluster.js` (`seed`, `avoidHexes`, shade variants via `colorLab.js`).
+- New `src/popup/colorPicker.js` — custom HSV picker with Material Symbols chrome.
+- Expanded palette unit tests for shuffle determinism, shade helpers, and black/white exclusion.
+
+### Package
+
+```bash
+npm run package:store
+# → dist/prism-0.3.0.zip
+```
+
+---
+
 ## 0.2.2 — On-page font highlighting
 
 **Date:** June 20, 2026

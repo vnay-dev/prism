@@ -369,7 +369,7 @@ Scores are normalized against page-wide maxima computed once per curation pass.
 
 `chromaDeduped` = hue-deduplicated, browser-link-stripped brand chromatics.
 
-### 7.2 Safeguards (`paletteSafeguards.js`)
+### 7.2 Safeguards (`paletteSafeguards.js` + `colorLab.js`)
 
 Applied during curation and role assignment:
 
@@ -378,9 +378,19 @@ Applied during curation and role assignment:
 | **Foundation surface filter** | Foundation area from `global_background`, `hero_background`, `repeated_section_bg`, `major_container` with `areaSourceType = Background` only |
 | **Foundation surface hex** | When neutral clusters merge near-black colors, display the dominant *surface* hex, not the merged cluster label |
 | **Browser link exclusion** | `#0000ee` / `#0000ff` stripped from chromatic selection unless explicit brand evidence (hero, CTA, logo sources) |
+| **Pure black / white exclusion** | Literal `#000000` / `#ffffff` filtered from samples before clustering |
 | **Legacy sample inference** | Test fixtures without sourceCategory get inferred fields for backward compatibility |
 
-### 7.3 Quality adjustment
+### 7.3 Shuffle curation
+
+`curatePalette(extraction, { seed, avoidHexes })` enables alternate palettes without re-extracting:
+
+- Seeded PRNG varies role picks among top-ranked candidates
+- Optional `avoidHexes` prefers colors not already on screen
+- Display hexes can rotate among cluster members and darker/lighter HSL shades (`shadeColor` in `colorLab.js`)
+- Edited/locked swatches in the popup are re-injected as high-weight samples so later shuffles build around them
+
+### 7.4 Quality adjustment
 
 Post-selection cleanup:
 
@@ -553,10 +563,11 @@ fontSamples[] + fontTokens[]
 | Component | Role |
 |-----------|------|
 | `src/content/extractInPage.js` | Injected into page tab; returns raw extraction JSON (colors + fonts) |
-| `src/core/scoreAndCluster.js` | `curatePalette(extraction)` → curated colors |
+| `src/core/scoreAndCluster.js` | `curatePalette(extraction, options?)` → curated colors (optional shuffle seed) |
 | `src/core/assignRoles.js` | `assignRoles(curated)` → final swatches |
 | `src/core/curateFonts.js` | `curateFonts(extraction)` → ranked families + weights |
-| `src/popup/App.js` | Tabbed UI — separate color/font extract, render, copy, and font-highlight flows |
+| `src/popup/App.js` | Tabbed UI — extract, shuffle, swatch edit/lock, copy, and font-highlight flows |
+| `src/popup/colorPicker.js` | Custom HSV color picker for swatch editing |
 | `src/popup/exportPaletteImage.js` | Palette PNG generation (color tab only), using `paletteLayout.js` geometry |
 | `src/popup/paletteLayout.js` | Shared bento layout for popup render and PNG export |
 | `src/content/highlightFont.js` | Injected on demand to highlight visible text matching a selected font family |

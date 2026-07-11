@@ -2,14 +2,15 @@
 
 Chrome extension that extracts a curated **8-color design palette** and **font families** from any live web page. Colors are sampled from rendered DOM styles (backgrounds, text, borders, icons), clustered, scored, and assigned semantic roles. Typography is sampled from computed `font-family` and `font-weight` on visible text, then ranked and filtered so you get the families and weights that actually matter on the page.
 
-**Version:** 0.2.2 · [Release notes](./RELEASE_NOTES.md)
+**Version:** 0.3.0 · [Release notes](./RELEASE_NOTES.md)
 
 ## Features
 
 ### Color palette
 - Full-page virtual section scan with importance weighting (not just CSS variables)
 - Semantic role assignment — foundation, primary, secondary, accent, and neutral
-- Bento-style 8-swatch preview
+- Bento-style 8-swatch preview with hex tooltips and per-swatch edit
+- **Shuffle** alternate palettes from the same page (site colors + shades)
 - Copy palette as a PNG image to the clipboard — includes the site logo and name, at retina resolution, matching the on-screen layout
 
 ### Font families
@@ -36,7 +37,7 @@ Chrome extension that extracts a curated **8-color design palette** and **font f
 1. Open a tab with the site you want to sample.
 2. Click the **Prism** extension icon to open the panel.
 3. Choose a tab:
-   - **Color palette** — click **Extract color palette**, then **Copy palette** to paste the PNG into Figma or another tool.
+   - **Color palette** — click **Extract color palette**, optionally **Shuffle** or edit swatches, then **Copy to clipboard** to paste the PNG into Figma or another tool.
    - **Font families** — click **Extract font families**, then use the copy icon on any card to copy that family name, or select a card to highlight that font's text on the page.
 4. Wait for the scan to finish (~10–20 seconds on long pages).
 
@@ -50,7 +51,7 @@ Build an upload-ready ZIP (runtime files only — no tests, scripts, or `node_mo
 npm run package:store
 ```
 
-Output: `dist/prism-0.2.2.zip`
+Output: `dist/prism-0.3.0.zip`
 
 **Privacy policy:** See [PRIVACY.md](./PRIVACY.md). Host it at a public URL (for example GitHub Pages on this repo) and paste that link into the Chrome Web Store listing.
 
