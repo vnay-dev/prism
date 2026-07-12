@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Prism (Dev)",
   "description": "Extracts curated color palettes and font families from live web pages for designers.",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",

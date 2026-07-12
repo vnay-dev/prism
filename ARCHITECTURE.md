@@ -250,7 +250,7 @@ Demo samples receive `rawImportance = 3` regardless of element type.
 
 ### 4.1 Neutral / chromatic split
 
-Samples split by `isNeutralHsl(hsl)` — low saturation or very high/low lightness.
+Samples split by `isNeutralHsl(hsl)` — low saturation or very high/low lightness. Soft pastels and deep brand darks stay in the neutral pool for clustering, but `hasVisibleChroma` (saturation > 18) can still promote them to primary.
 
 ### 4.2 LAB merge clustering
 
@@ -387,8 +387,9 @@ Applied during curation and role assignment:
 
 - Seeded PRNG varies role picks among top-ranked candidates
 - Optional `avoidHexes` prefers colors not already on screen
-- Display hexes can rotate among cluster members and darker/lighter HSL shades (`shadeColor` in `colorLab.js`)
+- Display hexes rotate among real sampled cluster members only (no invented lighter/darker shades)
 - Edited/locked swatches in the popup are re-injected as high-weight samples so later shuffles build around them
+- When no mid-tone brand chroma survives, a utility or soft-tint neutral with visible saturation can still seed primary
 
 ### 7.4 Quality adjustment
 
@@ -419,14 +420,16 @@ Selected from neutral pool using **foundation area share** (not total area):
 
 | Role | Selection rule |
 |------|----------------|
-| **Primary** | Highest `brandConfidence` among non-utility, non-neutral chromatics (browser links stripped) |
+| **Primary** | Highest `brandConfidence` among mid-tone non-utility chromatics (browser links stripped); soft pastels / deep darks (`hasVisibleChroma`) fill primary when no mid-tone brand exists; gray-only pages still promote a non-foundation swatch so a primary tile always appears |
 | **Secondary** | Next 2 brand chromatics by brandConfidence |
 | **Accent** | Curator accent hint, or chromatic with CTA context / brandConfidence ≥ 0.2; utility accent as fallback |
 | **Neutral** | Up to 4 remaining neutrals by designSystemScore |
 
-Utility colors cannot hold primary or secondary — demoted to accent.
+Utility colors cannot hold primary or secondary — demoted to accent, except utility may remain primary when it is the only chromatic on the page.
 
-Browser default link colors demoted from primary/secondary/accent → neutral.
+Browser default link colors demoted from primary/secondary/accent → neutral (unless that would remove the only primary).
+
+`ensurePrimaryRole` runs after assignment and injects a page chromatic from `allChromas` / soft neutrals when the shortlist still lacks primary.
 
 ### 8.3 Output
 
@@ -587,7 +590,7 @@ Documented by the frozen benchmark (not bugs — baseline expectations):
 | Role inversion (brand secondary vs primary) | Slack |
 | Warm foundation vs white extraction | Notion |
 | Browser link in neutral slot | Framer, Spotify |
-| No chromatic primary | Spotify |
+| No mid-tone chromatic primary (gray fallback may still assign primary) | Spotify |
 | Font benchmark | Not yet in frozen lockfile — color regression only today |
 | Lazy-loaded below-fold content | May be under-sampled without real scroll |
 

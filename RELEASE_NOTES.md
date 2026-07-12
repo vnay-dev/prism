@@ -1,6 +1,39 @@
 # Release notes
 
+## 0.4.0 — In-place editing & primary guarantee
+
+**Date:** July 12, 2026
+
+### New
+
+- **In-place color editing** — the swatch morphs into the picker; **Apply color** commits the change, dismissing without Apply restores the previous hex.
+- **HEX / RGB / HSL formats** — cycle the value format in the picker dock with a chevron carousel.
+
+### Improved
+
+- **Primary tile guaranteed** — palettes keep a primary hero swatch whenever the page has usable color (including soft pastels and utility-only chromatics); gray-heavy pages still get a primary slot.
+- **Shuffle uses real site colors only** — no invented darker/lighter shades; alternates come from colors actually sampled on the page.
+- **Near-white swatches** — light tiles get a subtle edge so they stay visible on the panel.
+- **Panel height** — resizes instantly when switching tabs or opening the picker (no height tween).
+- **Copy CTA** — label stays correct when moving between Color palette and Font families.
+
+### Technical
+
+- `hasVisibleChroma` / `ensurePrimaryRole` in `assignRoles.js`; soft-tint and utility seeding in `scoreAndCluster.js`.
+- Color picker FLIP morph, Apply/discard baseline, and format carousel in `colorPicker.js` / `App.js`.
+- Expanded palette tests for primary guarantee, soft pastels, and gray-only primary.
+
+### Package
+
+```bash
+npm run package:store
+# → dist/prism-0.4.0.zip
+```
+
+---
+
 ## 0.3.0 — Palette shuffle & color editing
+
 
 **Date:** July 11, 2026
 

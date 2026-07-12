@@ -2,15 +2,16 @@
 
 Chrome extension that extracts a curated **8-color design palette** and **font families** from any live web page. Colors are sampled from rendered DOM styles (backgrounds, text, borders, icons), clustered, scored, and assigned semantic roles. Typography is sampled from computed `font-family` and `font-weight` on visible text, then ranked and filtered so you get the families and weights that actually matter on the page.
 
-**Version:** 0.3.0 · [Release notes](./RELEASE_NOTES.md)
+**Version:** 0.4.0 · [Release notes](./RELEASE_NOTES.md)
 
 ## Features
 
 ### Color palette
 - Full-page virtual section scan with importance weighting (not just CSS variables)
 - Semantic role assignment — foundation, primary, secondary, accent, and neutral
-- Bento-style 8-swatch preview with hex tooltips and per-swatch edit
-- **Shuffle** alternate palettes from the same page (site colors + shades)
+- Bento-style 8-swatch preview with hex tooltips and per-swatch edit (in-place picker with HEX / RGB / HSL)
+- **Shuffle** alternate palettes from the same page using real sampled site colors
+- Palettes keep a **primary** hero swatch whenever the page has usable color
 - Copy palette as a PNG image to the clipboard — includes the site logo and name, at retina resolution, matching the on-screen layout
 
 ### Font families
@@ -51,7 +52,7 @@ Build an upload-ready ZIP (runtime files only — no tests, scripts, or `node_mo
 npm run package:store
 ```
 
-Output: `dist/prism-0.3.0.zip`
+Output: `dist/prism-0.4.0.zip`
 
 **Privacy policy:** See [PRIVACY.md](./PRIVACY.md). Host it at a public URL (for example GitHub Pages on this repo) and paste that link into the Chrome Web Store listing.
 
