@@ -1,4 +1,4 @@
-import { rgbToLab, deltaE, rgbToHsl, isNeutralHsl, isPureBlackOrWhite, shadeColor } from "./colorLab.js";
+import { rgbToLab, deltaE, rgbToHsl, isNeutralHsl, isPureBlackOrWhite } from "./colorLab.js";
 import {
   brandConfidence,
   classifyClusterUtility,
@@ -26,11 +26,6 @@ const SHUFFLE_POOL_SIZES = {
   accent: 6,
   neutral: 16
 };
-
-// Lightness offsets used when shuffle invents darker/lighter siblings of a
-// website color. Zero keeps the original; non-zero deltas create new swatches
-// that still belong to the same hue family.
-const SHUFFLE_SHADE_DELTAS = [-28, -20, -14, -8, 0, 8, 14, 20, 28];
 
 /** Deterministic seeded PRNG (mulberry32) so a given seed always reproduces the same palette. */
 function createSeededRng(seed) {
@@ -65,8 +60,8 @@ function pickIndex(pool, rng, avoid) {
 }
 
 /**
- * Builds the set of display options for a cluster during shuffle:
- * real sampled member hexes, plus darker/lighter shades of each.
+ * Display options for a cluster during shuffle: only real sampled website
+ * hexes from the cluster (no invented lighter/darker shades).
  */
 function buildDisplayOptions(entry) {
   const bases = entry?.memberHexes?.length
@@ -76,25 +71,23 @@ function buildDisplayOptions(entry) {
   const options = [];
   const seen = new Set();
   for (const base of bases) {
-    for (const delta of SHUFFLE_SHADE_DELTAS) {
-      const variant =
-        delta === 0
-          ? { hex: base.hex, rgb: base.rgb, hsl: base.hsl || rgbToHsl(base.rgb) }
-          : shadeColor(base, delta);
-      if (!variant?.hex || isPureBlackOrWhite(variant.hex)) continue;
-      const key = String(variant.hex).toLowerCase();
-      if (seen.has(key)) continue;
-      seen.add(key);
-      options.push(variant);
-    }
+    if (!base?.hex || isPureBlackOrWhite(base.hex)) continue;
+    const key = String(base.hex).toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    options.push({
+      hex: base.hex,
+      rgb: base.rgb,
+      hsl: base.hsl || rgbToHsl(base.rgb)
+    });
   }
   return options;
 }
 
 /**
  * Picks what hex to show for a selected cluster during shuffle.
- * Draws from website colors and darker/lighter shades of them, preferring
- * options not already on screen (`avoid`). Without an rng this is a no-op.
+ * Draws only from real website colors in the cluster, preferring options not
+ * already on screen (`avoid`). Without an rng this is a no-op.
  */
 function pickDisplayHex(entry, rng, avoid = new Set()) {
   if (!rng) return entry;
@@ -377,6 +370,27 @@ function buildPalette(neutralClusters, chromaClusters, sectionCount, totalSample
     result.push({ ...shown, roleHint: "primary" });
     used.add(primary.hex);
     usedDisplay.add(String(shown.hex).toLowerCase());
+  } else {
+    // No brand chroma survived dedupe — still seed one chromatic (utility or a
+    // soft/deep tinted neutral with visible saturation) so the palette is never
+    // neutrals-only when the page has color.
+    const softNeutralChromas = scoredNeutrals.filter(
+      (c) => (c.hsl?.s || 0) > 18 && !isPureBlackOrWhite(c.hex)
+    );
+    const utilityPool = stripBrowserDefaultLinks([...utilityChromas, ...softNeutralChromas]);
+    const [fallbackChroma] = sampleWithoutReplacement(
+      utilityPool,
+      1,
+      rng ? SHUFFLE_POOL_SIZES.primary : 1,
+      rng,
+      avoid
+    );
+    if (fallbackChroma) {
+      const shown = pickDisplayHex(fallbackChroma, rng, usedDisplay);
+      result.push({ ...shown, roleHint: "primary" });
+      used.add(fallbackChroma.hex);
+      usedDisplay.add(String(shown.hex).toLowerCase());
+    }
   }
 
   const secondaryPool = chromaDeduped.filter((x) => !used.has(x.hex));
@@ -452,10 +466,14 @@ function buildPalette(neutralClusters, chromaClusters, sectionCount, totalSample
 
   return {
     selected: result.slice(0, 8),
-    neutralDominant: chromaDeduped.length === 0,
-    chromaCount: chromaDeduped.length,
+    neutralDominant: chromaDeduped.length === 0 && utilityChromas.length === 0,
+    chromaCount: chromaDeduped.length + utilityChromas.length,
     totalSampleArea,
-    allNeutrals: scoredNeutrals
+    allNeutrals: scoredNeutrals,
+    allChromas: [
+      ...chromaDeduped,
+      ...utilityChromas.map((c) => ({ ...c, isNeutral: false }))
+    ]
   };
 }
 
@@ -477,9 +495,16 @@ function qualityAdjust(palette, sectionCount) {
   }
 
   if (brandChroma.length === 0 && chromaCount > 0) {
-    const topChroma = selected.filter((c) => !c.isNeutral && !c.isUtility).slice(0, 4);
+    // Prefer any chromatic already selected (including utility); do not rebuild
+    // from an empty non-utility filter.
+    const topChroma = selected
+      .filter((c) => !c.isNeutral)
+      .sort((a, b) => b.designSystemScore - a.designSystemScore)
+      .slice(0, 4);
     const topNeutral = neutrals.sort((a, b) => b.designSystemScore - a.designSystemScore).slice(0, 4);
-    selected = [...topChroma, ...topNeutral].slice(0, 8);
+    if (topChroma.length) {
+      selected = [...topChroma, ...topNeutral].slice(0, 8);
+    }
   }
 
   if (!selected.some((c) => c.roleHint === "accent") && chromaCount > 0) {
@@ -489,7 +514,7 @@ function qualityAdjust(palette, sectionCount) {
     }
   }
 
-  return { selected, neutralDominant, rankedCount: selected.length };
+  return { selected, neutralDominant, rankedCount: selected.length, allChromas: palette.allChromas || [] };
 }
 
 function legacyCandidatesToSamples(rawExtraction) {
@@ -587,6 +612,7 @@ export function curatePalette(rawExtraction, options = {}) {
         areaShare: (c.usageWeight || 0) / totalSampleArea
       })) || [],
       totalFoundationArea
-    )
+    ),
+    allChromas: built.allChromas || adjusted.allChromas || []
   };
 }

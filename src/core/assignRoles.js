@@ -1,4 +1,4 @@
-import { isNeutralHsl } from "./colorLab.js";
+import { hasVisibleChroma, isNeutralHsl, isPureBlackOrWhite } from "./colorLab.js";
 import { isBrowserDefaultLinkColor, stripBrowserDefaultLinks } from "./paletteSafeguards.js";
 
 const FOUNDATION_AREA_THRESHOLD = 0.3;
@@ -26,9 +26,80 @@ function demoteBrowserDefaultRole(roleMap, selected) {
     if (!["primary", "secondary", "accent"].includes(role)) continue;
     const entry = selected.find((e) => e.hex === hex);
     if (entry && isBrowserDefaultLinkColor(entry)) {
+      // Never demote the only primary away if nothing else can replace it.
+      if (role === "primary") {
+        const hasAlt = selected.some(
+          (e) =>
+            e.hex !== hex &&
+            hasVisibleChroma(e.hsl) &&
+            !isBrowserDefaultLinkColor(e)
+        );
+        if (!hasAlt) continue;
+      }
       roleMap.set(hex, "neutral");
     }
   }
+}
+
+function chromaticScore(entry) {
+  const sat = entry?.hsl?.s || 0;
+  return sat * 3 + (entry.brandConfidence || 0) * 2 + (entry.designSystemScore || entry.score || 0);
+}
+
+function ensurePrimaryRole(roleMap, selected, curated) {
+  if ([...roleMap.values()].includes("primary")) {
+    return selected;
+  }
+
+  const isChromatic = (e) => e && hasVisibleChroma(e.hsl);
+  const notBrowserDefault = (e) => e && !isBrowserDefaultLinkColor(e);
+  const foundationHex = [...roleMap.entries()].find(([, r]) => r === "foundation")?.[0];
+  const notFoundation = (e) => e && e.hex !== foundationHex;
+
+  const pickFrom = (pool) =>
+    [...pool].sort((a, b) => chromaticScore(b) - chromaticScore(a))[0] || null;
+
+  const hinted = selected.find(
+    (e) => e.roleHint === "primary" && isChromatic(e) && notBrowserDefault(e) && notFoundation(e)
+  );
+  const secondary = pickFrom(
+    selected.filter(
+      (e) =>
+        roleMap.get(e.hex) === "secondary" && isChromatic(e) && notBrowserDefault(e) && notFoundation(e)
+    )
+  );
+  const brand = pickFrom(
+    selected.filter((e) => isChromatic(e) && !e.isUtility && notBrowserDefault(e) && notFoundation(e))
+  );
+  const anySelected = pickFrom(
+    selected.filter((e) => isChromatic(e) && notBrowserDefault(e) && notFoundation(e))
+  );
+  const fromAllChromas = pickFrom(
+    (curated?.allChromas || []).filter((e) => isChromatic(e) && notBrowserDefault(e) && notFoundation(e))
+  );
+  // Soft pastels / deep darks live in the neutral pool (extreme L) but still
+  // carry brand hue — promote them when mid-tone chromas are missing.
+  const fromSoftNeutrals = pickFrom(
+    (curated?.allNeutrals || []).filter(
+      (e) => isChromatic(e) && notBrowserDefault(e) && notFoundation(e)
+    )
+  );
+
+  // Last resort on gray-heavy pages: still show a primary hero tile by promoting
+  // the most saturated / highest-scoring non-foundation swatch.
+  const grayFallback = pickFrom(
+    selected.filter((e) => notFoundation(e) && !isPureBlackOrWhite(e.hex) && notBrowserDefault(e))
+  );
+
+  const fallback =
+    hinted || secondary || brand || anySelected || fromAllChromas || fromSoftNeutrals || grayFallback;
+  if (!fallback) return selected;
+
+  roleMap.set(fallback.hex, "primary");
+
+  if (selected.some((e) => e.hex === fallback.hex)) return selected;
+  // Inject a page chromatic that curation left out of the shortlist.
+  return [fallback, ...selected];
 }
 
 export function assignRoles(curated) {
@@ -53,15 +124,29 @@ export function assignRoles(curated) {
     roleMap.set(foundationHex, "foundation");
   }
 
+  // Mid-tone brand chromas first. Soft pastels / deep darks (extreme L) stay in
+  // the neutral cluster pool and only fill primary when no mid-tone brand exists.
   const brandChromatics = stripBrowserDefaultLinks(
-    selected.filter((e) => !e.isNeutral && !isNeutralHsl(e.hsl) && !e.isUtility)
-  ).sort((a, b) => (b.brandConfidence || b.designSystemScore || 0) - (a.brandConfidence || a.designSystemScore || 0));
+    selected.filter((e) => !e.isNeutral && !isNeutralHsl(e.hsl) && !e.isUtility && !roleMap.has(e.hex))
+  ).sort(
+    (a, b) => (b.brandConfidence || b.designSystemScore || 0) - (a.brandConfidence || a.designSystemScore || 0)
+  );
+
+  const softBrandChromatics = stripBrowserDefaultLinks(
+    selected.filter(
+      (e) => hasVisibleChroma(e.hsl) && isNeutralHsl(e.hsl) && !e.isUtility && !roleMap.has(e.hex)
+    )
+  ).sort((a, b) => chromaticScore(b) - chromaticScore(a));
 
   const utilityChromatics = selected
-    .filter((e) => !e.isNeutral && !isNeutralHsl(e.hsl) && e.isUtility)
+    .filter((e) => !e.isNeutral && !isNeutralHsl(e.hsl) && e.isUtility && !roleMap.has(e.hex))
     .sort((a, b) => (b.designSystemScore || 0) - (a.designSystemScore || 0));
 
-  if (brandChromatics[0]) roleMap.set(brandChromatics[0].hex, "primary");
+  if (brandChromatics[0]) {
+    roleMap.set(brandChromatics[0].hex, "primary");
+  } else if (softBrandChromatics[0]) {
+    roleMap.set(softBrandChromatics[0].hex, "primary");
+  }
   for (const c of brandChromatics.slice(1, 3)) {
     if (!roleMap.has(c.hex)) roleMap.set(c.hex, "secondary");
   }
@@ -79,7 +164,11 @@ export function assignRoles(curated) {
     if (accentCandidate) roleMap.set(accentCandidate.hex, "accent");
   }
 
-  if (![...roleMap.values()].includes("accent") && utilityChromatics[0]) {
+  if (
+    ![...roleMap.values()].includes("accent") &&
+    utilityChromatics[0] &&
+    !roleMap.has(utilityChromatics[0].hex)
+  ) {
     roleMap.set(utilityChromatics[0].hex, "accent");
   }
 
@@ -93,7 +182,7 @@ export function assignRoles(curated) {
   for (const entry of selected) {
     if (!roleMap.has(entry.hex)) {
       if (entry.isUtility) roleMap.set(entry.hex, "accent");
-      else roleMap.set(entry.hex, entry.isNeutral ? "neutral" : "secondary");
+      else roleMap.set(entry.hex, entry.isNeutral || isNeutralHsl(entry.hsl) ? "neutral" : "secondary");
     }
   }
 
@@ -101,11 +190,15 @@ export function assignRoles(curated) {
     const entry = selected.find((e) => e.hex === hex);
     if (!entry) continue;
     if (entry.isUtility && (role === "primary" || role === "secondary")) {
+      // Keep utility as primary only when no brand chromatic exists.
+      if (role === "primary" && brandChromatics.length === 0) continue;
       roleMap.set(hex, "accent");
     }
   }
 
   demoteBrowserDefaultRole(roleMap, selected);
+
+  let swatchSource = ensurePrimaryRole(roleMap, selected, curated);
 
   const rolePriority = {
     foundation: 0,
@@ -124,15 +217,13 @@ export function assignRoles(curated) {
       }
     : null;
 
-  const swatchEntries =
-    foundationDisplay && !selected.some((e) => e.hex === foundationDisplay.hex)
-      ? [
-          foundationDisplay,
-          ...selected.filter(
-            (e) => e.hex !== foundationDisplay.hex && e.hex !== foundation.hex
-          )
-        ]
-      : selected;
+  // Remap foundation to its surface hex without dropping an extra swatch.
+  // Only replace the cluster representative when the surface hex is new.
+  let swatchEntries = swatchSource;
+  if (foundationDisplay && !swatchSource.some((e) => e.hex === foundationDisplay.hex)) {
+    const withoutRep = swatchSource.filter((e) => e.hex !== foundation.hex);
+    swatchEntries = [foundationDisplay, ...withoutRep];
+  }
 
   const swatches = swatchEntries
     .map((entry) => ({
@@ -153,7 +244,7 @@ export function assignRoles(curated) {
     .sort((a, b) => rolePriority[a.role] - rolePriority[b.role] || b.score - a.score)
     .slice(0, 8);
 
-  const chromatics = swatches.filter((s) => !isNeutralHsl(s.hsl));
+  const chromatics = swatches.filter((s) => hasVisibleChroma(s.hsl));
 
   return {
     sampledElements: curated?.sampledElements || 0,

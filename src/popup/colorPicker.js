@@ -1,4 +1,4 @@
-import { hexToRgb, rgbToHex, rgbToHsl } from "../core/colorLab.js";
+import { hexToRgb, rgbToHex, rgbToHsl, hslToRgb } from "../core/colorLab.js";
 
 function clamp(n, min, max) {
   return Math.min(max, Math.max(min, n));
@@ -67,6 +67,22 @@ function colorFromState(state) {
   return { hex, rgb, hsl: rgbToHsl(rgb) };
 }
 
+function relativeLuminance({ r, g, b }) {
+  const toLinear = (c) => {
+    const n = c / 255;
+    return n <= 0.04045 ? n / 12.92 : ((n + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+}
+
+function isLightSurface(rgb) {
+  return relativeLuminance(rgb) > 0.72;
+}
+
+function isDarkSurface(rgb) {
+  return relativeLuminance(rgb) < 0.28;
+}
+
 let activePicker = null;
 
 function stopDragListeners(move, up) {
@@ -76,55 +92,82 @@ function stopDragListeners(move, up) {
 }
 
 /**
- * Opens a Figma-style color picker anchored near `anchorEl`.
- * Returns a close() function.
+ * Opens a Figma-style color picker mounted in-flow inside `mountEl`.
+ * Returns { close, root, setHex }.
  */
 export function openColorPicker({
   hex,
-  anchorEl,
-  container = document.body,
+  mountEl,
   onInput,
   onCommit,
-  onClose
+  onClose,
+  animateClose
 }) {
-  closeColorPicker();
+  closeColorPicker({ immediate: true });
 
+  const host = mountEl || document.body;
   const rgb = hexToRgb(hex) || { r: 0, g: 198, b: 0 };
   const hsv = rgbToHsv(rgb);
   const state = { h: hsv.h, s: hsv.s, v: hsv.v };
+  let applied = false;
 
   const root = document.createElement("div");
   root.className = "color-picker";
   root.setAttribute("role", "dialog");
   root.setAttribute("aria-label", "Color picker");
   root.innerHTML = `
-    <div class="cp-header">
-      <button type="button" class="cp-close" aria-label="Close color picker" title="Close">
-        <span class="material-symbols-outlined" aria-hidden="true">close</span>
-      </button>
-    </div>
     <div class="cp-sv-wrap">
       <div class="cp-sv" aria-hidden="true"></div>
       <div class="cp-sv-thumb" aria-hidden="true"></div>
       <div class="cp-sv-hit" tabindex="0" aria-label="Saturation and brightness"></div>
     </div>
-    <div class="cp-controls">
-      <div class="cp-slider cp-hue" tabindex="0" aria-label="Hue">
-        <div class="cp-slider-thumb" aria-hidden="true"></div>
+    <div class="cp-dock">
+      <div class="cp-controls">
+        <button type="button" class="cp-eyedropper" title="Eyedropper" aria-label="Pick color from screen">
+          <span class="material-symbols-outlined" aria-hidden="true">colorize</span>
+        </button>
+        <div class="cp-slider cp-hue" tabindex="0" aria-label="Hue">
+          <div class="cp-slider-thumb" aria-hidden="true"></div>
+        </div>
+      </div>
+      <div class="cp-fields">
+        <div class="cp-swatch-preview" aria-hidden="true"></div>
+        <div class="cp-value" data-format="hex">
+          <label class="cp-hex-field cp-value-hex">
+            <span class="cp-hex-prefix" aria-hidden="true">#</span>
+            <input class="cp-hex" type="text" spellcheck="false" maxlength="6" autocomplete="off" aria-label="Hex color" />
+          </label>
+          <div class="cp-value-rgb" hidden>
+            <label class="cp-channel"><span>R</span><input class="cp-rgb-r" type="number" min="0" max="255" inputmode="numeric" aria-label="Red" /></label>
+            <label class="cp-channel"><span>G</span><input class="cp-rgb-g" type="number" min="0" max="255" inputmode="numeric" aria-label="Green" /></label>
+            <label class="cp-channel"><span>B</span><input class="cp-rgb-b" type="number" min="0" max="255" inputmode="numeric" aria-label="Blue" /></label>
+          </div>
+          <div class="cp-value-hsl" hidden>
+            <label class="cp-channel"><span>H</span><input class="cp-hsl-h" type="number" min="0" max="360" inputmode="numeric" aria-label="Hue" /></label>
+            <label class="cp-channel"><span>S</span><input class="cp-hsl-s" type="number" min="0" max="100" inputmode="numeric" aria-label="Saturation" /></label>
+            <label class="cp-channel"><span>L</span><input class="cp-hsl-l" type="number" min="0" max="100" inputmode="numeric" aria-label="Lightness" /></label>
+          </div>
+        </div>
+        <div class="cp-format-carousel" role="group" aria-label="Color format">
+          <button type="button" class="cp-format-step" data-dir="-1" aria-label="Previous format">
+            <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
+          </button>
+          <span class="cp-format-viewport">
+            <span class="cp-format-label" aria-live="polite">HEX</span>
+          </span>
+          <button type="button" class="cp-format-step" data-dir="1" aria-label="Next format">
+            <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+          </button>
+        </div>
       </div>
     </div>
-    <div class="cp-fields">
-      <label class="cp-hex-field">
-        <span class="cp-hex-prefix" aria-hidden="true">#</span>
-        <input class="cp-hex" type="text" spellcheck="false" maxlength="7" autocomplete="off" aria-label="Hex color" />
-      </label>
-      <button type="button" class="cp-eyedropper" title="Eyedropper" aria-label="Pick color from screen">
-        <span class="material-symbols-outlined" aria-hidden="true">colorize</span>
-      </button>
-    </div>
+    <button type="button" class="cp-done btn btn-primary btn-block">
+      <span class="material-symbols-outlined" aria-hidden="true">check</span>
+      <span>Apply color</span>
+    </button>
   `;
 
-  const closeBtn = root.querySelector(".cp-close");
+  const doneBtn = root.querySelector(".cp-done");
   const svWrap = root.querySelector(".cp-sv-wrap");
   const svEl = root.querySelector(".cp-sv");
   const svThumb = root.querySelector(".cp-sv-thumb");
@@ -132,15 +175,41 @@ export function openColorPicker({
   const hueEl = root.querySelector(".cp-hue");
   const hueThumb = hueEl.querySelector(".cp-slider-thumb");
   const eyedropperBtn = root.querySelector(".cp-eyedropper");
+  const valueEl = root.querySelector(".cp-value");
+  const previewEl = root.querySelector(".cp-swatch-preview");
+  const hexField = root.querySelector(".cp-value-hex");
+  const rgbFields = root.querySelector(".cp-value-rgb");
+  const hslFields = root.querySelector(".cp-value-hsl");
   const hexInput = root.querySelector(".cp-hex");
+  const rgbInputs = {
+    r: root.querySelector(".cp-rgb-r"),
+    g: root.querySelector(".cp-rgb-g"),
+    b: root.querySelector(".cp-rgb-b")
+  };
+  const hslInputs = {
+    h: root.querySelector(".cp-hsl-h"),
+    s: root.querySelector(".cp-hsl-s"),
+    l: root.querySelector(".cp-hsl-l")
+  };
+  const formatCarousel = root.querySelector(".cp-format-carousel");
+  const formatViewport = root.querySelector(".cp-format-viewport");
+  let formatLabel = root.querySelector(".cp-format-label");
+  const formatStepBtns = [...root.querySelectorAll(".cp-format-step")];
+  const FORMAT_ORDER = ["hex", "rgb", "hsl"];
+  const FORMAT_SLIDE_MS = 240;
+
+  let activeFormat = "hex";
+  let formatAnimating = false;
 
   if (!window.EyeDropper) {
     eyedropperBtn.hidden = true;
   }
 
-  closeBtn.addEventListener("click", (event) => {
+  doneBtn.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
+    applied = true;
+    emit("commit");
     close();
   });
 
@@ -150,12 +219,108 @@ export function openColorPicker({
     if (kind === "commit") onCommit?.(color);
   }
 
-  function syncUi({ syncHex = true } = {}) {
+  function prefersReducedMotion() {
+    return window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
+  }
+
+  function applyFormat(format, { updateLabel = true } = {}) {
+    activeFormat = format;
+    valueEl.dataset.format = format;
+    hexField.hidden = format !== "hex";
+    rgbFields.hidden = format !== "rgb";
+    hslFields.hidden = format !== "hsl";
+    if (updateLabel && formatLabel) formatLabel.textContent = format.toUpperCase();
+    syncUi();
+  }
+
+  function setFormat(format) {
+    if (format !== "rgb" && format !== "hsl" && format !== "hex") return;
+    applyFormat(format);
+  }
+
+  function slideFormatLabel(nextFormat, direction) {
+    if (!formatLabel || !formatViewport || prefersReducedMotion() || !direction) {
+      applyFormat(nextFormat);
+      return;
+    }
+
+    formatAnimating = true;
+    applyFormat(nextFormat, { updateLabel: false });
+
+    const outgoing = formatLabel;
+    const incoming = document.createElement("span");
+    incoming.className = "cp-format-label is-incoming";
+    incoming.textContent = nextFormat.toUpperCase();
+    incoming.setAttribute("aria-hidden", "true");
+    formatViewport.appendChild(incoming);
+
+    const exitClass = direction > 0 ? "is-exit-next" : "is-exit-prev";
+    const startClass = direction > 0 ? "is-start-next" : "is-start-prev";
+
+    incoming.classList.add(startClass);
+    void incoming.offsetWidth;
+
+    outgoing.classList.add(exitClass);
+    incoming.classList.remove(startClass);
+    incoming.classList.add("is-settle");
+
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      outgoing.removeEventListener("transitionend", onEnd);
+      outgoing.remove();
+      incoming.classList.remove("is-incoming", "is-settle", startClass);
+      incoming.removeAttribute("aria-hidden");
+      incoming.setAttribute("aria-live", "polite");
+      formatLabel = incoming;
+      formatAnimating = false;
+    };
+
+    const onEnd = (event) => {
+      if (event.target !== outgoing || event.propertyName !== "transform") return;
+      finish();
+    };
+
+    outgoing.addEventListener("transitionend", onEnd);
+    window.setTimeout(finish, FORMAT_SLIDE_MS + 40);
+  }
+
+  function stepFormat(delta) {
+    if (formatAnimating || !delta) return;
+    const idx = FORMAT_ORDER.indexOf(activeFormat);
+    const next = FORMAT_ORDER[(idx + delta + FORMAT_ORDER.length) % FORMAT_ORDER.length];
+    if (next === activeFormat) return;
+    slideFormatLabel(next, delta);
+  }
+
+  formatStepBtns.forEach((btn) => {
+    btn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      stepFormat(Number(btn.dataset.dir) || 0);
+    });
+  });
+
+  formatCarousel?.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      stepFormat(-1);
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      stepFormat(1);
+    }
+  });
+
+  function syncUi({ syncFields = true } = {}) {
     const pure = pureHueRgb(state.h);
     const pureHex = rgbToHex(pure);
     const current = colorFromState(state);
 
     svEl.style.backgroundColor = pureHex;
+    root.classList.toggle("is-light", isLightSurface(current.rgb));
+    root.classList.toggle("is-dark", isDarkSurface(current.rgb));
+
     svThumb.style.left = `${state.s}%`;
     svThumb.style.top = `${100 - state.v}%`;
     svThumb.style.backgroundColor = current.hex;
@@ -163,7 +328,25 @@ export function openColorPicker({
     hueThumb.style.left = `${(state.h / 360) * 100}%`;
     hueThumb.style.backgroundColor = pureHex;
 
-    if (syncHex) hexInput.value = current.hex.replace("#", "").toUpperCase();
+    if (previewEl) {
+      previewEl.style.backgroundColor = current.hex;
+      previewEl.classList.toggle("is-light", isLightSurface(current.rgb));
+    }
+
+    if (!syncFields) return;
+
+    if (activeFormat === "hex") {
+      hexInput.value = current.hex.replace("#", "").toUpperCase();
+    } else if (activeFormat === "rgb") {
+      rgbInputs.r.value = String(current.rgb.r);
+      rgbInputs.g.value = String(current.rgb.g);
+      rgbInputs.b.value = String(current.rgb.b);
+    } else {
+      const hsl = current.hsl;
+      hslInputs.h.value = String(Math.round(hsl.h));
+      hslInputs.s.value = String(Math.round(hsl.s));
+      hslInputs.l.value = String(Math.round(hsl.l));
+    }
   }
 
   function expandHex(raw) {
@@ -178,19 +361,24 @@ export function openColorPicker({
     return null;
   }
 
-  function setFromHex(nextHex, { commit = false, syncHex = true } = {}) {
+  function setFromRgb(rgb, { commit = false, syncFields = true } = {}) {
+    if (!rgb) return false;
+    const next = rgbToHsv(rgb);
+    state.h = next.h;
+    state.s = next.s;
+    state.v = next.v;
+    syncUi({ syncFields });
+    emit("input");
+    if (commit) emit("commit");
+    return true;
+  }
+
+  function setFromHex(nextHex, { commit = false, syncFields = true } = {}) {
     const expanded = expandHex(nextHex.startsWith("#") ? nextHex.slice(1) : nextHex);
     if (!expanded) return false;
     const parsed = hexToRgb(`#${expanded}`);
     if (!parsed) return false;
-    const next = rgbToHsv(parsed);
-    state.h = next.h;
-    state.s = next.s;
-    state.v = next.v;
-    syncUi({ syncHex });
-    emit("input");
-    if (commit) emit("commit");
-    return true;
+    return setFromRgb(parsed, { commit, syncFields });
   }
 
   function sanitizeHexInput(preserveCaret = true) {
@@ -215,7 +403,41 @@ export function openColorPicker({
       if (commit) syncUi();
       return false;
     }
-    return setFromHex(expanded, { commit, syncHex: false });
+    return setFromHex(expanded, { commit, syncFields: false });
+  }
+
+  function readChannel(input, min, max) {
+    const n = Number(input.value);
+    if (!Number.isFinite(n)) return null;
+    return clamp(Math.round(n), min, max);
+  }
+
+  function applyRgbFromInputs({ commit = false } = {}) {
+    const r = readChannel(rgbInputs.r, 0, 255);
+    const g = readChannel(rgbInputs.g, 0, 255);
+    const b = readChannel(rgbInputs.b, 0, 255);
+    if (r == null || g == null || b == null) {
+      if (commit) syncUi();
+      return false;
+    }
+    rgbInputs.r.value = String(r);
+    rgbInputs.g.value = String(g);
+    rgbInputs.b.value = String(b);
+    return setFromRgb({ r, g, b }, { commit, syncFields: false });
+  }
+
+  function applyHslFromInputs({ commit = false } = {}) {
+    const h = readChannel(hslInputs.h, 0, 360);
+    const s = readChannel(hslInputs.s, 0, 100);
+    const l = readChannel(hslInputs.l, 0, 100);
+    if (h == null || s == null || l == null) {
+      if (commit) syncUi();
+      return false;
+    }
+    hslInputs.h.value = String(h);
+    hslInputs.s.value = String(s);
+    hslInputs.l.value = String(l);
+    return setFromRgb(hslToRgb({ h, s, l }), { commit, syncFields: false });
   }
 
   function bindDrag(el, onMove) {
@@ -255,25 +477,26 @@ export function openColorPicker({
     emit("input");
   });
 
-  hexInput.addEventListener("pointerdown", (event) => {
-    event.stopPropagation();
-  });
+  function bindTextField(el, onInput, onCommit) {
+    el.addEventListener("pointerdown", (event) => event.stopPropagation());
+    el.addEventListener("input", () => onInput());
+    el.addEventListener("blur", () => onCommit());
+    el.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        onCommit();
+        el.blur();
+      }
+    });
+  }
 
-  hexInput.addEventListener("input", () => {
-    applyHexFromInput();
-  });
-
-  hexInput.addEventListener("blur", () => {
-    applyHexFromInput({ commit: true });
-  });
-
-  hexInput.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      applyHexFromInput({ commit: true });
-      hexInput.blur();
-    }
-  });
+  bindTextField(hexInput, () => applyHexFromInput(), () => applyHexFromInput({ commit: true }));
+  for (const input of Object.values(rgbInputs)) {
+    bindTextField(input, () => applyRgbFromInputs(), () => applyRgbFromInputs({ commit: true }));
+  }
+  for (const input of Object.values(hslInputs)) {
+    bindTextField(input, () => applyHslFromInputs(), () => applyHslFromInputs({ commit: true }));
+  }
 
   eyedropperBtn.addEventListener("click", async (event) => {
     event.preventDefault();
@@ -287,12 +510,6 @@ export function openColorPicker({
     }
   });
 
-  function onDocPointerDown(event) {
-    if (root.contains(event.target)) return;
-    if (anchorEl?.contains?.(event.target)) return;
-    close();
-  }
-
   function onKeyDown(event) {
     if (event.key === "Escape") {
       event.preventDefault();
@@ -300,58 +517,37 @@ export function openColorPicker({
     }
   }
 
-  function position() {
-    const pad = 12;
-    const pickerWidth = 240;
-    const pickerHeight = root.offsetHeight || 280;
-    const host = container.getBoundingClientRect();
-    let left = pad;
-    let top = pad;
+  let closing = false;
 
-    if (anchorEl) {
-      const anchor = anchorEl.getBoundingClientRect();
-      left = anchor.left - host.left;
-      top = anchor.bottom - host.top + 8;
-      if (top + pickerHeight > host.height - pad) {
-        top = anchor.top - host.top - pickerHeight - 8;
-      }
-      if (top < pad) top = pad;
-      if (left + pickerWidth > host.width - pad) {
-        left = host.width - pickerWidth - pad;
-      }
-      if (left < pad) left = pad;
-    } else {
-      left = Math.max(pad, (host.width - pickerWidth) / 2);
-      top = Math.max(pad, (host.height - pickerHeight) / 2);
-    }
-
-    root.style.left = `${Math.round(left)}px`;
-    root.style.top = `${Math.round(top)}px`;
-  }
-
-  function close() {
-    if (activePicker !== api) return;
-    document.removeEventListener("pointerdown", onDocPointerDown, true);
-    document.removeEventListener("keydown", onKeyDown, true);
+  function finishClose() {
     root.remove();
     activePicker = null;
-    onClose?.();
+    onClose?.({ applied });
+  }
+
+  function close({ immediate = false } = {}) {
+    if (activePicker !== api || closing) return;
+    closing = true;
+    document.removeEventListener("keydown", onKeyDown, true);
+
+    if (immediate || !animateClose) {
+      finishClose();
+      return;
+    }
+
+    Promise.resolve(animateClose(root, { applied })).then(finishClose, finishClose);
   }
 
   const api = { close, root, setHex: setFromHex };
 
-  container.style.position = container.style.position || "relative";
-  container.appendChild(root);
-  syncUi();
-  position();
-  requestAnimationFrame(position);
+  host.appendChild(root);
+  setFormat("hex");
 
-  document.addEventListener("pointerdown", onDocPointerDown, true);
   document.addEventListener("keydown", onKeyDown, true);
   activePicker = api;
   return api;
 }
 
-export function closeColorPicker() {
-  if (activePicker) activePicker.close();
+export function closeColorPicker({ immediate = false } = {}) {
+  if (activePicker) activePicker.close({ immediate });
 }

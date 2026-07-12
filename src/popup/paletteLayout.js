@@ -10,7 +10,7 @@ export const HERO_HEIGHT = 100;
 export const ROW_HEIGHT = HERO_HEIGHT / 2;
 
 // Geometry mirrored from styles.css (.app padding, .swatches/.bento-row gap,
-// .swatch border-radius, .swatch-light border).
+// .swatch border-radius, .swatch-light edge).
 export const APP_PADDING = 16;
 export const CONTENT_WIDTH = 348; // 380px panel − 16px padding on each side
 export const BENTO_GAP = 6;
@@ -18,12 +18,15 @@ export const TILE_RADIUS = 6;
 export const LIGHT_BORDER_COLOR = "#e4e7ee";
 
 export function isLightSwatch(hex) {
-  const value = hex.replace("#", "");
+  const value = String(hex || "").replace("#", "");
   if (value.length !== 6) return false;
-  const r = parseInt(value.slice(0, 2), 16);
-  const g = parseInt(value.slice(2, 4), 16);
-  const b = parseInt(value.slice(4, 6), 16);
-  return r >= 248 && g >= 248 && b >= 248;
+  const r = parseInt(value.slice(0, 2), 16) / 255;
+  const g = parseInt(value.slice(2, 4), 16) / 255;
+  const b = parseInt(value.slice(4, 6), 16) / 255;
+  if (![r, g, b].every((n) => Number.isFinite(n))) return false;
+  // Near-white tiles disappear on the #fefefe panel; edge them for contrast.
+  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return luminance >= 0.9;
 }
 
 /** True when a swatch is dark enough that light chrome needs a visible edge. */

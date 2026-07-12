@@ -587,7 +587,7 @@ button:focus-visible {
 }
 
 .swatch-light {
-  border: 1px solid #e4e7ee;
+  box-shadow: inset 0 0 0 1px #e4e7ee;
 }
 
 .swatch-tooltip {
@@ -698,67 +698,149 @@ button:focus-visible {
 }
 
 .color-picker {
-  position: absolute;
-  z-index: 40;
-  width: 240px;
-  padding: 8px 12px 12px;
-  border-radius: 12px;
-  background: #ffffff;
-  border: 1px solid #e6e9f0;
-  box-shadow: 0 12px 32px rgba(20, 24, 36, 0.16), 0 2px 8px rgba(20, 24, 36, 0.06);
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: auto;
+  box-sizing: border-box;
+  padding: 0;
+  border-radius: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   user-select: none;
-  cursor: pointer;
+  cursor: default;
+  overflow: visible;
 }
 
-.cp-header {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  margin: 0 -4px -4px;
-  min-height: 24px;
+.color-picker.is-light .cp-sv-wrap {
+  box-shadow: inset 0 0 0 1px #e4e7ee;
 }
 
-.cp-close {
-  width: 24px;
-  height: 24px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: #6b7285;
-  cursor: pointer;
-  padding: 0;
+.app.is-picking-color .panel-body,
+.app.is-picking-color .panel-footer {
+  display: none !important;
 }
 
-.cp-close:hover {
-  background: #f3f5f8;
-  color: #1a1d26;
+/* Crossfade handoff: palette stays painted and eases out/in under the morphing picker. */
+.app.is-picking-enter .panel-body,
+.app.is-picking-enter .panel-footer,
+.app.is-picking-exit .panel-body,
+.app.is-picking-exit .panel-footer {
+  pointer-events: none;
+  transition: opacity 200ms ease;
 }
 
-.cp-close .material-symbols-outlined {
-  font-family: "Material Symbols Outlined";
-  font-size: 18px;
-  font-variation-settings: "FILL" 0, "wght" var(--icon-weight), "GRAD" 0, "opsz" 20;
-  line-height: 1;
+.app.is-picking-enter .panel-body,
+.app.is-picking-enter .panel-footer {
+  opacity: 1;
 }
 
+.app.is-picking-enter.is-picking-enter-active .panel-body,
+.app.is-picking-enter.is-picking-enter-active .panel-footer {
+  opacity: 0;
+}
+
+.app.is-picking-exit .panel-body,
+.app.is-picking-exit .panel-footer {
+  opacity: 0;
+}
+
+.app.is-picking-exit.is-picking-exit-active .panel-body,
+.app.is-picking-exit.is-picking-exit-active .panel-footer {
+  opacity: 1;
+}
+
+.app.is-picking-enter .swatch.is-editing,
+.app.is-picking-exit .swatch.is-editing {
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+.color-picker.is-morphing {
+  pointer-events: none;
+}
+
+.color-picker.is-morphing .cp-sv-wrap {
+  transition: none;
+  will-change: transform, border-radius, opacity;
+}
+
+.color-picker.is-morphing-in .cp-dock,
+.color-picker.is-morphing-in .cp-done,
+.color-picker.is-morphing-in .cp-sv-thumb {
+  opacity: 0;
+}
+
+.color-picker.is-morphing-in.is-morphing-active .cp-dock,
+.color-picker.is-morphing-in.is-morphing-active .cp-done,
+.color-picker.is-morphing-in.is-morphing-active .cp-sv-thumb {
+  transition: opacity 220ms ease;
+  opacity: 1;
+}
+
+.color-picker.is-morphing-out .cp-dock,
+.color-picker.is-morphing-out .cp-done,
+.color-picker.is-morphing-out .cp-sv-thumb {
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.color-picker.is-morphing-active .cp-sv-wrap {
+  transition:
+    transform 340ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-radius 340ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 280ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app.is-picking-enter .panel-body,
+  .app.is-picking-enter .panel-footer,
+  .app.is-picking-exit .panel-body,
+  .app.is-picking-exit .panel-footer,
+  .app.is-picking-enter .swatch.is-editing,
+  .app.is-picking-exit .swatch.is-editing,
+  .color-picker.is-morphing-active .cp-sv-wrap,
+  .color-picker.is-morphing-in.is-morphing-active .cp-dock,
+  .color-picker.is-morphing-in.is-morphing-active .cp-done,
+  .color-picker.is-morphing-in.is-morphing-active .cp-sv-thumb,
+  .color-picker.is-morphing-out .cp-dock,
+  .color-picker.is-morphing-out .cp-done,
+  .color-picker.is-morphing-out .cp-sv-thumb {
+    transition: none;
+  }
+}
+
+.color-picker-stage {
+  display: none;
+  width: 100%;
+  min-height: 0;
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
+.color-picker-stage:not([hidden]) {
+  display: block;
+}
+
+/* Expanded tile surface — SV plane only. */
 .cp-sv-wrap {
   position: relative;
   width: 100%;
-  aspect-ratio: 1;
+  height: 200px;
+  aspect-ratio: auto;
+  border-radius: 8px;
+  overflow: hidden;
+  flex: none;
 }
 
 .cp-sv {
   position: absolute;
   inset: 0;
   border-radius: 8px;
-  /* Single painted surface — avoids Chrome's jagged overflow+radius clipping
-     that stacked gradient layers used to cause on the corners. */
   background-image:
     linear-gradient(to top, #000, transparent),
     linear-gradient(to right, #fff, transparent);
@@ -773,6 +855,38 @@ button:focus-visible {
   cursor: pointer;
   touch-action: none;
   border-radius: 8px;
+}
+
+/* Controls sit below the tile, not overlaid on it. */
+.cp-dock {
+  position: relative;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  z-index: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  background: #f3f5f8;
+  border: 1px solid #e6e9f0;
+  box-shadow: none;
+  backdrop-filter: none;
+  flex: none;
+  overflow: visible;
+}
+
+.cp-done {
+  flex: none;
+  margin: 0;
+}
+
+.cp-done .material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-size: var(--icon-size);
+  font-variation-settings: "FILL" 0, "wght" var(--icon-weight), "GRAD" 0, "opsz" 20;
+  line-height: 1;
 }
 
 .cp-sv-thumb,
@@ -798,8 +912,9 @@ button:focus-visible {
 .cp-controls {
   display: flex;
   align-items: center;
+  gap: 14px;
   width: 100%;
-  padding: 2px 0;
+  padding: 0;
 }
 
 .cp-eyedropper {
@@ -811,14 +926,20 @@ button:focus-visible {
   justify-content: center;
   border: 0;
   border-radius: 8px;
-  background: #f3f5f8;
+  background: transparent;
   color: #1a1d26;
   cursor: pointer;
   padding: 0;
+  box-shadow: none;
 }
 
 .cp-eyedropper:hover {
   background: #e8ebf1;
+}
+
+.cp-eyedropper:active {
+  background: #dde2eb;
+  transform: scale(0.96);
 }
 
 .cp-eyedropper .material-symbols-outlined {
@@ -830,8 +951,11 @@ button:focus-visible {
 
 .cp-slider {
   position: relative;
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   height: 14px;
+  /* Inset so the thumb at 0%/100% doesn't collide with neighbors. */
+  margin-left: 8px;
   border-radius: 999px;
   cursor: pointer;
   touch-action: none;
@@ -867,17 +991,51 @@ button:focus-visible {
 }
 
 .cp-fields {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
+  display: flex;
   align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cp-swatch-preview {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #888888;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+}
+
+.cp-swatch-preview.is-light {
+  box-shadow: inset 0 0 0 1px #d8dde8;
+}
+
+.cp-value {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.cp-value-rgb,
+.cp-value-hsl {
+  display: grid;
+  grid-template-columns: repeat(3, max-content);
+  gap: 6px;
+  width: auto;
+}
+
+.cp-value-rgb[hidden],
+.cp-value-hsl[hidden],
+.cp-value-hex[hidden] {
+  display: none !important;
 }
 
 .cp-hex-field {
   height: 32px;
+  width: 100%;
+  max-width: 140px;
   border-radius: 8px;
-  background: #f3f5f8;
-  border: 0;
+  background: #ffffff;
+  border: 1px solid #d8dde8;
   color: #1a1d26;
   font-size: 12px;
   font-weight: 500;
@@ -885,8 +1043,10 @@ button:focus-visible {
   align-items: center;
   min-width: 0;
   padding: 0 10px;
-  gap: 1px;
+  gap: 2px;
   cursor: text;
+  box-sizing: border-box;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .cp-hex-prefix {
@@ -915,12 +1075,190 @@ button:focus-visible {
   cursor: text;
 }
 
-.cp-hex-field:focus-within {
-  box-shadow: inset 0 0 0 1.5px rgba(186, 64, 147, 0.45);
-}
-
 .cp-hex:focus {
   outline: none;
+}
+
+.cp-channel {
+  height: 32px;
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid #d8dde8;
+  box-sizing: border-box;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  min-width: 0;
+}
+
+.cp-channel span {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #6b7285;
+}
+
+.cp-channel input {
+  flex: 0 0 auto;
+  width: 3ch;
+  min-width: 0;
+  max-width: 3ch;
+  border: 0;
+  background: transparent;
+  color: #1a1d26;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+  padding: 0;
+  margin: 0;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.cp-channel input:focus {
+  outline: none;
+}
+
+.cp-channel input::-webkit-outer-spin-button,
+.cp-channel input::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.cp-format-carousel {
+  flex-shrink: 0;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.cp-format-step {
+  flex-shrink: 0;
+  width: 24px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #6b7285;
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+  box-shadow: none;
+}
+
+.cp-format-step:hover {
+  color: #1a1a1a;
+}
+
+.cp-format-step:active {
+  transform: scale(0.96);
+}
+
+.cp-format-step:focus,
+.cp-format-step:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.cp-format-step .material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-size: 18px;
+  font-variation-settings: "FILL" 0, "wght" var(--icon-weight), "GRAD" 0, "opsz" 20;
+  line-height: 1;
+}
+
+.cp-format-viewport {
+  position: relative;
+  display: inline-block;
+  min-width: 36px;
+  height: 28px;
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+.cp-format-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 28px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #1a1a1a;
+  user-select: none;
+  transform: translateX(0);
+  opacity: 1;
+  transition:
+    transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, opacity;
+}
+
+.cp-format-label.is-incoming {
+  position: absolute;
+  inset: 0;
+}
+
+.cp-format-label.is-exit-next {
+  transform: translateX(-45%);
+  opacity: 0;
+}
+
+.cp-format-label.is-exit-prev {
+  transform: translateX(45%);
+  opacity: 0;
+}
+
+.cp-format-label.is-start-next {
+  transform: translateX(45%);
+  opacity: 0;
+  transition: none;
+}
+
+.cp-format-label.is-start-prev {
+  transform: translateX(-45%);
+  opacity: 0;
+  transition: none;
+}
+
+.cp-format-label.is-settle {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cp-format-label {
+    transition: none;
+  }
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .fonts {

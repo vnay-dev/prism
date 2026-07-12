@@ -48,6 +48,7 @@ const tabColorsBtn = document.getElementById("tabColors");
 const tabFontsBtn = document.getElementById("tabFonts");
 const panelHeaderEl = document.querySelector(".panel-header");
 const dragHandleEl = document.getElementById("dragHandle");
+const colorPickerStageEl = document.getElementById("colorPickerStage");
 
 const isEmbedded = window.parent !== window;
 const EXTRACTION_TIMEOUT_MS = 22000;
@@ -94,14 +95,22 @@ const SHUFFLE_MAX_ATTEMPTS = 60;
 
 function measureAppHeight(app) {
   if (!app) return document.body.offsetHeight;
-  let height = Math.ceil(app.getBoundingClientRect().height);
-  const picker = app.querySelector(".color-picker");
-  if (picker) {
-    const appTop = app.getBoundingClientRect().top;
-    const pickerBottom = picker.getBoundingClientRect().bottom;
-    height = Math.max(height, Math.ceil(pickerBottom - appTop + 16));
+  const appRect = app.getBoundingClientRect();
+  let bottom = appRect.bottom;
+
+  // Morph overlay can sit absolutely over the palette; include it when present.
+  for (const selector of [".color-picker-stage:not([hidden])", ".color-picker"]) {
+    const el = app.querySelector(selector);
+    if (!el) continue;
+    const rect = el.getBoundingClientRect();
+    if (rect.height > 0) bottom = Math.max(bottom, rect.bottom);
   }
-  return height;
+
+  return Math.ceil(bottom - appRect.top);
+}
+
+function prefersReducedMotion() {
+  return window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
 }
 
 function reportHeight() {
@@ -215,7 +224,7 @@ function modeConfig(mode = activeMode) {
 }
 
 function setCopyButtonState(label, iconName = COPY_ICON_DEFAULT) {
-  if (copyBtnLabel) copyBtnLabel.textContent = label;
+  if (copyBtnLabel) copyBtnLabel.textContent = label || MODE_COPY.colors.copyLabel;
   if (copyBtnIcon) {
     copyBtnIcon.textContent = iconName;
     copyBtnIcon.hidden = false;
@@ -230,7 +239,8 @@ function flashCopyFeedback(success) {
     success ? COPY_ICON_COPIED : COPY_ICON_FAILED
   );
   copyFeedbackTimer = setTimeout(() => {
-    setCopyButtonState(modeConfig().copyLabel, COPY_ICON_DEFAULT);
+    copyFeedbackTimer = null;
+    setCopyButtonState(MODE_COPY.colors.copyLabel, COPY_ICON_DEFAULT);
   }, 3500);
 }
 
@@ -256,8 +266,8 @@ function updateModeChrome() {
 
   applyTabVisuals();
 
-  if (!copyFeedbackTimer && activeMode === "colors" && config.copyLabel) {
-    setCopyButtonState(config.copyLabel, COPY_ICON_DEFAULT);
+  if (!copyFeedbackTimer && activeMode === "colors") {
+    setCopyButtonState(MODE_COPY.colors.copyLabel, COPY_ICON_DEFAULT);
   }
 
   updateFooterForMode();
@@ -277,6 +287,9 @@ function updateFooterForMode() {
     resetBtn.setAttribute("aria-label", "Reset color palette");
     shuffleBtn.hidden = false;
     copyBtn.hidden = false;
+    if (!copyFeedbackTimer) {
+      setCopyButtonState(MODE_COPY.colors.copyLabel, COPY_ICON_DEFAULT);
+    }
     return;
   }
 
@@ -353,6 +366,8 @@ function showError(error, context = {}) {
 }
 
 function setIntroState() {
+  closeColorPicker({ immediate: true });
+  exitPickingMode();
   appEl.classList.remove("state-results", "state-guidance");
   appEl.classList.add("state-intro");
   introEl.hidden = false;
@@ -380,6 +395,10 @@ function setResultsState() {
 
 function setLoading(active, message) {
   const config = modeConfig();
+  if (active) {
+    closeColorPicker({ immediate: true });
+    exitPickingMode();
+  }
   appEl.classList.toggle("is-loading", active);
   loadingEl.hidden = !active;
   loadingTextEl.textContent = message || config.loadingStart;
@@ -401,7 +420,8 @@ function setLoading(active, message) {
 
 function resetCurrentMode() {
   clearTimeout(copyFeedbackTimer);
-  setCopyButtonState(modeConfig().copyLabel, COPY_ICON_DEFAULT);
+  copyFeedbackTimer = null;
+  setCopyButtonState(MODE_COPY.colors.copyLabel, COPY_ICON_DEFAULT);
 
   if (activeMode === "fonts") {
     clearFontHighlightOnPage();
@@ -482,6 +502,7 @@ function extractionWithLockedColors(rawExtraction, locked) {
 /**
  * Keeps locked colors in the shuffled result (matched by role first, then any
  * remaining open slot) so edits survive shuffle while unlocked tiles refresh.
+ * Unlocked tiles that would duplicate a locked hex are nudged to a shade.
  */
 function mergeLockedIntoPalette(nextSwatches, previousPalette) {
   const locked = lockedSwatches(previousPalette);
@@ -523,7 +544,53 @@ function mergeLockedIntoPalette(nextSwatches, previousPalette) {
       id: lock.id || merged[i].id
     };
   }
-  return merged;
+
+  return resolveLockedDuplicates(merged, lastRawExtraction);
+}
+
+/** Replace unlocked tiles that collide with a locked hex using other page colors. */
+function resolveLockedDuplicates(swatches, rawExtraction = lastRawExtraction) {
+  const lockedHexes = new Set(
+    swatches.filter((s) => s.locked).map((s) => String(s.hex || "").toLowerCase())
+  );
+  if (!lockedHexes.size) return swatches;
+
+  const usedHexes = new Set(swatches.map((s) => String(s.hex || "").toLowerCase()));
+  const pool = samplePoolFromExtraction(rawExtraction, lockedHexes).filter(
+    (s) => !usedHexes.has(String(s.hex).toLowerCase())
+  );
+
+  return swatches.map((swatch) => {
+    if (swatch.locked) return swatch;
+    if (!lockedHexes.has(String(swatch.hex || "").toLowerCase())) return swatch;
+    const replacement = pool.shift();
+    if (!replacement) return swatch;
+    usedHexes.add(String(replacement.hex).toLowerCase());
+    return {
+      ...swatch,
+      hex: replacement.hex,
+      rgb: replacement.rgb,
+      hsl: replacement.hsl || rgbToHsl(replacement.rgb)
+    };
+  });
+}
+
+/** Real sampled page colors, excluding pure black/white and any blocked hexes. */
+function samplePoolFromExtraction(rawExtraction, blockedHexes = new Set()) {
+  const samples = rawExtraction?.samples || [];
+  const out = [];
+  const seen = new Set();
+  for (const sample of samples) {
+    const hex = String(sample?.hex || "").toLowerCase();
+    if (!hex || seen.has(hex) || blockedHexes.has(hex) || isPureBlackOrWhite(hex)) continue;
+    seen.add(hex);
+    out.push({
+      hex: sample.hex,
+      rgb: sample.rgb,
+      hsl: sample.hsl || (sample.rgb ? rgbToHsl(sample.rgb) : null)
+    });
+  }
+  return out;
 }
 
 function applyColorToSwatchState(swatchId, hex) {
@@ -566,7 +633,7 @@ function updateSwatchColor(swatchId, hex, { commit = false, tile = null } = {}) 
         return btn?.dataset.swatchId === swatchId;
       });
     if (liveTile) paintSwatchTile(liveTile, swatch);
-    reportHeight();
+    if (!appEl.classList.contains("is-picking-color")) reportHeight();
     return;
   }
 
@@ -574,6 +641,211 @@ function updateSwatchColor(swatchId, hex, { commit = false, tile = null } = {}) 
 }
 
 let activePickerSwatchId = null;
+let activePickerTile = null;
+let activePickerOriginRect = null;
+let activePickerBaseline = null;
+
+const PICKER_MORPH_MS = 340;
+
+function snapshotSwatchForPicker(swatch) {
+  if (!swatch) return null;
+  return {
+    id: swatch.id,
+    hex: swatch.hex,
+    rgb: swatch.rgb ? { ...swatch.rgb } : null,
+    hsl: swatch.hsl ? { ...swatch.hsl } : null,
+    locked: Boolean(swatch.locked)
+  };
+}
+
+function revertPickerBaseline() {
+  const baseline = activePickerBaseline;
+  if (!baseline?.id) return null;
+  currentPalette = currentPalette.map((s) =>
+    s.id === baseline.id
+      ? {
+          ...s,
+          hex: baseline.hex,
+          rgb: baseline.rgb,
+          hsl: baseline.hsl,
+          locked: baseline.locked
+        }
+      : s
+  );
+  return currentPalette.find((s) => s.id === baseline.id) || null;
+}
+
+function clearPickerStageOverlay() {
+  if (!colorPickerStageEl) return;
+  colorPickerStageEl.style.position = "";
+  colorPickerStageEl.style.left = "";
+  colorPickerStageEl.style.top = "";
+  colorPickerStageEl.style.width = "";
+  colorPickerStageEl.style.zIndex = "";
+}
+
+function lockPickerStageOverlay() {
+  if (!colorPickerStageEl || !appEl) return;
+  const appRect = appEl.getBoundingClientRect();
+  const stageRect = colorPickerStageEl.getBoundingClientRect();
+  if (!stageRect.width) return;
+  colorPickerStageEl.style.position = "absolute";
+  colorPickerStageEl.style.left = `${Math.round(stageRect.left - appRect.left)}px`;
+  colorPickerStageEl.style.top = `${Math.round(stageRect.top - appRect.top)}px`;
+  colorPickerStageEl.style.width = `${Math.round(stageRect.width)}px`;
+  colorPickerStageEl.style.zIndex = "6";
+}
+
+function exitPickingMode() {
+  appEl.classList.remove(
+    "is-picking-color",
+    "is-picking-enter",
+    "is-picking-enter-active",
+    "is-picking-exit",
+    "is-picking-exit-active"
+  );
+  clearPickerStageOverlay();
+  if (colorPickerStageEl) {
+    colorPickerStageEl.hidden = true;
+    colorPickerStageEl.style.height = "";
+    colorPickerStageEl.replaceChildren();
+  }
+  activePickerOriginRect = null;
+}
+
+function waitForTransition(el, property, ms) {
+  return new Promise((resolve) => {
+    if (!el || prefersReducedMotion()) {
+      resolve();
+      return;
+    }
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      el.removeEventListener("transitionend", onEnd);
+      resolve();
+    };
+    const onEnd = (event) => {
+      if (event.target !== el) return;
+      if (property && event.propertyName !== property) return;
+      finish();
+    };
+    el.addEventListener("transitionend", onEnd);
+    window.setTimeout(finish, ms + 40);
+  });
+}
+
+function morphPickerFromTile(root, tile) {
+  const surface = root?.querySelector(".cp-sv-wrap") || root;
+  if (!root || !tile || prefersReducedMotion()) {
+    root?.classList.remove("is-morphing", "is-morphing-in", "is-morphing-out", "is-morphing-active");
+    return Promise.resolve();
+  }
+
+  const from = activePickerOriginRect || tile.getBoundingClientRect();
+  const to = surface.getBoundingClientRect();
+  if (!from.width || !to.width) {
+    root.classList.remove("is-morphing", "is-morphing-in", "is-morphing-out", "is-morphing-active");
+    return Promise.resolve();
+  }
+
+  const dx = from.left + from.width / 2 - (to.left + to.width / 2);
+  const dy = from.top + from.height / 2 - (to.top + to.height / 2);
+  const sx = from.width / to.width;
+  const sy = from.height / to.height;
+
+  root.classList.add("is-morphing", "is-morphing-in");
+  root.classList.remove("is-morphing-out", "is-morphing-active");
+  surface.style.transformOrigin = "center center";
+  surface.style.borderRadius = "6px";
+  surface.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
+
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        root.classList.add("is-morphing-active");
+        surface.style.transform = "";
+        surface.style.borderRadius = "";
+        waitForTransition(surface, "transform", PICKER_MORPH_MS).then(() => {
+          root.classList.remove("is-morphing", "is-morphing-in", "is-morphing-active");
+          surface.style.removeProperty("transform");
+          surface.style.removeProperty("transform-origin");
+          surface.style.removeProperty("border-radius");
+          resolve();
+        });
+      });
+    });
+  });
+}
+
+function morphPickerToTile(root) {
+  const surface = root?.querySelector(".cp-sv-wrap") || root;
+  if (!root || prefersReducedMotion()) {
+    appEl.classList.remove("is-picking-color");
+    appEl.classList.add("is-picking-exit", "is-picking-exit-active");
+    return Promise.resolve();
+  }
+
+  if (!surface.getBoundingClientRect().width) return Promise.resolve();
+
+  // Keep the picker overlaid while the palette fades back in underneath.
+  lockPickerStageOverlay();
+  appEl.classList.remove("is-picking-color");
+  appEl.classList.add("is-picking-exit");
+
+  // Origin was captured before layout changed; remeasure the live tile.
+  if (activePickerTile) {
+    const liveTile = activePickerTile.getBoundingClientRect();
+    if (liveTile.width && liveTile.height) {
+      activePickerOriginRect = {
+        left: liveTile.left,
+        top: liveTile.top,
+        width: liveTile.width,
+        height: liveTile.height
+      };
+    }
+  }
+  const to = activePickerOriginRect;
+  reportHeight();
+
+  // Fade chrome + contract surface together (no staged wait).
+  root.classList.add("is-morphing", "is-morphing-out", "is-morphing-active");
+  root.classList.remove("is-morphing-in");
+  surface.style.transformOrigin = "center center";
+
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => {
+      appEl.classList.add("is-picking-exit-active");
+
+      const finish = () => {
+        root.classList.remove("is-morphing", "is-morphing-out", "is-morphing-active");
+        surface.style.removeProperty("transform");
+        surface.style.removeProperty("transform-origin");
+        surface.style.removeProperty("border-radius");
+        surface.style.removeProperty("opacity");
+        resolve();
+      };
+
+      if (!to?.width || !to?.height) {
+        surface.style.transform = "scale(0.98)";
+        surface.style.opacity = "0";
+        waitForTransition(surface, "opacity", PICKER_MORPH_MS).then(finish);
+        return;
+      }
+
+      const live = surface.getBoundingClientRect();
+      const dx = to.left + to.width / 2 - (live.left + live.width / 2);
+      const dy = to.top + to.height / 2 - (live.top + live.height / 2);
+      const sx = to.width / live.width;
+      const sy = to.height / live.height;
+
+      surface.style.borderRadius = "6px";
+      surface.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
+      waitForTransition(surface, "transform", PICKER_MORPH_MS).then(finish);
+    });
+  });
+}
 
 function openSwatchColorPicker(swatch, tile) {
   if (activePickerSwatchId === swatch.id) {
@@ -581,30 +853,96 @@ function openSwatchColorPicker(swatch, tile) {
     return;
   }
 
+  closeColorPicker({ immediate: true });
+  exitPickingMode();
+
   activePickerSwatchId = swatch.id;
+  activePickerTile = tile;
   tile.classList.add("is-editing");
-  openColorPicker({
-    hex: currentPalette.find((s) => s.id === swatch.id)?.hex || swatch.hex,
-    anchorEl: tile,
-    container: appEl,
+
+  if (!colorPickerStageEl) return;
+
+  const origin = tile.getBoundingClientRect();
+  activePickerOriginRect = {
+    left: origin.left,
+    top: origin.top,
+    width: origin.width,
+    height: origin.height
+  };
+
+  colorPickerStageEl.hidden = false;
+  appEl.classList.add("is-picking-enter");
+
+  const startHex = currentPalette.find((s) => s.id === swatch.id)?.hex || swatch.hex;
+  const startSwatch = currentPalette.find((s) => s.id === swatch.id) || swatch;
+  activePickerBaseline = snapshotSwatchForPicker(startSwatch);
+
+  const picker = openColorPicker({
+    hex: startHex,
+    mountEl: colorPickerStageEl,
     onInput: (color) => {
       updateSwatchColor(swatch.id, color.hex, { tile });
     },
     onCommit: (color) => {
       updateSwatchColor(swatch.id, color.hex, { commit: true, tile });
     },
-    onClose: () => {
+    animateClose: (root, { applied = false } = {}) => {
+      const sv = root.querySelector(".cp-sv");
+      const hex = applied
+        ? currentPalette.find((s) => s.id === swatch.id)?.hex || startHex
+        : activePickerBaseline?.hex || startHex;
+      if (sv) {
+        sv.style.backgroundImage = "none";
+        sv.style.backgroundColor = hex;
+      }
+      return morphPickerToTile(root);
+    },
+    onClose: ({ applied = false } = {}) => {
+      const editingTile = activePickerTile;
+      const swatchId = activePickerSwatchId;
+      if (!applied) revertPickerBaseline();
       activePickerSwatchId = null;
-      tile.classList.remove("is-editing");
+      activePickerTile = null;
+      activePickerBaseline = null;
+      editingTile?.classList.remove("is-editing");
+      exitPickingMode();
+      const latest = currentPalette.find((s) => s.id === swatchId);
+      if (editingTile && latest) paintSwatchTile(editingTile, latest);
       reportHeight();
     }
   });
+
+  const sv = picker?.root?.querySelector(".cp-sv");
+  if (sv) {
+    sv.style.backgroundImage = "none";
+    sv.style.backgroundColor = startHex;
+  }
+
+  // Overlay the picker on the palette so both can crossfade without a blank gap.
+  lockPickerStageOverlay();
   reportHeight();
+
+  requestAnimationFrame(() => {
+    appEl.classList.add("is-picking-enter-active");
+    morphPickerFromTile(picker?.root, tile).then(() => {
+      appEl.classList.add("is-picking-color");
+      appEl.classList.remove("is-picking-enter", "is-picking-enter-active");
+      clearPickerStageOverlay();
+      if (sv) {
+        sv.style.removeProperty("background-image");
+        picker?.setHex?.(startHex);
+      }
+      reportHeight();
+    });
+  });
 }
 
 function renderSwatches(swatches) {
-  closeColorPicker();
+  closeColorPicker({ immediate: true });
   activePickerSwatchId = null;
+  activePickerTile = null;
+  activePickerBaseline = null;
+  exitPickingMode();
   swatchesEl.innerHTML = "";
 
   for (const { tiles, height } of buildBentoRows(swatches)) {
@@ -676,18 +1014,38 @@ function createLocalRng(seed) {
   };
 }
 
-/** Guaranteed visual change: nudge unlocked swatches to darker/lighter siblings. */
-function forceShadedPalette(swatches, seed) {
+/** Last-resort shuffle: swap unlocked tiles to other real page colors. */
+function forceAlternatePalette(swatches, rawExtraction, seed) {
   const rng = createLocalRng(seed);
-  const deltas = [-28, -20, -14, -8, 8, 14, 20, 28];
+  const lockedHexes = new Set(
+    swatches.filter((s) => s.locked).map((s) => String(s.hex || "").toLowerCase())
+  );
+  const used = new Set(
+    swatches.filter((s) => s.locked).map((s) => String(s.hex || "").toLowerCase())
+  );
+  const pool = samplePoolFromExtraction(rawExtraction, lockedHexes);
+
+  // Fisher–Yates with seeded rng
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+
+  let cursor = 0;
   return swatches.map((swatch) => {
     if (swatch.locked) return swatch;
-    for (let attempt = 0; attempt < 12; attempt++) {
-      const delta = deltas[Math.floor(rng() * deltas.length)];
-      const variant = shadeColor(swatch, delta);
-      if (variant && variant.hex.toLowerCase() !== String(swatch.hex).toLowerCase()) {
-        return { ...swatch, hex: variant.hex, rgb: variant.rgb, hsl: variant.hsl };
-      }
+    const current = String(swatch.hex || "").toLowerCase();
+    while (cursor < pool.length) {
+      const candidate = pool[cursor++];
+      const hex = String(candidate.hex).toLowerCase();
+      if (hex === current || used.has(hex)) continue;
+      used.add(hex);
+      return {
+        ...swatch,
+        hex: candidate.hex,
+        rgb: candidate.rgb,
+        hsl: candidate.hsl || rgbToHsl(candidate.rgb)
+      };
     }
     return swatch;
   });
@@ -711,17 +1069,22 @@ function buildPaletteAttempt(rawExtraction, seed, avoidHexes) {
 
 /**
  * Always returns a palette that looks different from what's on screen.
- * Locked colors are injected into the extraction so new shades grow from them,
+ * Locked colors are injected into the extraction so new picks build around them,
  * then re-applied so they stay put while unlocked tiles refresh.
  */
 function buildShuffledPalette(rawExtraction) {
   const locked = lockedSwatches();
   const seededExtraction = extractionWithLockedColors(rawExtraction, locked);
   const currentSignature = paletteSignature(currentPalette);
-  const avoidHexes = currentPalette.filter((s) => !s.locked).map((s) => s.hex);
+  const lockedHexes = locked.map((s) => s.hex);
+  // Unlocked tiles should change; locked hexes must never reappear on another tile.
+  const unlockedHexes = currentPalette.filter((s) => !s.locked).map((s) => s.hex);
 
   for (let i = 0; i < SHUFFLE_MAX_ATTEMPTS; i++) {
-    const avoid = i < SHUFFLE_MAX_ATTEMPTS / 2 ? avoidHexes : [];
+    const avoid =
+      i < SHUFFLE_MAX_ATTEMPTS / 2
+        ? [...unlockedHexes, ...lockedHexes]
+        : [...lockedHexes];
     const attempt = buildPaletteAttempt(seededExtraction, nextShuffleSeed(), avoid);
     if (!attempt) continue;
     const merged = mergeLockedIntoPalette(attempt.swatches, currentPalette);
@@ -730,11 +1093,11 @@ function buildShuffledPalette(rawExtraction) {
     }
   }
 
-  const shaded = mergeLockedIntoPalette(
-    forceShadedPalette(currentPalette, nextShuffleSeed()),
+  const alternates = mergeLockedIntoPalette(
+    forceAlternatePalette(currentPalette, rawExtraction, nextShuffleSeed()),
     currentPalette
   );
-  return { swatches: shaded, signature: paletteSignature(shaded) };
+  return { swatches: alternates, signature: paletteSignature(alternates) };
 }
 
 async function shufflePalette() {
@@ -921,6 +1284,9 @@ function renderFonts(fonts) {
 
 function switchMode(mode) {
   if ((mode !== "colors" && mode !== "fonts") || mode === activeMode) return;
+
+  closeColorPicker({ immediate: true });
+  exitPickingMode();
 
   appEl.classList.add("is-switching");
 

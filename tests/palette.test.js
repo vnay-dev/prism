@@ -68,6 +68,196 @@ test("utility-heavy colors do not become primary or secondary", async () => {
   }
 });
 
+test("pages with only utility chromatics still get a primary tile", async () => {
+  const curated = curatePalette({
+    sectionCount: 3,
+    sampledElements: 40,
+    samples: [
+      {
+        hex: "#f5f5f5",
+        rgb: { r: 245, g: 245, b: 245 },
+        hsl: { h: 0, s: 0, l: 96 },
+        area: 800,
+        importance: 200,
+        sourceCategory: "global_background",
+        sectionId: "section-0",
+        context: "surface",
+        contrast: 0.2
+      },
+      {
+        hex: "#111111",
+        rgb: { r: 17, g: 17, b: 17 },
+        hsl: { h: 0, s: 0, l: 7 },
+        area: 120,
+        importance: 80,
+        sourceCategory: "default",
+        sectionId: "section-0",
+        context: "text",
+        contrast: 0.9
+      },
+      {
+        hex: "#9ca3af",
+        rgb: { r: 156, g: 163, b: 175 },
+        hsl: { h: 220, s: 9, l: 65 },
+        area: 60,
+        importance: 40,
+        sourceCategory: "default",
+        sectionId: "section-1",
+        context: "text",
+        contrast: 0.5
+      },
+      {
+        hex: "#22c55e",
+        rgb: { r: 34, g: 197, b: 94 },
+        hsl: { h: 142, s: 71, l: 45 },
+        area: 40,
+        importance: 90,
+        sourceCategory: "success_state",
+        sectionId: "section-1",
+        context: "surface",
+        contrast: 0.5
+      },
+      {
+        hex: "#ef4444",
+        rgb: { r: 239, g: 68, b: 68 },
+        hsl: { h: 0, s: 84, l: 60 },
+        area: 30,
+        importance: 70,
+        sourceCategory: "error_state",
+        sectionId: "section-2",
+        context: "surface",
+        contrast: 0.5
+      }
+    ]
+  });
+  const assigned = assignRoles(curated);
+  const primary = assigned.swatches.find((s) => s.role === "primary");
+  assert.ok(primary, "expected a primary when page has chromatic colors");
+  assert.ok(primary.hsl.s > 18, "primary must be chromatic, not gray");
+  assert.equal(assigned.paletteMode, "brand");
+});
+
+test("soft pastel and deep brand darks can become primary", async () => {
+  const curated = curatePalette({
+    sectionCount: 3,
+    sampledElements: 30,
+    samples: [
+      {
+        hex: "#f8fafc",
+        rgb: { r: 248, g: 250, b: 252 },
+        hsl: { h: 210, s: 40, l: 98 },
+        area: 900,
+        importance: 200,
+        sourceCategory: "global_background",
+        sectionId: "section-0",
+        context: "surface",
+        contrast: 0.1,
+        areaSourceType: "Background"
+      },
+      {
+        hex: "#dbeafe",
+        rgb: { r: 219, g: 234, b: 254 },
+        hsl: { h: 214, s: 95, l: 93 },
+        area: 200,
+        importance: 320,
+        sourceCategory: "hero_background",
+        sectionId: "section-0",
+        context: "surface",
+        contrast: 0.2,
+        areaSourceType: "Background"
+      },
+      {
+        hex: "#0f172a",
+        rgb: { r: 15, g: 23, b: 42 },
+        hsl: { h: 222, s: 47, l: 11 },
+        area: 80,
+        importance: 280,
+        sourceCategory: "primary_button",
+        sectionId: "section-1",
+        context: "button",
+        contrast: 0.8
+      },
+      {
+        hex: "#64748b",
+        rgb: { r: 100, g: 116, b: 139 },
+        hsl: { h: 215, s: 16, l: 47 },
+        area: 40,
+        importance: 40,
+        sourceCategory: "default",
+        sectionId: "section-2",
+        context: "text",
+        contrast: 0.5
+      }
+    ]
+  });
+  const assigned = assignRoles(curated);
+  const primary = assigned.swatches.find((s) => s.role === "primary");
+  assert.ok(primary, "expected primary from soft/deep brand colors");
+  assert.ok(
+    ["#dbeafe", "#0f172a"].includes(primary.hex.toLowerCase()),
+    `primary should be pastel or deep brand, got ${primary.hex}`
+  );
+  assert.ok(primary.hsl.s > 18, "primary should not be a gray");
+});
+
+test("gray-only pages still expose a primary hero tile", async () => {
+  const curated = curatePalette({
+    sectionCount: 3,
+    sampledElements: 20,
+    samples: [
+      {
+        hex: "#f5f5f5",
+        rgb: { r: 245, g: 245, b: 245 },
+        hsl: { h: 0, s: 0, l: 96 },
+        area: 800,
+        importance: 200,
+        sourceCategory: "global_background",
+        sectionId: "section-0",
+        context: "surface",
+        contrast: 0.2,
+        areaSourceType: "Background"
+      },
+      {
+        hex: "#111111",
+        rgb: { r: 17, g: 17, b: 17 },
+        hsl: { h: 0, s: 0, l: 7 },
+        area: 120,
+        importance: 80,
+        sourceCategory: "default",
+        sectionId: "section-0",
+        context: "text",
+        contrast: 0.9
+      },
+      {
+        hex: "#9ca3af",
+        rgb: { r: 156, g: 163, b: 175 },
+        hsl: { h: 220, s: 9, l: 65 },
+        area: 60,
+        importance: 50,
+        sourceCategory: "default",
+        sectionId: "section-1",
+        context: "text",
+        contrast: 0.5
+      },
+      {
+        hex: "#6b7280",
+        rgb: { r: 107, g: 114, b: 128 },
+        hsl: { h: 220, s: 9, l: 46 },
+        area: 40,
+        importance: 40,
+        sourceCategory: "default",
+        sectionId: "section-2",
+        context: "border",
+        contrast: 0.4
+      }
+    ]
+  });
+  const assigned = assignRoles(curated);
+  const primary = assigned.swatches.find((s) => s.role === "primary");
+  assert.ok(primary, "gray-only pages should still get a primary tile");
+  assert.ok(assigned.swatches.length >= 3, "should keep the available gray swatches");
+});
+
 test("classifySourceFromSignals detects utility badges", async () => {
   const { classifySourceFromSignals } = await import("../src/core/sourceClassification.js");
   assert.equal(
@@ -377,7 +567,7 @@ test("hexToRgb parses six-digit hex codes", async () => {
   assert.equal(hexToRgb("not-a-color"), null);
 });
 
-test("shuffle seeds produce many distinct palettes via shades", async () => {
+test("shuffle seeds produce distinct real-color palettes", async () => {
   const fixtures = await loadFixtures();
   const signatures = new Set();
   for (let seed = 1; seed <= 40; seed++) {
@@ -390,8 +580,17 @@ test("shuffle seeds produce many distinct palettes via shades", async () => {
         .join("|")
     );
   }
+  // Shuffle uses real sampled colors only (no invented shades), so variety is
+  // bounded by the page's chromatic pool — still expect multiple alternatives.
   assert.ok(
-    signatures.size >= 15,
-    `expected rich shade variety, got ${signatures.size} distinct palettes`
+    signatures.size >= 4,
+    `expected multiple shuffle alternatives, got ${signatures.size} distinct palettes`
   );
+  for (let seed = 1; seed <= 10; seed++) {
+    const assigned = assignRoles(curatePalette(fixtures[0], { seed: seed * 2654435761 }));
+    assert.ok(
+      assigned.swatches.some((s) => s.role === "primary"),
+      "every shuffled palette should still include a primary"
+    );
+  }
 });

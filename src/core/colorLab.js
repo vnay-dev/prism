@@ -121,7 +121,14 @@ export function shadeColor(color, lightnessDelta) {
 }
 
 export function isNeutralHsl(hsl) {
+  // Clustering / foundation: extreme lightness stays in the neutral pool so
+  // soft tinted surfaces are not hue-deduped away against dark brand siblings.
   return hsl.s <= 18 || hsl.l <= 12 || hsl.l >= 90;
+}
+
+/** True when a color has enough saturation to read as a brand/primary hue. */
+export function hasVisibleChroma(hsl) {
+  return (hsl?.s || 0) > 18;
 }
 
 /** Literal pure black/white carry no design value in a curated palette. */

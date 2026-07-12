@@ -70,13 +70,6 @@
       border-radius: 12px;
       background: #fefefe;
       vertical-align: top;
-      transition: height 220ms cubic-bezier(0.4, 0, 0.2, 1);
-      will-change: height;
-    }
-    @media (prefers-reduced-motion: reduce) {
-      #${HOST_ID} .prism-panel-frame {
-        transition: none;
-      }
     }
   `;
 
@@ -170,13 +163,9 @@
       const nextHeight = `${Math.min(Math.max(height, 1), 720)}px`;
 
       if (!hasSized) {
-        // Apply the initial size instantly so the panel opens at its natural
-        // height instead of animating up from zero.
+        // First paint: size immediately so the panel never opens at height 0.
         hasSized = true;
-        iframe.style.transition = "none";
         iframe.style.height = nextHeight;
-        void iframe.offsetHeight;
-        iframe.style.transition = "";
         return;
       }
 
