@@ -9,7 +9,7 @@ import {
 } from "../benchmark/benchmark-lib.mjs";
 
 const LOCKFILE_PATH = new URL("../benchmark/lockfile.json", import.meta.url);
-const EXTRACTIONS_DIR = new URL("../scripts/benchmark-extractions/", import.meta.url);
+const EXTRACTIONS_DIR = new URL("../benchmark/extractions/", import.meta.url);
 
 function loadLockfile() {
   assert.ok(existsSync(LOCKFILE_PATH), "benchmark/lockfile.json is missing — run npm run benchmark:lock");
@@ -27,7 +27,7 @@ test("benchmark lockfile covers all 9 reference sites", () => {
 test("benchmark extractions exist for all reference sites", () => {
   for (const { slug } of BENCHMARK_SITES) {
     const path = new URL(`${slug}.json`, EXTRACTIONS_DIR);
-    assert.ok(existsSync(path), `missing extraction scripts/benchmark-extractions/${slug}.json`);
+    assert.ok(existsSync(path), `missing extraction benchmark/extractions/${slug}.json`);
   }
 });
 

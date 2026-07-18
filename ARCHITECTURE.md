@@ -62,6 +62,8 @@ Popup (Font families tab)  →  cards with family name + weights · per-card cli
 | `src/core/colorLab.js` | RGB ↔ HSL ↔ LAB, Delta-E |
 | `benchmark/benchmark-lib.mjs` | Frozen 9-site regression baseline |
 | `benchmark/lockfile.json` | Canonical palettes and scores |
+| `benchmark/extractions/*.json` | Cached page extractions (input fixtures) |
+| `benchmark/generate-lockfile.mjs` | Regenerates lockfile from extractions + algorithm |
 
 ---
 
@@ -500,8 +502,9 @@ Linear, Stripe, Spotify, Vercel, Notion, Framer, Apple, Netflix, Slack
 | File | Contents |
 |------|----------|
 | `benchmark/lockfile.json` | Frozen palettes, roles, scores (brandAccuracy, designerUsefulness) |
-| `scripts/benchmark-extractions/*.json` | Cached raw extractions (input fixtures) |
+| `benchmark/extractions/*.json` | Cached raw extractions (input fixtures) |
 | `benchmark/benchmark-lib.mjs` | Shared run, score, compare logic |
+| `benchmark/generate-lockfile.mjs` | Regenerates lockfile from extractions + algorithm |
 | `tests/benchmark.test.js` | Automated regression test |
 
 **Current baseline averages:** brand accuracy **8.6/10**, designer usefulness **8.3/10**

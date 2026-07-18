@@ -7,7 +7,7 @@
     "prepare": "node scripts/install-hooks.mjs",
     "test": "node --test",
     "test:benchmark": "node --test tests/benchmark.test.js",
-    "benchmark:lock": "node scripts/generate-benchmark-lockfile.mjs",
+    "benchmark:lock": "node benchmark/generate-lockfile.mjs",
     "package:store": "node scripts/package-store.mjs"
   }
 }

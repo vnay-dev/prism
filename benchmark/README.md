@@ -12,7 +12,8 @@ Linear, Stripe, Spotify, Vercel, Notion, Framer, Apple, Netflix, Slack
 |------|---------|
 | `lockfile.json` | Frozen palettes, roles, and benchmark scores |
 | `benchmark-lib.mjs` | Shared extraction, scoring, and comparison logic |
-| `../scripts/benchmark-extractions/*.json` | Cached page extractions (input fixtures) |
+| `extractions/*.json` | Cached page extractions (input fixtures) |
+| `generate-lockfile.mjs` | Regenerates `lockfile.json` from extractions + algorithm |
 
 ## Commands
 

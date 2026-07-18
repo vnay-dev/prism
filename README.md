@@ -86,8 +86,8 @@ src/
   core/                Clustering, scoring, roles, font curation
   popup/               Tabbed panel UI
 tests/                 Node test runner suites
-benchmark/             Frozen 9-site color regression baseline
-scripts/               Benchmark lockfile generator and store packaging
+benchmark/             Frozen 9-site color baseline (lockfile, extractions, regen)
+scripts/               Store packaging, version sync, git hooks
 ```
 
 ## Permissions and network

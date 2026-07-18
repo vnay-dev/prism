@@ -1,16 +1,17 @@
 /**
  * Generate or update benchmark/lockfile.json from current extractions + algorithm.
- * Usage: node scripts/generate-benchmark-lockfile.mjs
+ * Usage: node benchmark/generate-lockfile.mjs
+ *        (or: npm run benchmark:lock)
  */
 import { writeFileSync } from "fs";
 import {
   BENCHMARK_SITES,
   BENCHMARK_VERSION,
   runBenchmark
-} from "../benchmark/benchmark-lib.mjs";
+} from "./benchmark-lib.mjs";
 
-const EXTRACTIONS_DIR = new URL("../scripts/benchmark-extractions/", import.meta.url);
-const LOCKFILE_PATH = new URL("../benchmark/lockfile.json", import.meta.url);
+const EXTRACTIONS_DIR = new URL("./extractions/", import.meta.url);
+const LOCKFILE_PATH = new URL("./lockfile.json", import.meta.url);
 
 const sites = runBenchmark(EXTRACTIONS_DIR);
 const avgBrand = sites.reduce((s, x) => s + x.scores.brandAccuracy, 0) / sites.length;
@@ -21,7 +22,7 @@ const lockfile = {
   frozenAt: new Date().toISOString(),
   description:
     "Frozen palette extraction baseline. Regenerate only when intentionally accepting benchmark changes.",
-  extractionsSource: "scripts/benchmark-extractions/",
+  extractionsSource: "benchmark/extractions/",
   sites,
   averages: {
     brandAccuracy: +avgBrand.toFixed(1),

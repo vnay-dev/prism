@@ -2,7 +2,7 @@
   "version": 1,
   "frozenAt": "2026-07-11T07:05:28.472Z",
   "description": "Frozen palette extraction baseline. Regenerate only when intentionally accepting benchmark changes.",
-  "extractionsSource": "scripts/benchmark-extractions/",
+  "extractionsSource": "benchmark/extractions/",
   "sites": [
     {
       "slug": "linear",
