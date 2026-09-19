@@ -1,5 +1,23 @@
 # Release notes
 
+## 0.4.1 — Store listing name & summary
+
+**Date:** September 19, 2026
+
+### Changed
+
+- **Extension name** — now **Prism - Website Color & Font Extractor** in Chrome and on the Web Store.
+- **Store summary** — “Extract the colors and fonts from any website in one click. Prism helps designers quickly understand the visual style of websites they like.”
+
+### Package
+
+```bash
+npm run package:store
+# → dist/prism-0.4.1.zip
+```
+
+---
+
 ## 0.4.0 — In-place editing & primary guarantee
 
 **Date:** July 12, 2026
