@@ -7,7 +7,7 @@
 ### Changed
 
 - **Extension name** — now **Prism - Website Color & Font Extractor** in Chrome and on the Web Store.
-- **Store summary** — “Extract the colors and fonts from any website in one click. Prism helps designers quickly understand the visual style of websites they like.”
+- **Store summary** — “Extract color palettes and fonts from any website in one click. For designers who need CSS colors, typography, and style fast.”
 
 ### Package
 

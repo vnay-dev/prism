@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Prism - Website Color & Font Extractor",
-  "description": "Extract the colors and fonts from any website in one click. Prism helps designers quickly understand the visual style of websites they like.",
+  "description": "Extract color palettes and fonts from any website in one click. For designers who need CSS colors, typography, and style fast.",
   "version": "0.4.1",
   "icons": {
     "16": "icons/icon16.png",
