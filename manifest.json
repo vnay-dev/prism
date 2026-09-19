@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Prism (Dev)",
-  "description": "Extracts curated color palettes and font families from live web pages for designers.",
+  "name": "Prism - Website Color & Font Extractor",
+  "description": "Extract the colors and fonts from any website in one click. Prism helps designers quickly understand the visual style of websites they like.",
   "version": "0.4.0",
   "icons": {
     "16": "icons/icon16.png",
@@ -14,7 +14,7 @@
     "service_worker": "src/background/service-worker.js"
   },
   "action": {
-    "default_title": "Prism (Dev)",
+    "default_title": "Prism - Website Color & Font Extractor",
     "default_icon": {
       "16": "icons/icon16.png",
       "32": "icons/icon32.png",

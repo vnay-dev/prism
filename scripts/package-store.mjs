@@ -15,7 +15,7 @@ import {
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const PROD_NAME = "Prism";
+const PROD_NAME = "Prism - Website Color & Font Extractor";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const manifest = JSON.parse(readFileSync(join(root, "manifest.json"), "utf8"));
