@@ -10,6 +10,7 @@ import {
   attachFoundationAreaShare,
   contributesFoundationArea,
   inferLegacySampleFields,
+  shouldKeepSample,
   stripBrowserDefaultLinks
 } from "./paletteSafeguards.js";
 import { addSampleUsage, emptyUsage, snapshotUsage } from "./usageRoles.js";
@@ -582,7 +583,7 @@ export function curatePalette(rawExtraction, options = {}) {
   const avoid = normalizeAvoidHexes(options.avoidHexes);
 
   const enriched = samples
-    .filter((s) => !isPureBlackOrWhite(s.hex))
+    .filter((s) => shouldKeepSample(s))
     .map((s) => ({
       ...s,
       hsl: s.hsl || rgbToHsl(s.rgb),

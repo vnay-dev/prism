@@ -160,16 +160,21 @@
       return;
     }
     if (type === "prism-resize" && typeof height === "number") {
-      const nextHeight = `${Math.min(Math.max(height, 1), 720)}px`;
-
-      if (!hasSized) {
-        // First paint: size immediately so the panel never opens at height 0.
-        hasSized = true;
-        iframe.style.height = nextHeight;
-        return;
-      }
-
+      // Hug content: always adopt the popup's measured height (shrinks when
+      // dynamic tab/view content gets shorter).
+      const px = Math.min(Math.max(Math.ceil(height), 1), 720);
+      const nextHeight = `${px}px`;
+      const prevHeight = parseInt(iframe.style.height, 10) || 0;
+      hasSized = true;
       iframe.style.height = nextHeight;
+
+      // Second pass after the iframe viewport changes — content can only be
+      // measured correctly once the frame is no longer taller than the UI.
+      if (Math.abs(px - prevHeight) > 1) {
+        requestAnimationFrame(() => {
+          iframe.contentWindow?.postMessage({ type: "prism-request-resize" }, "*");
+        });
+      }
 
       // If the user has dragged the panel, re-clamp so a taller panel does not
       // grow off the bottom of the screen.

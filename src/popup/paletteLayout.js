@@ -1,4 +1,9 @@
-import { USAGE_ROLE_LABELS, USAGE_ROLE_ORDER } from "../core/usageRoles.js";
+import {
+  USAGE_ROLE_LABELS,
+  USAGE_ROLE_ORDER,
+  normalizeUsageHex,
+  primaryUsageRole
+} from "../core/usageRoles.js";
 
 /**
  * Shared palette layout logic.
@@ -100,18 +105,46 @@ export function buildFilledRows(tiles) {
   return rows;
 }
 
+function swatchColorKey(swatch) {
+  return (
+    normalizeUsageHex(swatch?.hex) ||
+    normalizeUsageHex(swatch?.rgb) ||
+    String(swatch?.hex || "").toLowerCase()
+  );
+}
+
+function sectionPrimaryRole(swatch) {
+  return swatch?.primaryUsageRole || primaryUsageRole(swatch?.usageRoles, swatch?.usage);
+}
+
 /**
  * Group swatches under role titles: Background, then Text, then Accent.
- * A color with more than one role is listed under each of those titles.
+ * Each unique color appears in exactly one section (its primary usage role).
+ * Full `usageRoles` stay on the swatch so secondary uses remain visible as metadata.
  * Colors with no measured role stay visible after the titled groups.
  */
 export function buildRoleSections(swatches) {
   const list = Array.isArray(swatches) ? swatches : [];
+  const seen = new Set();
+  const unique = [];
+  for (const swatch of list) {
+    const key = swatchColorKey(swatch);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    unique.push(swatch);
+  }
+
   const sections = [];
+  const placed = new Set();
 
   for (const role of USAGE_ROLE_ORDER) {
-    const tiles = list.filter((swatch) => (swatch.usageRoles || []).includes(role));
+    const tiles = unique.filter((swatch) => {
+      const key = swatchColorKey(swatch);
+      if (placed.has(key)) return false;
+      return sectionPrimaryRole(swatch) === role;
+    });
     if (!tiles.length) continue;
+    for (const tile of tiles) placed.add(swatchColorKey(tile));
     sections.push({
       role,
       label: USAGE_ROLE_LABELS[role],
@@ -119,7 +152,10 @@ export function buildRoleSections(swatches) {
     });
   }
 
-  const unlabeled = list.filter((swatch) => !(swatch.usageRoles || []).length);
+  const unlabeled = unique.filter((swatch) => {
+    const key = swatchColorKey(swatch);
+    return !placed.has(key) && !(swatch.usageRoles || []).length;
+  });
   if (unlabeled.length) {
     sections.push({ role: "", label: "", rows: buildFilledRows(unlabeled) });
   }

@@ -427,7 +427,7 @@ test("browser default link blue cannot become primary", async () => {
   assert.equal(primary?.hex, "#1ed760");
 });
 
-test("pure black and pure white never appear in the curated palette", async () => {
+test("pure black/white page canvases may be foundation but never primary accents", async () => {
   const { curatePalette } = await import("../src/core/scoreAndCluster.js");
   const { assignRoles } = await import("../src/core/assignRoles.js");
   const extraction = {
@@ -445,9 +445,9 @@ test("pure black and pure white never appear in the curated palette", async () =
         context: "surface"
       },
       {
-        hex: "#000000",
-        rgb: { r: 0, g: 0, b: 0 },
-        hsl: { h: 0, s: 0, l: 0 },
+        hex: "#ffffff",
+        rgb: { r: 255, g: 255, b: 255 },
+        hsl: { h: 0, s: 0, l: 100 },
         area: 400000,
         importance: 380,
         sourceCategory: "repeated_section_bg",
@@ -456,15 +456,26 @@ test("pure black and pure white never appear in the curated palette", async () =
         context: "surface"
       },
       {
-        hex: "#f4f4f4",
-        rgb: { r: 244, g: 244, b: 244 },
-        hsl: { h: 0, s: 0, l: 96 },
-        area: 100000,
-        importance: 80,
-        sourceCategory: "repeated_section_bg",
-        areaSourceType: "Background",
+        hex: "#000000",
+        rgb: { r: 0, g: 0, b: 0 },
+        hsl: { h: 0, s: 0, l: 0 },
+        area: 50000,
+        importance: 30,
+        sourceCategory: "default",
+        areaSourceType: "Text",
+        sectionId: "section-0",
+        context: "text"
+      },
+      {
+        hex: "#000000",
+        rgb: { r: 0, g: 0, b: 0 },
+        hsl: { h: 0, s: 0, l: 0 },
+        area: 900000,
+        importance: 24,
+        sourceCategory: "illustration",
+        areaSourceType: "SVG Fill",
         sectionId: "section-2",
-        context: "surface"
+        context: "icon"
       },
       {
         hex: "#5e6ad2",
@@ -482,9 +493,16 @@ test("pure black and pure white never appear in the curated palette", async () =
 
   const curated = curatePalette(extraction);
   const assigned = assignRoles(curated);
-  const hexes = assigned.swatches.map((s) => s.hex.toLowerCase());
-  assert.ok(!hexes.includes("#000000"), "pure black must be excluded");
-  assert.ok(!hexes.includes("#ffffff"), "pure white must be excluded");
+  const byHex = Object.fromEntries(assigned.swatches.map((s) => [s.hex.toLowerCase(), s]));
+  assert.ok(byHex["#ffffff"], "white page canvas must remain as foundation/background");
+  assert.ok(
+    byHex["#ffffff"].role === "foundation" || byHex["#ffffff"].usageRoles.includes("background")
+  );
+  assert.ok(byHex["#000000"], "black body text must remain");
+  assert.ok(byHex["#000000"].usageRoles.includes("text"));
+  assert.notEqual(assigned.swatches.find((s) => s.role === "primary")?.hex.toLowerCase(), "#ffffff");
+  assert.notEqual(assigned.swatches.find((s) => s.role === "primary")?.hex.toLowerCase(), "#000000");
+  assert.equal(assigned.swatches.find((s) => s.role === "primary")?.hex.toLowerCase(), "#5e6ad2");
 });
 
 test("shuffling with a seed produces a valid, black/white-free palette", async () => {
@@ -593,4 +611,578 @@ test("shuffle seeds produce distinct real-color palettes", async () => {
       "every shuffled palette should still include a primary"
     );
   }
+});
+
+function fixtureByName(fixtures, name) {
+  const found = fixtures.find((entry) => entry.name === name);
+  assert.ok(found, `missing fixture ${name}`);
+  return found;
+}
+
+test("light grayscale marketplace keeps background, text, and button over marquee chips", async () => {
+  const fixtures = await loadFixtures();
+  const curated = curatePalette(fixtureByName(fixtures, "light-grayscale-marketplace"));
+  const assigned = assignRoles(curated);
+  const byHex = Object.fromEntries(assigned.swatches.map((s) => [s.hex.toLowerCase(), s]));
+
+  assert.ok(byHex["#f5f5f5"]?.usageRoles.includes("background"), "page background must survive");
+  // Near-black body text and dark button fills often merge (ΔE < 5); the cluster
+  // must still expose both Text and Accent usage — not paste over identity.
+  const darkInk = assigned.swatches.find((s) => s.hsl.l <= 12);
+  assert.ok(darkInk, "dark ink/button cluster must survive curation");
+  assert.ok(darkInk.usageRoles.includes("text"), "dark cluster must keep text usage");
+  assert.ok(darkInk.usageRoles.includes("accent"), "dark CTA fill must keep accent usage");
+  assert.ok(assigned.swatches.some((s) => s.usageRoles.includes("background")));
+  assert.ok(assigned.swatches.some((s) => s.usageRoles.includes("text")));
+  assert.ok(
+    !assigned.swatches.every((s) => s.usageRoles.length === 1 && s.usageRoles[0] === "accent"),
+    "palette must not collapse to accent-only"
+  );
+  // Marquee pastel chips may appear, but must not be the only swatches.
+  assert.ok(assigned.swatches.length >= 3);
+  assert.ok(byHex["#f5f5f5"].areaShare > (byHex["#e6fff0"]?.areaShare || 0));
+});
+
+test("chips-only extraction (oklch identity missing) cannot invent a full identity palette", async () => {
+  const fixtures = await loadFixtures();
+  const curated = curatePalette(fixtureByName(fixtures, "light-grayscale-chips-only-regression"));
+  const assigned = assignRoles(curated);
+  const hasFoundationSurface = assigned.swatches.some(
+    (s) => s.usageRoles.includes("background") && s.hsl.l >= 90 && s.areaShare >= 20
+  );
+  const hasBodyText = assigned.swatches.some((s) => s.usageRoles.includes("text") && s.hsl.l <= 20);
+  // Documents the pre-fix failure mode: without parsed page surfaces/text,
+  // curation only has pastel chips / filtered black — no real identity.
+  assert.equal(hasFoundationSurface, false);
+  assert.equal(hasBodyText, false);
+});
+
+test("dark site with restrained accent keeps surfaces, light text, and small CTA", async () => {
+  const fixtures = await loadFixtures();
+  const curated = curatePalette(fixtureByName(fixtures, "dark-site-restrained-accent"));
+  const assigned = assignRoles(curated);
+  const foundation = assigned.swatches.find((s) => s.role === "foundation");
+  const primary = assigned.swatches.find((s) => s.role === "primary");
+  const byHex = Object.fromEntries(assigned.swatches.map((s) => [s.hex.toLowerCase(), s]));
+
+  assert.ok(foundation, "expected dark foundation");
+  assert.ok(foundation.hsl.l <= 12);
+  assert.ok(byHex["#f4f4f5"]?.usageRoles.includes("text"), "light text on dark ground");
+  assert.ok(byHex["#151922"]?.usageRoles.includes("background"), "secondary surface retained");
+  assert.equal(primary?.hex.toLowerCase(), "#22d3ee");
+  assert.ok(byHex["#22d3ee"]?.usageRoles.includes("accent"));
+  // Tiny repeated icon gold must not outrank the real CTA.
+  assert.notEqual(primary?.hex.toLowerCase(), "#fbbf24");
+});
+
+test("light site with competing accents prefers brand CTA over utility and icons", async () => {
+  const fixtures = await loadFixtures();
+  const curated = curatePalette(fixtureByName(fixtures, "competing-accents-light-site"));
+  const assigned = assignRoles(curated);
+  const primary = assigned.swatches.find((s) => s.role === "primary");
+  const hexes = assigned.swatches.map((s) => s.hex.toLowerCase());
+  const byHex = Object.fromEntries(assigned.swatches.map((s) => [s.hex.toLowerCase(), s]));
+
+  assert.ok(byHex["#f8fafc"]?.usageRoles.includes("background"));
+  assert.ok(byHex["#0f172a"]?.usageRoles.includes("text"));
+  assert.ok(["#2563eb", "#f97316"].includes(primary?.hex.toLowerCase()));
+  assert.ok(!hexes.includes("#22c55e") || byHex["#22c55e"]?.isUtility);
+  // Small purple icon can remain, but must not become primary.
+  assert.notEqual(primary?.hex.toLowerCase(), "#a855f7");
+});
+
+test("small CTA accent is kept despite tiny coverage", async () => {
+  const fixtures = await loadFixtures();
+  const curated = curatePalette(fixtureByName(fixtures, "dark-site-restrained-accent"));
+  const assigned = assignRoles(curated);
+  const accent = assigned.swatches.find((s) => s.hex.toLowerCase() === "#22d3ee");
+  assert.ok(accent, "small-area CTA must remain in the palette");
+  assert.ok(accent.areaShare < 5, "CTA coverage is intentionally small");
+  assert.ok(accent.usageRoles.includes("accent"));
+});
+
+test("classifySourceFromSignals does not treat link fills as page surfaces", async () => {
+  const { classifySourceFromSignals } = await import("../src/core/sourceClassification.js");
+  assert.equal(
+    classifySourceFromSignals({
+      tagName: "A",
+      context: "link",
+      prop: "backgroundColor",
+      classText: "flex items-center gap-2 px-4"
+    }),
+    "default"
+  );
+  assert.equal(
+    classifySourceFromSignals({
+      tagName: "DIV",
+      context: "surface",
+      prop: "backgroundColor",
+      classText: "content-section",
+      sectionIndex: 2
+    }),
+    "repeated_section_bg"
+  );
+});
+
+test("small badge fills are not major_container page surfaces", async () => {
+  const { classifySourceFromSignals } = await import("../src/core/sourceClassification.js");
+  assert.equal(
+    classifySourceFromSignals({
+      tagName: "DIV",
+      context: "surface",
+      prop: "backgroundColor",
+      classText: "absolute top-0 right-0 bg-amber-100",
+      text: "FOR SALE",
+      area: 2400,
+      viewportArea: 1920 * 1080
+    }),
+    "promo_content"
+  );
+  assert.equal(
+    classifySourceFromSignals({
+      tagName: "SPAN",
+      context: "surface",
+      prop: "backgroundColor",
+      classText: "inline-flex rounded-full",
+      area: 1800,
+      viewportArea: 1440 * 900
+    }),
+    "default"
+  );
+  assert.equal(
+    classifySourceFromSignals({
+      tagName: "DIV",
+      context: "surface",
+      prop: "backgroundColor",
+      classText: "card shadow-sm",
+      area: 220000,
+      viewportArea: 1440 * 900
+    }),
+    "card"
+  );
+});
+
+test("dominant background keeps Background while badge fills do not", async () => {
+  const curated = curatePalette({
+    sectionCount: 5,
+    sampledElements: 200,
+    samples: [
+      ...[0, 1, 2, 3, 4].flatMap((section) => [
+        {
+          hex: "#f5f5f5",
+          rgb: { r: 245, g: 245, b: 245 },
+          hsl: { h: 0, s: 0, l: 96 },
+          area: 400000,
+          importance: 24,
+          sourceCategory: "global_background",
+          sectionId: `section-${section}`,
+          context: "surface",
+          contrast: 0.1,
+          areaSourceType: "Background"
+        }
+      ]),
+      ...Array.from({ length: 20 }, (_, i) => ({
+        hex: "#fef3c6",
+        rgb: { r: 254, g: 243, b: 198 },
+        hsl: { h: 48, s: 97, l: 89 },
+        area: 900,
+        importance: 18,
+        sourceCategory: "major_container",
+        sectionId: `section-${i % 5}`,
+        context: "surface",
+        contrast: 0.3,
+        areaSourceType: "Background"
+      })),
+      {
+        hex: "#0a0a0a",
+        rgb: { r: 10, g: 10, b: 10 },
+        hsl: { h: 0, s: 0, l: 4 },
+        area: 50000,
+        importance: 30,
+        sourceCategory: "default",
+        sectionId: "section-0",
+        context: "text",
+        contrast: 0.9,
+        areaSourceType: "Text"
+      },
+      {
+        hex: "#0a0a0a",
+        rgb: { r: 10, g: 10, b: 10 },
+        hsl: { h: 0, s: 0, l: 4 },
+        area: 40000,
+        importance: 30,
+        sourceCategory: "default",
+        sectionId: "section-1",
+        context: "text",
+        contrast: 0.9,
+        areaSourceType: "Text"
+      },
+      {
+        hex: "#e2e8f0",
+        rgb: { r: 226, g: 232, b: 240 },
+        hsl: { h: 214, s: 32, l: 91 },
+        area: 220000,
+        importance: 48,
+        sourceCategory: "card",
+        sectionId: "section-1",
+        context: "surface",
+        contrast: 0.1,
+        areaSourceType: "Background"
+      },
+      {
+        hex: "#e2e8f0",
+        rgb: { r: 226, g: 232, b: 240 },
+        hsl: { h: 214, s: 32, l: 91 },
+        area: 200000,
+        importance: 48,
+        sourceCategory: "card",
+        sectionId: "section-2",
+        context: "surface",
+        contrast: 0.1,
+        areaSourceType: "Background"
+      }
+    ]
+  });
+  const assigned = assignRoles(curated);
+  const byHex = Object.fromEntries(assigned.swatches.map((s) => [s.hex.toLowerCase(), s]));
+
+  assert.ok(byHex["#f5f5f5"]?.usageRoles.includes("background"), "main canvas stays Background");
+  assert.ok(byHex["#e2e8f0"]?.usageRoles.includes("background"), "large card surfaces stay Background");
+  assert.ok(
+    !byHex["#fef3c6"] || !byHex["#fef3c6"].usageRoles.includes("background"),
+    "badge fill must not enter Background"
+  );
+  if (byHex["#fef3c6"]) {
+    assert.ok(byHex["#fef3c6"].usageRoles.includes("accent"), "badge may remain as Accent");
+  }
+});
+
+test("X-like white canvas keeps Background; green accents do not become Background", async () => {
+  const curated = curatePalette({
+    sectionCount: 5,
+    samples: [
+      ...[0, 1, 2, 3, 4].map((section) => ({
+        hex: "#ffffff",
+        rgb: { r: 255, g: 255, b: 255 },
+        hsl: { h: 0, s: 0, l: 100 },
+        area: 500000,
+        importance: 24,
+        sourceCategory: "global_background",
+        sectionId: `section-${section}`,
+        context: "surface",
+        contrast: 0.1,
+        areaSourceType: "Background"
+      })),
+      {
+        hex: "#000000",
+        rgb: { r: 0, g: 0, b: 0 },
+        hsl: { h: 0, s: 0, l: 0 },
+        area: 70000,
+        importance: 30,
+        sourceCategory: "default",
+        sectionId: "section-0",
+        context: "text",
+        contrast: 0.9,
+        areaSourceType: "Text"
+      },
+      {
+        hex: "#000000",
+        rgb: { r: 0, g: 0, b: 0 },
+        hsl: { h: 0, s: 0, l: 0 },
+        area: 50000,
+        importance: 30,
+        sourceCategory: "default",
+        sectionId: "section-1",
+        context: "text",
+        contrast: 0.9,
+        areaSourceType: "Text"
+      },
+      {
+        hex: "#1d9bf0",
+        rgb: { r: 29, g: 155, b: 240 },
+        hsl: { h: 203, s: 89, l: 53 },
+        area: 8000,
+        importance: 900,
+        sourceCategory: "hero_cta",
+        sectionId: "section-0",
+        context: "button",
+        contrast: 0.7,
+        areaSourceType: "Background"
+      },
+      // Repeated green success / join chips — must not become foundational Background
+      ...[0, 1, 2, 3, 4].flatMap((section) => [
+        {
+          hex: "#00ba7c",
+          rgb: { r: 0, g: 186, b: 124 },
+          hsl: { h: 160, s: 100, l: 36 },
+          area: 12000,
+          importance: 48,
+          sourceCategory: "major_container",
+          sectionId: `section-${section}`,
+          context: "surface",
+          contrast: 0.5,
+          areaSourceType: "Background"
+        },
+        {
+          hex: "#00ba7c",
+          rgb: { r: 0, g: 186, b: 124 },
+          hsl: { h: 160, s: 100, l: 36 },
+          area: 3000,
+          importance: 40,
+          sourceCategory: "success_state",
+          sectionId: `section-${section}`,
+          context: "surface",
+          contrast: 0.5,
+          areaSourceType: "Background"
+        }
+      ])
+    ]
+  });
+  const assigned = assignRoles(curated);
+  const byHex = Object.fromEntries(assigned.swatches.map((s) => [s.hex.toLowerCase(), s]));
+  const sections = (await import("../src/popup/paletteLayout.js")).buildRoleSections(assigned.swatches);
+  const backgroundHexes = sections
+    .filter((section) => section.label === "Background")
+    .flatMap((section) => section.rows.flatMap((row) => row.tiles.map((tile) => tile.hex.toLowerCase())));
+
+  assert.ok(byHex["#ffffff"], "white canvas must survive curation");
+  assert.ok(backgroundHexes.includes("#ffffff"), "white canvas must be Background");
+  assert.ok(!backgroundHexes.includes("#00ba7c"), "green must not be foundational Background");
+  if (byHex["#00ba7c"]) {
+    assert.ok(
+      byHex["#00ba7c"].usageRoles.includes("accent") || byHex["#00ba7c"].primaryUsageRole === "accent",
+      "green remains an accent-like color"
+    );
+  }
+  assert.ok(byHex["#1d9bf0"]?.usageRoles.includes("accent"));
+});
+
+test("Reddit-like light canvas keeps Background over colorful community accents", async () => {
+  const curated = curatePalette({
+    sectionCount: 5,
+    samples: [
+      ...[0, 1, 2, 3, 4].map((section) => ({
+        hex: "#ffffff",
+        rgb: { r: 255, g: 255, b: 255 },
+        hsl: { h: 0, s: 0, l: 100 },
+        area: 450000,
+        importance: 24,
+        sourceCategory: "global_background",
+        sectionId: `section-${section}`,
+        context: "surface",
+        contrast: 0.1,
+        areaSourceType: "Background"
+      })),
+      ...[1, 2, 3].map((section) => ({
+        hex: "#dae0e6",
+        rgb: { r: 218, g: 224, b: 230 },
+        hsl: { h: 210, s: 20, l: 88 },
+        area: 160000,
+        importance: 42,
+        sourceCategory: "major_container",
+        sectionId: `section-${section}`,
+        context: "surface",
+        contrast: 0.15,
+        areaSourceType: "Background"
+      })),
+      {
+        hex: "#1c1c1c",
+        rgb: { r: 28, g: 28, b: 28 },
+        hsl: { h: 0, s: 0, l: 11 },
+        area: 60000,
+        importance: 30,
+        sourceCategory: "default",
+        sectionId: "section-0",
+        context: "text",
+        contrast: 0.9,
+        areaSourceType: "Text"
+      },
+      {
+        hex: "#1c1c1c",
+        rgb: { r: 28, g: 28, b: 28 },
+        hsl: { h: 0, s: 0, l: 11 },
+        area: 40000,
+        importance: 30,
+        sourceCategory: "default",
+        sectionId: "section-1",
+        context: "text",
+        contrast: 0.9,
+        areaSourceType: "Text"
+      },
+      {
+        hex: "#ff4500",
+        rgb: { r: 255, g: 69, b: 0 },
+        hsl: { h: 16, s: 100, l: 50 },
+        area: 7000,
+        importance: 900,
+        sourceCategory: "primary_button",
+        sectionId: "section-0",
+        context: "button",
+        contrast: 0.75,
+        areaSourceType: "Background"
+      },
+      ...[0, 1, 2, 3, 4].map((section) => ({
+        hex: "#46d160",
+        rgb: { r: 70, g: 209, b: 96 },
+        hsl: { h: 131, s: 60, l: 55 },
+        area: 9000,
+        importance: 60,
+        sourceCategory: "major_container",
+        sectionId: `section-${section}`,
+        context: "surface",
+        contrast: 0.5,
+        areaSourceType: "Background"
+      }))
+    ]
+  });
+  const assigned = assignRoles(curated);
+  const sections = (await import("../src/popup/paletteLayout.js")).buildRoleSections(assigned.swatches);
+  const backgroundHexes = sections
+    .filter((section) => section.label === "Background")
+    .flatMap((section) => section.rows.flatMap((row) => row.tiles.map((tile) => tile.hex.toLowerCase())));
+
+  assert.ok(backgroundHexes.includes("#ffffff") || backgroundHexes.includes("#dae0e6"));
+  assert.ok(!backgroundHexes.includes("#46d160"), "community green must not be Background");
+  assert.ok(!backgroundHexes.includes("#ff4500"), "orangered CTA must not be Background");
+});
+
+test("dark theme canvas stays Background while green accents stay Accent", async () => {
+  const curated = curatePalette({
+    sectionCount: 5,
+    samples: [
+      ...[0, 1, 2, 3, 4].map((section) => ({
+        hex: "#000000",
+        rgb: { r: 0, g: 0, b: 0 },
+        hsl: { h: 0, s: 0, l: 0 },
+        area: 500000,
+        importance: 24,
+        sourceCategory: "global_background",
+        sectionId: `section-${section}`,
+        context: "surface",
+        contrast: 0.1,
+        areaSourceType: "Background"
+      })),
+      {
+        hex: "#e7e9ea",
+        rgb: { r: 231, g: 233, b: 234 },
+        hsl: { h: 200, s: 6, l: 91 },
+        area: 50000,
+        importance: 30,
+        sourceCategory: "default",
+        sectionId: "section-0",
+        context: "text",
+        contrast: 0.9,
+        areaSourceType: "Text"
+      },
+      {
+        hex: "#e7e9ea",
+        rgb: { r: 231, g: 233, b: 234 },
+        hsl: { h: 200, s: 6, l: 91 },
+        area: 40000,
+        importance: 30,
+        sourceCategory: "default",
+        sectionId: "section-1",
+        context: "text",
+        contrast: 0.9,
+        areaSourceType: "Text"
+      },
+      {
+        hex: "#00ba7c",
+        rgb: { r: 0, g: 186, b: 124 },
+        hsl: { h: 160, s: 100, l: 36 },
+        area: 5000,
+        importance: 900,
+        sourceCategory: "hero_cta",
+        sectionId: "section-0",
+        context: "button",
+        contrast: 0.7,
+        areaSourceType: "Background"
+      },
+      ...[0, 1, 2].map((section) => ({
+        hex: "#00ba7c",
+        rgb: { r: 0, g: 186, b: 124 },
+        hsl: { h: 160, s: 100, l: 36 },
+        area: 8000,
+        importance: 48,
+        sourceCategory: "major_container",
+        sectionId: `section-${section}`,
+        context: "surface",
+        contrast: 0.5,
+        areaSourceType: "Background"
+      }))
+    ]
+  });
+  const assigned = assignRoles(curated);
+  const sections = (await import("../src/popup/paletteLayout.js")).buildRoleSections(assigned.swatches);
+  const backgroundHexes = sections
+    .filter((section) => section.label === "Background")
+    .flatMap((section) => section.rows.flatMap((row) => row.tiles.map((tile) => tile.hex.toLowerCase())));
+  const accentHexes = sections
+    .filter((section) => section.label === "Accent")
+    .flatMap((section) => section.rows.flatMap((row) => row.tiles.map((tile) => tile.hex.toLowerCase())));
+
+  assert.ok(backgroundHexes.includes("#000000"), "dark canvas must be Background");
+  assert.ok(!backgroundHexes.includes("#00ba7c"));
+  assert.ok(accentHexes.includes("#00ba7c"), "green CTA/surface remains Accent");
+});
+
+test("dark site keeps multiple large surface shades as Background", async () => {
+  const curated = curatePalette({
+    sectionCount: 5,
+    samples: [
+      ...[0, 1, 2, 3, 4].map((section) => ({
+        hex: "#0b0d10",
+        rgb: { r: 11, g: 13, b: 16 },
+        hsl: { h: 216, s: 18, l: 5 },
+        area: 500000,
+        importance: 24,
+        sourceCategory: "global_background",
+        sectionId: `section-${section}`,
+        context: "surface",
+        contrast: 0.1,
+        areaSourceType: "Background"
+      })),
+      ...[1, 2, 3].map((section) => ({
+        hex: "#151922",
+        rgb: { r: 21, g: 25, b: 34 },
+        hsl: { h: 222, s: 24, l: 11 },
+        area: 180000,
+        importance: 48,
+        sourceCategory: "major_container",
+        sectionId: `section-${section}`,
+        context: "surface",
+        contrast: 0.2,
+        areaSourceType: "Background"
+      })),
+      {
+        hex: "#f4f4f5",
+        rgb: { r: 244, g: 244, b: 245 },
+        hsl: { h: 240, s: 5, l: 96 },
+        area: 40000,
+        importance: 30,
+        sourceCategory: "default",
+        sectionId: "section-0",
+        context: "text",
+        contrast: 0.9,
+        areaSourceType: "Text"
+      },
+      {
+        hex: "#f4f4f5",
+        rgb: { r: 244, g: 244, b: 245 },
+        hsl: { h: 240, s: 5, l: 96 },
+        area: 30000,
+        importance: 30,
+        sourceCategory: "default",
+        sectionId: "section-1",
+        context: "text",
+        contrast: 0.9,
+        areaSourceType: "Text"
+      }
+    ]
+  });
+  const assigned = assignRoles(curated);
+  const byHex = Object.fromEntries(assigned.swatches.map((s) => [s.hex.toLowerCase(), s]));
+  assert.ok(byHex["#0b0d10"]?.usageRoles.includes("background"));
+  assert.ok(byHex["#151922"]?.usageRoles.includes("background"));
+  assert.ok(byHex["#f4f4f5"]?.usageRoles.includes("text"));
 });

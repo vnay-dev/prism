@@ -163,6 +163,38 @@
 
             <p id="status" class="status"></p>
 
+            <div
+              id="colorViewToggle"
+              class="view-toggle"
+              data-active="roles"
+              role="radiogroup"
+              aria-label="Color palette layout"
+            >
+              <div class="view-toggle-indicator" aria-hidden="true"></div>
+              <button
+                type="button"
+                class="view-toggle-btn is-active"
+                role="radio"
+                aria-checked="true"
+                data-view="roles"
+                title="Organized by role"
+                aria-label="Organized by role"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">grid_view</span>
+              </button>
+              <button
+                type="button"
+                class="view-toggle-btn"
+                role="radio"
+                aria-checked="false"
+                data-view="stack"
+                title="Stack view"
+                aria-label="Stack view"
+              >
+                <span class="material-symbols-outlined" aria-hidden="true">view_agenda</span>
+              </button>
+            </div>
+
             <button
               id="resetBtn"
               class="btn-toolbar"
@@ -176,7 +208,7 @@
 
           </div>
 
-          <div id="swatches" class="swatches"></div>
+          <div id="swatches" class="swatches" data-view="roles"></div>
 
         </section>
 

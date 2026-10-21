@@ -3,7 +3,14 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { curatePalette } from "../src/core/scoreAndCluster.js";
 import { assignRoles } from "../src/core/assignRoles.js";
-import { addSampleUsage, emptyUsage, labelsFromUsage, usageRoleLabels } from "../src/core/usageRoles.js";
+import {
+  addSampleUsage,
+  emptyUsage,
+  labelsFromUsage,
+  normalizeUsageHex,
+  primaryUsageRole,
+  usageRoleLabels
+} from "../src/core/usageRoles.js";
 import {
   DARK_INK,
   LIGHT_INK,
@@ -35,24 +42,23 @@ async function loadFixtures() {
 }
 
 test("page surfaces are labeled Background and incidental fills are not", () => {
-  const page = labelsFromUsage(
-    usageFrom([
-      sample({
-        area: 800,
-        context: "surface",
-        sourceCategory: "global_background",
-        areaSourceType: "Background"
-      }),
-      sample({
-        area: 40,
-        context: "surface",
-        sourceCategory: "default",
-        areaSourceType: "Background",
-        hex: "#ff4fa3"
-      })
-    ])
-  );
-  assert.deepEqual(page, ["background"]);
+  const pageUsage = usageFrom([
+    sample({
+      area: 800,
+      context: "surface",
+      sourceCategory: "global_background",
+      areaSourceType: "Background"
+    }),
+    sample({
+      area: 40,
+      context: "surface",
+      sourceCategory: "default",
+      areaSourceType: "Background",
+      hex: "#ff4fa3"
+    })
+  ]);
+  pageUsage.background.pageShare = 0.9;
+  assert.deepEqual(labelsFromUsage(pageUsage), ["background"]);
 
   const decorative = labelsFromUsage(
     usageFrom([
@@ -67,7 +73,8 @@ test("page surfaces are labeled Background and incidental fills are not", () => 
       })
     ])
   );
-  assert.deepEqual(decorative, ["background"]);
+  // Decorative / non-page fills are accents, not foundational backgrounds.
+  assert.deepEqual(decorative, ["accent"]);
 });
 
 test("text and accent labels follow measured use and can combine", () => {
@@ -126,7 +133,27 @@ test("a border or status color still gets the role it was painted as", () => {
   assert.deepEqual(status, ["accent"]);
 });
 
-test("a small surface still gets a label, and body text is not marked Accent", () => {
+test("a tiny CTA fill keeps Accent even when merged with large body-text area", () => {
+  const mixed = usageFrom([
+    sample({
+      hex: "#0a0a0a",
+      area: 80000,
+      context: "text",
+      sourceCategory: "default",
+      areaSourceType: "Text"
+    }),
+    sample({
+      hex: "#0a0a0a",
+      area: 2500,
+      context: "button",
+      sourceCategory: "primary_button",
+      areaSourceType: "Background"
+    })
+  ]);
+  assert.deepEqual(labelsFromUsage(mixed), ["text", "accent"]);
+});
+
+test("a tiny page-surface patch is Accent, not Background; body text is not Accent", () => {
   const patch = usageFrom([
     sample({
       area: 256,
@@ -136,7 +163,7 @@ test("a small surface still gets a label, and body text is not marked Accent", (
     })
   ]);
   patch.background.pageShare = 0.004;
-  assert.deepEqual(labelsFromUsage(patch), ["background"]);
+  assert.deepEqual(labelsFromUsage(patch), ["accent"]);
 
   const bodyAndButtons = usageFrom([
     sample({ area: 400, context: "text", sourceCategory: "default", areaSourceType: "Text" }),
@@ -149,6 +176,86 @@ test("a small surface still gets a label, and body text is not marked Accent", (
     })
   ]);
   assert.deepEqual(labelsFromUsage(bodyAndButtons), ["text"]);
+});
+
+test("repeated badge backgrounds stay out of Background", () => {
+  const badges = [];
+  for (let i = 0; i < 24; i++) {
+    badges.push(
+      sample({
+        hex: "#fef3c6",
+        rgb: { r: 254, g: 243, b: 198 },
+        hsl: { h: 48, s: 97, l: 89 },
+        area: 900,
+        context: "surface",
+        sourceCategory: "major_container",
+        areaSourceType: "Background",
+        sectionId: `section-${i % 5}`
+      })
+    );
+  }
+  const usage = usageFrom(badges);
+  usage.background.pageShare = 0.018;
+  assert.deepEqual(labelsFromUsage(usage), ["accent"]);
+
+  const statusBadges = usageFrom([
+    sample({
+      hex: "#fef3c6",
+      area: 800,
+      context: "surface",
+      sourceCategory: "status_chip",
+      areaSourceType: "Background"
+    }),
+    sample({
+      hex: "#fef3c6",
+      area: 800,
+      context: "surface",
+      sourceCategory: "status_chip",
+      areaSourceType: "Background",
+      sectionId: "section-1"
+    })
+  ]);
+  assert.deepEqual(labelsFromUsage(statusBadges), ["accent"]);
+});
+
+test("legitimate cards and large panels remain Background", () => {
+  const cards = usageFrom([
+    sample({
+      hex: "#ffffff",
+      rgb: { r: 255, g: 255, b: 255 },
+      hsl: { h: 0, s: 0, l: 100 },
+      area: 180000,
+      context: "surface",
+      sourceCategory: "card",
+      areaSourceType: "Background"
+    }),
+    sample({
+      hex: "#ffffff",
+      rgb: { r: 255, g: 255, b: 255 },
+      hsl: { h: 0, s: 0, l: 100 },
+      area: 160000,
+      context: "surface",
+      sourceCategory: "card",
+      areaSourceType: "Background",
+      sectionId: "section-1"
+    })
+  ]);
+  cards.background.pageShare = 0.22;
+  assert.deepEqual(labelsFromUsage(cards), ["background"]);
+
+  const panel = usageFrom([
+    sample({
+      hex: "#111827",
+      rgb: { r: 17, g: 24, b: 39 },
+      hsl: { h: 222, s: 39, l: 11 },
+      area: 420000,
+      context: "surface",
+      sourceCategory: "major_container",
+      areaSourceType: "Background"
+    })
+  ]);
+  panel.background.pageShare = 0.35;
+  assert.deepEqual(labelsFromUsage(panel), ["background"]);
 });
 
 test("link text is Accent when it is a real share of the color", () => {
@@ -189,13 +296,17 @@ test("legacy candidate palettes are not given invented usage labels", async () =
   assert.ok(assigned.swatches.every((swatch) => swatch.usageRoles.length === 0));
 });
 
-test("role titles group equal square tiles", () => {
+test("role titles group equal square tiles without duplicating multi-role colors", () => {
   const swatches = [
-    { hex: "#111111", usageRoles: ["text"] },
-    { hex: "#222222", usageRoles: ["text"] },
-    { hex: "#ffffff", usageRoles: ["background"] },
-    { hex: "#3366ff", usageRoles: ["background", "accent"] },
-    { hex: "#ff8800", usageRoles: ["accent"] }
+    { hex: "#111111", usageRoles: ["text"], primaryUsageRole: "text" },
+    { hex: "#222222", usageRoles: ["text"], primaryUsageRole: "text" },
+    { hex: "#ffffff", usageRoles: ["background"], primaryUsageRole: "background" },
+    {
+      hex: "#3366ff",
+      usageRoles: ["background", "accent"],
+      primaryUsageRole: "background"
+    },
+    { hex: "#ff8800", usageRoles: ["accent"], primaryUsageRole: "accent" }
   ];
   const sections = buildRoleSections(swatches);
   assert.deepEqual(
@@ -207,9 +318,22 @@ test("role titles group equal square tiles", () => {
     ["#ffffff", "#3366ff"]
   );
   assert.deepEqual(
-    sections[2].rows[0].tiles.map((tile) => tile.hex),
-    ["#3366ff", "#ff8800"]
+    sections[1].rows[0].tiles.map((tile) => tile.hex),
+    ["#111111", "#222222"]
   );
+  assert.deepEqual(
+    sections[2].rows[0].tiles.map((tile) => tile.hex),
+    ["#ff8800"]
+  );
+  // Multi-role color keeps secondary usage metadata on the single tile.
+  assert.deepEqual(
+    sections[0].rows[0].tiles.find((tile) => tile.hex === "#3366ff").usageRoles,
+    ["background", "accent"]
+  );
+  const allHexes = sections.flatMap((section) =>
+    section.rows.flatMap((row) => row.tiles.map((tile) => tile.hex.toLowerCase()))
+  );
+  assert.equal(allHexes.length, new Set(allHexes).size);
   for (const section of sections) {
     for (const row of section.rows) {
       assert.equal(row.height, TILE_SIZE);
@@ -217,6 +341,61 @@ test("role titles group equal square tiles", () => {
       assert.equal(row.height, row.tileSize);
     }
   }
+});
+
+test("normalizeUsageHex treats equivalent color representations as one key", () => {
+  assert.equal(normalizeUsageHex("#FFF"), "#ffffff");
+  assert.equal(normalizeUsageHex("#ffffff"), "#ffffff");
+  assert.equal(normalizeUsageHex("rgb(255, 255, 255)"), "#ffffff");
+  assert.equal(normalizeUsageHex({ r: 255, g: 255, b: 255 }), "#ffffff");
+  assert.equal(normalizeUsageHex("#3366FF"), normalizeUsageHex("rgb(51, 102, 255)"));
+});
+
+test("primaryUsageRole prefers measured area then foundational order", () => {
+  assert.equal(primaryUsageRole(["text", "accent"]), "text");
+  assert.equal(primaryUsageRole(["background", "text", "accent"]), "background");
+  assert.equal(
+    primaryUsageRole(["text", "accent"], {
+      text: { area: 20 },
+      accent: { area: 80 },
+      loose: { text: 0, accent: 0, background: 0 }
+    }),
+    "accent"
+  );
+});
+
+test("text+accent colors render once and keep usage metadata", () => {
+  const swatches = [
+    {
+      hex: "#0a0a0a",
+      usageRoles: ["text", "accent"],
+      primaryUsageRole: "text"
+    },
+    {
+      hex: "rgb(10, 10, 10)",
+      usageRoles: ["text", "accent"],
+      primaryUsageRole: "accent"
+    },
+    { hex: "#f5f5f5", usageRoles: ["background"], primaryUsageRole: "background" }
+  ];
+  const sections = buildRoleSections(swatches);
+  const allTiles = sections.flatMap((section) => section.rows.flatMap((row) => row.tiles));
+  assert.equal(allTiles.filter((tile) => normalizeUsageHex(tile.hex) === "#0a0a0a").length, 1);
+  const dark = allTiles.find((tile) => normalizeUsageHex(tile.hex) === "#0a0a0a");
+  assert.deepEqual(dark.usageRoles, ["text", "accent"]);
+  assert.equal(
+    sections.find((section) => section.label === "Text")?.rows[0].tiles.some(
+      (tile) => normalizeUsageHex(tile.hex) === "#0a0a0a"
+    ),
+    true
+  );
+  assert.equal(
+    sections
+      .find((section) => section.label === "Accent")
+      ?.rows.flatMap((row) => row.tiles)
+      .some((tile) => normalizeUsageHex(tile.hex) === "#0a0a0a") || false,
+    false
+  );
 });
 
 test("label ink follows how light or dark the tile is", () => {

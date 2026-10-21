@@ -1,6 +1,6 @@
 import { hasVisibleChroma, isNeutralHsl, isPureBlackOrWhite } from "./colorLab.js";
 import { isBrowserDefaultLinkColor, stripBrowserDefaultLinks } from "./paletteSafeguards.js";
-import { labelsFromUsage } from "./usageRoles.js";
+import { labelsFromUsage, primaryUsageRole } from "./usageRoles.js";
 
 const FOUNDATION_AREA_THRESHOLD = 0.3;
 const FOUNDATION_SECTION_RATIO = 0.5;
@@ -227,22 +227,27 @@ export function assignRoles(curated) {
   }
 
   const swatches = swatchEntries
-    .map((entry) => ({
-      hex: entry.hex,
-      role: roleMap.get(entry.hex) || "neutral",
-      score: Number((entry.designSystemScore || entry.memoryScore || entry.score || 0).toFixed(3)),
-      brandConfidence: Number((entry.brandConfidence || 0).toFixed(3)),
-      hsl: entry.hsl,
-      areaShare: Number(((entry.areaShare || 0) * 100).toFixed(1)),
-      isUtility: !!entry.isUtility,
-      usageRoles: labelsFromUsage(entry.usage),
-      source: {
-        usageWeight: Number((entry.usageWeight || 0).toFixed(0)),
-        semanticWeight: Number((entry.semanticWeight || 0).toFixed(0)),
-        sectionCoverage: entry.sectionCoverage || 0,
-        sourceCounts: entry.sourceCounts || {}
-      }
-    }))
+    .map((entry) => {
+      const usageRoles = labelsFromUsage(entry.usage);
+      return {
+        hex: entry.hex,
+        role: roleMap.get(entry.hex) || "neutral",
+        score: Number((entry.designSystemScore || entry.memoryScore || entry.score || 0).toFixed(3)),
+        brandConfidence: Number((entry.brandConfidence || 0).toFixed(3)),
+        hsl: entry.hsl,
+        areaShare: Number(((entry.areaShare || 0) * 100).toFixed(1)),
+        isUtility: !!entry.isUtility,
+        usageRoles,
+        // Section placement uses one primary role; usageRoles keeps secondary uses.
+        primaryUsageRole: primaryUsageRole(usageRoles, entry.usage),
+        source: {
+          usageWeight: Number((entry.usageWeight || 0).toFixed(0)),
+          semanticWeight: Number((entry.semanticWeight || 0).toFixed(0)),
+          sectionCoverage: entry.sectionCoverage || 0,
+          sourceCounts: entry.sourceCounts || {}
+        }
+      };
+    })
     .sort((a, b) => rolePriority[a.role] - rolePriority[b.role] || b.score - a.score)
     .slice(0, 8);
 
