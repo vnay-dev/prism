@@ -1,0 +1,42 @@
+# First CI quality gate for Prism.
+# Runs unit + benchmark regression tests and builds the Chrome Web Store ZIP.
+# Does not publish, deploy, or regenerate benchmark baselines.
+
+name: Quality Gates
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+  workflow_dispatch:
+
+# Least privilege: checkout + run tests/package only. No write, packages, or id-token.
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Avoid writing GITHUB_TOKEN into local git config (safer for fork PRs).
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          # LTS compatible with README (Node 18+) and local development (22.x).
+          node-version: "22"
+
+      # No package-lock.json and no package.json dependencies today.
+      # Skip npm ci / npm install so CI stays reproducible and does not run
+      # the local-only `prepare` git-hook installer.
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build store package
+        run: npm run package:store
