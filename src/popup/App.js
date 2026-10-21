@@ -4,7 +4,30 @@ import { curateFonts } from "../core/curateFonts.js";
 import { shadeColor, hexToRgb, rgbToHsl, rgbToHex, isPureBlackOrWhite } from "../core/colorLab.js";
 import { openColorPicker, closeColorPicker } from "./colorPicker.js";
 import { copyPaletteImage, readPageMetaFromTab } from "./exportPaletteImage.js";
-import { buildBentoRows, isLightSwatch, isDarkSwatch } from "./paletteLayout.js";
+import { buildRoleSections, isLightSwatch, isDarkSwatch } from "./paletteLayout.js";
+import {
+  COLOR_VIEW_MODES,
+  normalizeColorViewMode,
+  buildStackLayout
+} from "./paletteViews.js";
+import {
+  makePageKey,
+  createGenerationState,
+  shouldAutoGenerate,
+  canReuseModeResults,
+  canReuseRawExtraction,
+  beginRequest,
+  isStaleRequest,
+  setInFlight,
+  clearInFlight,
+  applyExtractionSuccess,
+  resetMode,
+  markModeForManualGenerate,
+  invalidatePage,
+  serializeGenerationCache,
+  restoreGenerationCache
+} from "./generationController.js";
+import { usageRoleLabels } from "../core/usageRoles.js";
 import { getTargetTab } from "./tabs.js";
 import {
   ERROR_MESSAGES,
@@ -46,6 +69,7 @@ const fontsEl = document.getElementById("fonts");
 const tabBarEl = document.getElementById("tabBar");
 const tabColorsBtn = document.getElementById("tabColors");
 const tabFontsBtn = document.getElementById("tabFonts");
+const colorViewToggleEl = document.getElementById("colorViewToggle");
 const panelHeaderEl = document.querySelector(".panel-header");
 const dragHandleEl = document.getElementById("dragHandle");
 const colorPickerStageEl = document.getElementById("colorPickerStage");
@@ -79,6 +103,8 @@ let currentFonts = [];
 let highlightedFontFamily = null;
 let exportPageMeta = { title: "", siteName: "", hostname: "", url: "", iconDataUrl: "" };
 let copyFeedbackTimer = null;
+let colorViewMode = COLOR_VIEW_MODES.ROLES;
+let generation = createGenerationState();
 
 const COPY_LABEL_COPIED = "Copied! Paste in Figma";
 const FONT_COPY_LABEL_COPIED = "Copied!";
@@ -93,33 +119,137 @@ let lastRawExtraction = null;
 let shuffleSeedCounter = 0;
 const SHUFFLE_MAX_ATTEMPTS = 60;
 
-function measureAppHeight(app) {
-  if (!app) return document.body.offsetHeight;
-  const appRect = app.getBoundingClientRect();
-  let bottom = appRect.bottom;
+function syncGenerationMirrors() {
+  currentPalette = generation.palette || [];
+  currentFonts = generation.fonts || [];
+  lastRawExtraction = generation.rawExtraction || null;
+}
 
-  // Morph overlay can sit absolutely over the palette; include it when present.
+function sendRuntimeMessage(payload) {
+  return new Promise((resolve) => {
+    if (!chrome?.runtime?.sendMessage) {
+      resolve(null);
+      return;
+    }
+    try {
+      chrome.runtime.sendMessage(payload, (response) => {
+        if (chrome.runtime.lastError) {
+          resolve(null);
+          return;
+        }
+        resolve(response || null);
+      });
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+async function persistGenerationCache() {
+  if (!generation.pageKey) return;
+  await sendRuntimeMessage({
+    type: "prism-generation-cache-set",
+    pageKey: generation.pageKey,
+    cache: serializeGenerationCache(generation)
+  });
+}
+
+async function loadGenerationCache(pageKey) {
+  if (!pageKey) return null;
+  const response = await sendRuntimeMessage({
+    type: "prism-generation-cache-get",
+    pageKey
+  });
+  return response?.cache || null;
+}
+
+async function persistColorViewMode(mode) {
+  await sendRuntimeMessage({ type: "prism-color-view-set", mode });
+}
+
+async function loadColorViewMode() {
+  const response = await sendRuntimeMessage({ type: "prism-color-view-get" });
+  return normalizeColorViewMode(response?.mode);
+}
+
+function isDisplayed(el) {
+  if (!el || el.hidden) return false;
+  return getComputedStyle(el).display !== "none";
+}
+
+/**
+ * Hug content (Figma-style).
+ * Collapse html/body to 0 first so a taller iframe viewport cannot inflate
+ * the measured height of dynamic tab/view content.
+ */
+function measureAppHeight(app) {
+  if (!app) return 1;
+
+  const html = document.documentElement;
+  const body = document.body;
+
+  html.style.setProperty("height", "0px", "important");
+  body.style.setProperty("height", "0px", "important");
+  app.style.setProperty("height", "auto", "important");
+  void app.offsetHeight;
+
+  let height = Math.max(app.scrollHeight, app.offsetHeight);
+
+  const appRect = app.getBoundingClientRect();
   for (const selector of [".color-picker-stage:not([hidden])", ".color-picker"]) {
     const el = app.querySelector(selector);
-    if (!el) continue;
+    if (!isDisplayed(el)) continue;
     const rect = el.getBoundingClientRect();
-    if (rect.height > 0) bottom = Math.max(bottom, rect.bottom);
+    if (rect.height > 0) {
+      height = Math.max(height, rect.bottom - appRect.top);
+    }
   }
 
-  return Math.ceil(bottom - appRect.top);
+  // Bottom of the last in-flow child is the true content edge.
+  for (const child of app.children) {
+    if (!isDisplayed(child)) continue;
+    const position = getComputedStyle(child).position;
+    if (position === "absolute" || position === "fixed") continue;
+    height = Math.max(height, child.offsetTop + child.offsetHeight);
+  }
+
+  return Math.max(1, Math.ceil(height));
 }
 
 function prefersReducedMotion() {
   return window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
 }
 
+let lastReportedHeight = 0;
+
 function reportHeight() {
+  const app = document.querySelector(".app");
+  if (!app) return;
+
+  const height = measureAppHeight(app);
+  const html = document.documentElement;
+  const body = document.body;
+
+  html.style.setProperty("height", `${height}px`, "important");
+  body.style.setProperty("height", `${height}px`, "important");
+  app.style.removeProperty("height");
+
+  if (Math.abs(height - lastReportedHeight) < 1) return;
+  lastReportedHeight = height;
+
   if (isEmbedded) {
-    const app = document.querySelector(".app");
-    window.parent.postMessage({ type: "prism-resize", height: measureAppHeight(app) }, "*");
+    window.parent.postMessage({ type: "prism-resize", height }, "*");
     return;
   }
   resizeStandaloneWindow();
+}
+
+/** Remeasure after layout settles so tab/view switches hug the new content. */
+function reportHeightAfterLayout() {
+  lastReportedHeight = 0; // allow shrink after dynamic content changes
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => reportHeight());
+  });
 }
 
 function resizeStandaloneWindow() {
@@ -204,11 +334,25 @@ if (isEmbedded) {
     window.parent.postMessage({ type: "prism-close" }, "*");
   });
   initPanelDrag();
-  if (appEl) new ResizeObserver(reportHeight).observe(appEl);
-  window.addEventListener("load", reportHeight);
-  window.addEventListener("message", (event) => {
-    if (event.data?.type === "prism-request-resize") reportHeight();
+  if (appEl) {
+    let resizeFrame = 0;
+    new ResizeObserver(() => {
+      // Debounce RO so html/body height writes don't thrash with measurements.
+      cancelAnimationFrame(resizeFrame);
+      resizeFrame = requestAnimationFrame(() => reportHeight());
+    }).observe(appEl);
+  }
+  window.addEventListener("load", () => {
+    lastReportedHeight = 0;
+    reportHeight();
   });
+  window.addEventListener("message", (event) => {
+    if (event.data?.type === "prism-request-resize") {
+      lastReportedHeight = 0;
+      reportHeight();
+    }
+  });
+  lastReportedHeight = 0;
   reportHeight();
 } else {
   document.body.classList.add("standalone-window");
@@ -310,7 +454,34 @@ function updateFooterForMode() {
 }
 
 function hasResultsForMode(mode) {
+  syncGenerationMirrors();
   return mode === "colors" ? currentPalette.length > 0 : currentFonts.length > 0;
+}
+
+function applyColorViewToggleUi() {
+  if (!colorViewToggleEl) return;
+  colorViewToggleEl.dataset.active = colorViewMode;
+  for (const btn of colorViewToggleEl.querySelectorAll("[data-view]")) {
+    const active = btn.dataset.view === colorViewMode;
+    btn.classList.toggle("is-active", active);
+    btn.setAttribute("aria-checked", active ? "true" : "false");
+  }
+  if (swatchesEl) swatchesEl.dataset.view = colorViewMode;
+}
+
+function setColorViewMode(mode, { persist = true, rerender = true } = {}) {
+  const next = normalizeColorViewMode(mode);
+  if (next === colorViewMode && rerender === false) {
+    applyColorViewToggleUi();
+    return;
+  }
+  colorViewMode = next;
+  applyColorViewToggleUi();
+  if (persist) persistColorViewMode(colorViewMode);
+  if (rerender && activeMode === "colors" && currentPalette.length) {
+    renderSwatches(currentPalette);
+    reportHeightAfterLayout();
+  }
 }
 
 function clearError() {
@@ -427,22 +598,19 @@ function resetCurrentMode() {
     clearFontHighlightOnPage();
   }
 
+  generation = resetMode(generation, activeMode);
+  syncGenerationMirrors();
+
   if (activeMode === "colors") {
-    currentPalette = [];
     swatchesEl.innerHTML = "";
     statusEl.textContent = "";
-    lastRawExtraction = null;
   } else {
-    currentFonts = [];
     fontsEl.innerHTML = "";
   }
 
-  if (hasResultsForMode(activeMode)) {
-    setResultsState();
-  } else {
-    setIntroState();
-  }
-  reportHeight();
+  persistGenerationCache();
+  setIntroState();
+  reportHeightAfterLayout();
 }
 
 function normalizePickerColor(hex) {
@@ -524,7 +692,8 @@ function mergeLockedIntoPalette(nextSwatches, previousPalette) {
         rgb: lock.rgb,
         hsl: lock.hsl,
         locked: true,
-        id: lock.id || `slot-${i}`
+        id: lock.id || `slot-${i}`,
+        usageRoles: Array.isArray(lock.usageRoles) ? [...lock.usageRoles] : []
       };
     }
     return { ...s, locked: false, id: s.id || `slot-${i}` };
@@ -541,7 +710,8 @@ function mergeLockedIntoPalette(nextSwatches, previousPalette) {
       rgb: lock.rgb,
       hsl: lock.hsl,
       locked: true,
-      id: lock.id || merged[i].id
+      id: lock.id || merged[i].id,
+      usageRoles: Array.isArray(lock.usageRoles) ? [...lock.usageRoles] : []
     };
   }
 
@@ -570,7 +740,8 @@ function resolveLockedDuplicates(swatches, rawExtraction = lastRawExtraction) {
       ...swatch,
       hex: replacement.hex,
       rgb: replacement.rgb,
-      hsl: replacement.hsl || rgbToHsl(replacement.rgb)
+      hsl: replacement.hsl || rgbToHsl(replacement.rgb),
+      usageRoles: []
     };
   });
 }
@@ -596,12 +767,28 @@ function samplePoolFromExtraction(rawExtraction, blockedHexes = new Set()) {
 function applyColorToSwatchState(swatchId, hex) {
   const parsed = normalizePickerColor(hex);
   if (!parsed) return null;
+  const baseline = activePickerBaseline?.id === swatchId ? activePickerBaseline : null;
+  const matchesBaseline =
+    baseline && parsed.hex === String(baseline.hex || "").toLowerCase();
   currentPalette = currentPalette.map((s) =>
     s.id === swatchId
-      ? { ...s, hex: parsed.hex, rgb: parsed.rgb, hsl: parsed.hsl, locked: true }
+      ? {
+          ...s,
+          hex: parsed.hex,
+          rgb: parsed.rgb,
+          hsl: parsed.hsl,
+          locked: true,
+          usageRoles: matchesBaseline ? [...(baseline.usageRoles || [])] : []
+        }
       : s
   );
+  generation = { ...generation, palette: currentPalette };
   return parsed;
+}
+
+function swatchAriaLabel(swatch) {
+  const labels = usageRoleLabels(swatch?.usageRoles);
+  return labels.length ? `${swatch.hex}, ${labels.join(", ")}` : swatch.hex;
 }
 
 function paintSwatchTile(tile, swatch) {
@@ -609,7 +796,7 @@ function paintSwatchTile(tile, swatch) {
   tile.style.backgroundColor = swatch.hex;
   tile.classList.toggle("swatch-light", isLightSwatch(swatch.hex));
   tile.classList.toggle("swatch-dark", isDarkSwatch(swatch.hex));
-  tile.setAttribute("aria-label", swatch.hex);
+  tile.setAttribute("aria-label", swatchAriaLabel(swatch));
   tile.dataset.hex = swatch.hex;
   const tip = tile.querySelector(".swatch-tooltip");
   if (tip) tip.textContent = swatch.hex.toUpperCase();
@@ -625,19 +812,16 @@ function updateSwatchColor(swatchId, hex, { commit = false, tile = null } = {}) 
   if (!parsed) return;
 
   const swatch = currentPalette.find((s) => s.id === swatchId);
+  const liveTiles = [...swatchesEl.querySelectorAll(".swatch")].filter((el) => {
+    const btn = el.querySelector(".swatch-edit-btn");
+    return btn?.dataset.swatchId === swatchId;
+  });
+  if (tile && !liveTiles.includes(tile)) liveTiles.push(tile);
+  for (const liveTile of liveTiles) paintSwatchTile(liveTile, swatch);
   if (commit) {
-    const liveTile =
-      tile ||
-      [...swatchesEl.querySelectorAll(".swatch")].find((el) => {
-        const btn = el.querySelector(".swatch-edit-btn");
-        return btn?.dataset.swatchId === swatchId;
-      });
-    if (liveTile) paintSwatchTile(liveTile, swatch);
+    persistGenerationCache();
     if (!appEl.classList.contains("is-picking-color")) reportHeight();
-    return;
   }
-
-  if (tile) paintSwatchTile(tile, swatch);
 }
 
 let activePickerSwatchId = null;
@@ -654,7 +838,8 @@ function snapshotSwatchForPicker(swatch) {
     hex: swatch.hex,
     rgb: swatch.rgb ? { ...swatch.rgb } : null,
     hsl: swatch.hsl ? { ...swatch.hsl } : null,
-    locked: Boolean(swatch.locked)
+    locked: Boolean(swatch.locked),
+    usageRoles: Array.isArray(swatch.usageRoles) ? [...swatch.usageRoles] : []
   };
 }
 
@@ -668,10 +853,12 @@ function revertPickerBaseline() {
           hex: baseline.hex,
           rgb: baseline.rgb,
           hsl: baseline.hsl,
-          locked: baseline.locked
+          locked: baseline.locked,
+          usageRoles: Array.isArray(baseline.usageRoles) ? [...baseline.usageRoles] : []
         }
       : s
   );
+  generation = { ...generation, palette: currentPalette };
   return currentPalette.find((s) => s.id === baseline.id) || null;
 }
 
@@ -937,6 +1124,76 @@ function openSwatchColorPicker(swatch, tile) {
   });
 }
 
+function createSwatchTile(swatch, { variant = "roles" } = {}) {
+  const tile = document.createElement("article");
+  tile.className = `swatch role-${swatch.role || "neutral"}`;
+  if (variant === "stack") tile.classList.add("swatch-stack");
+  if (isLightSwatch(swatch.hex)) tile.classList.add("swatch-light");
+  if (isDarkSwatch(swatch.hex)) tile.classList.add("swatch-dark");
+  tile.setAttribute("aria-label", swatchAriaLabel(swatch));
+  tile.dataset.hex = swatch.hex;
+  tile.style.backgroundColor = swatch.hex;
+
+  const tooltip = document.createElement("div");
+  tooltip.className = "swatch-tooltip";
+  tooltip.textContent = swatch.hex.toUpperCase();
+  tooltip.setAttribute("role", "tooltip");
+
+  const meta = document.createElement("div");
+  meta.className = "swatch-meta";
+
+  const editBtn = document.createElement("button");
+  editBtn.type = "button";
+  editBtn.className = "swatch-edit-btn";
+  editBtn.dataset.swatchId = swatch.id;
+  editBtn.title = "Edit color";
+  editBtn.setAttribute("aria-label", `Edit ${swatch.hex}`);
+  editBtn.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">edit</span>';
+  editBtn.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    openSwatchColorPicker(swatch, tile);
+  });
+
+  meta.appendChild(editBtn);
+  tile.append(tooltip, meta);
+  return tile;
+}
+
+function renderOrganizedSwatches(swatches) {
+  for (const section of buildRoleSections(swatches)) {
+    const block = document.createElement("section");
+    block.className = "role-section";
+
+    if (section.label) {
+      const title = document.createElement("h2");
+      title.className = "role-title";
+      title.textContent = section.label;
+      block.appendChild(title);
+    }
+
+    const rows = document.createElement("div");
+    rows.className = "role-rows";
+    for (const { tiles } of section.rows) {
+      const row = document.createElement("div");
+      row.className = "bento-row";
+      for (const swatch of tiles) row.appendChild(createSwatchTile(swatch, { variant: "roles" }));
+      rows.appendChild(row);
+    }
+    block.appendChild(rows);
+    swatchesEl.appendChild(block);
+  }
+}
+
+function renderStackSwatches(swatches) {
+  const strip = document.createElement("div");
+  strip.className = "stack-strip";
+  for (const { swatch } of buildStackLayout(swatches)) {
+    strip.appendChild(createSwatchTile(swatch, { variant: "stack" }));
+  }
+  swatchesEl.appendChild(strip);
+}
+
 function renderSwatches(swatches) {
   closeColorPicker({ immediate: true });
   activePickerSwatchId = null;
@@ -944,49 +1201,13 @@ function renderSwatches(swatches) {
   activePickerBaseline = null;
   exitPickingMode();
   swatchesEl.innerHTML = "";
+  applyColorViewToggleUi();
 
-  for (const { tiles, height } of buildBentoRows(swatches)) {
-    const row = document.createElement("div");
-    row.className = "bento-row";
-    row.style.height = `${height}px`;
-
-    for (const swatch of tiles) {
-      const tile = document.createElement("article");
-      tile.className = `swatch role-${swatch.role}`;
-      if (isLightSwatch(swatch.hex)) tile.classList.add("swatch-light");
-      if (isDarkSwatch(swatch.hex)) tile.classList.add("swatch-dark");
-      tile.setAttribute("aria-label", swatch.hex);
-      tile.dataset.hex = swatch.hex;
-      tile.style.backgroundColor = swatch.hex;
-
-      const tooltip = document.createElement("div");
-      tooltip.className = "swatch-tooltip";
-      tooltip.textContent = swatch.hex.toUpperCase();
-      tooltip.setAttribute("role", "tooltip");
-
-      const meta = document.createElement("div");
-      meta.className = "swatch-meta";
-
-      const editBtn = document.createElement("button");
-      editBtn.type = "button";
-      editBtn.className = "swatch-edit-btn";
-      editBtn.dataset.swatchId = swatch.id;
-      editBtn.title = "Edit color";
-      editBtn.setAttribute("aria-label", `Edit ${swatch.hex}`);
-      editBtn.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">edit</span>';
-      editBtn.addEventListener("click", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        openSwatchColorPicker(swatch, tile);
-      });
-
-      meta.appendChild(editBtn);
-      tile.append(tooltip, meta);
-      row.appendChild(tile);
-    }
-
-    swatchesEl.appendChild(row);
+  if (colorViewMode === COLOR_VIEW_MODES.STACK) {
+    renderStackSwatches(swatches);
+    return;
   }
+  renderOrganizedSwatches(swatches);
 }
 
 function paletteSignature(swatches) {
@@ -1044,7 +1265,8 @@ function forceAlternatePalette(swatches, rawExtraction, seed) {
         ...swatch,
         hex: candidate.hex,
         rgb: candidate.rgb,
-        hsl: candidate.hsl || rgbToHsl(candidate.rgb)
+        hsl: candidate.hsl || rgbToHsl(candidate.rgb),
+        usageRoles: []
       };
     }
     return swatch;
@@ -1110,6 +1332,9 @@ async function shufflePalette() {
     if (!attempt?.swatches?.length) return;
 
     currentPalette = withSlotMeta(attempt.swatches);
+    generation = { ...generation, palette: currentPalette };
+    syncGenerationMirrors();
+    persistGenerationCache();
     renderSwatches(currentPalette);
     reportHeight();
   } finally {
@@ -1306,6 +1531,12 @@ function switchMode(mode) {
 
   if (hasResultsForMode(mode)) {
     setResultsState();
+    if (mode === "colors") renderSwatches(currentPalette);
+    else renderFonts(currentFonts);
+  } else if (generation.dismissed?.[mode]) {
+    setIntroState();
+  } else if (generation.inFlight) {
+    setLoading(true, config.loadingStart);
   } else {
     setIntroState();
   }
@@ -1317,7 +1548,10 @@ function switchMode(mode) {
   void appEl.offsetWidth;
   appEl.classList.remove("is-switching");
 
-  reportHeight();
+  reportHeightAfterLayout();
+
+  // Auto-generate for tabs that still need results (never after Reset).
+  ensureResultsForActiveMode({ reason: "tab-switch" });
 }
 
 async function runExtractionOnTab(tab) {
@@ -1344,23 +1578,75 @@ async function runExtractionOnTab(tab) {
   return injection.result;
 }
 
-async function extractColors() {
-  const config = modeConfig("colors");
-  clearError();
-  setLoading(true, config.loadingStart);
+function curateColorsFromRaw(result) {
+  if (isExtractionResultEmpty(result)) return null;
+  let curated;
+  try {
+    curated = curatePalette(result);
+  } catch {
+    return null;
+  }
+  const assigned = assignRoles(curated);
+  if (!assigned?.swatches?.length) return null;
+  return withSlotMeta(assigned.swatches.slice(0, 8));
+}
 
-  const tab = await getTargetTab();
-  if (!tab?.id) {
-    showError(null, { noTab: true });
-    return;
+function curateFontsFromRaw(result) {
+  if (isFontExtractionEmpty(result)) return null;
+  const curatedFonts = curateFonts(result);
+  if (!curatedFonts.hasFonts || !curatedFonts.fonts.length) return null;
+  return curatedFonts.fonts;
+}
+
+function showActiveModeResults() {
+  syncGenerationMirrors();
+  if (activeMode === "colors") {
+    if (!currentPalette.length) return false;
+    setResultsState();
+    renderSwatches(currentPalette);
+    statusEl.textContent = "";
+    setLoading(false);
+    reportHeightAfterLayout();
+    return true;
+  }
+  if (!currentFonts.length) return false;
+  setResultsState();
+  renderFonts(currentFonts);
+  setLoading(false);
+  reportHeightAfterLayout();
+  return true;
+}
+
+function applyRawToGeneration(result, pageKey, requestId) {
+  const palette = generation.dismissed.colors ? generation.palette : curateColorsFromRaw(result);
+  const fonts = generation.dismissed.fonts ? generation.fonts : curateFontsFromRaw(result);
+
+  generation = applyExtractionSuccess(generation, {
+    pageKey,
+    rawExtraction: result,
+    palette: palette || [],
+    fonts: fonts || [],
+    requestId
+  });
+  syncGenerationMirrors();
+  persistGenerationCache();
+
+  if (activeMode === "colors") {
+    if (!palette?.length && !generation.dismissed.colors) {
+      showError(null, { noPalette: true });
+      return false;
+    }
+  } else if (!fonts?.length && !generation.dismissed.fonts) {
+    showError(null, { noFonts: true });
+    return false;
   }
 
+  return showActiveModeResults();
+}
+
+async function scanPage(tab, requestId) {
+  const config = modeConfig();
   const tabUrl = tab.url || "";
-  if (isUnsupportedPageUrl(tabUrl)) {
-    showError(null, { unsupportedPage: true });
-    return;
-  }
-
   exportPageMeta = await readPageMetaFromTab(tab);
 
   let timedOut = false;
@@ -1368,7 +1654,6 @@ async function extractColors() {
     error.injectionFailed = true;
     throw error;
   });
-
   const timeoutPromise = new Promise((_, reject) => {
     setTimeout(() => {
       timedOut = true;
@@ -1378,116 +1663,125 @@ async function extractColors() {
 
   setLoading(true, config.loadingBuild);
 
-  let result;
   try {
-    result = await Promise.race([scriptPromise, timeoutPromise]);
+    const result = await Promise.race([scriptPromise, timeoutPromise]);
+    if (isStaleRequest(generation, requestId)) return null;
+    return result;
   } catch (error) {
+    if (isStaleRequest(generation, requestId)) return null;
+    generation = clearInFlight(generation);
     showError(error, {
       timedOut,
       injectionFailed: Boolean(error?.injectionFailed),
       unsupportedPage: isUnsupportedPageUrl(tabUrl)
     });
-    return;
+    return null;
   }
-
-  if (isExtractionResultEmpty(result)) {
-    showError(null, { noPalette: true });
-    return;
-  }
-
-  let curated;
-  try {
-    curated = curatePalette(result);
-  } catch (error) {
-    showError(error, { noPalette: true });
-    return;
-  }
-
-  const assigned = assignRoles(curated);
-  if (!assigned?.swatches?.length) {
-    showError(null, { noPalette: true });
-    return;
-  }
-
-  currentPalette = withSlotMeta(assigned.swatches.slice(0, 8));
-  lastRawExtraction = result;
-  setResultsState();
-  renderSwatches(currentPalette);
-  statusEl.textContent = "";
-  setLoading(false);
-  reportHeight();
 }
 
-async function extractFonts() {
-  const config = modeConfig("fonts");
-  clearError();
-  setLoading(true, config.loadingStart);
+/**
+ * Shared entry for auto-open, tab switches, and explicit Generate.
+ * Dedupes in-flight scans; reuses page cache; never auto-runs after Reset.
+ */
+async function ensureResultsForActiveMode({ force = false, reason = "auto" } = {}) {
+  const config = modeConfig();
 
-  const tab = await getTargetTab();
+  if (isRestrictedPopupContext()) {
+    if (reason === "auto" || reason === "tab-switch") return;
+    showBanner(GUIDANCE_COPY.message, { guidance: true, title: GUIDANCE_COPY.title });
+    return;
+  }
+
+  let tab;
+  try {
+    tab = await getTargetTab();
+  } catch {
+    tab = null;
+  }
+
   if (!tab?.id) {
-    showError(null, { noTab: true });
+    if (force) showError(null, { noTab: true });
     return;
   }
 
   const tabUrl = tab.url || "";
   if (isUnsupportedPageUrl(tabUrl)) {
-    showError(null, { unsupportedPage: true });
+    if (force || reason === "auto") {
+      showBanner(GUIDANCE_COPY.message, { guidance: true, title: GUIDANCE_COPY.title });
+    }
     return;
   }
 
-  let timedOut = false;
-  const scriptPromise = runExtractionOnTab(tab).catch((error) => {
-    error.injectionFailed = true;
-    throw error;
-  });
+  const pageKey = makePageKey(tab);
+  const previousKey = generation.pageKey;
+  generation = invalidatePage(generation, pageKey);
+  if (previousKey && pageKey && previousKey !== pageKey) {
+    syncGenerationMirrors();
+  }
 
-  const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => {
-      timedOut = true;
-      reject(new Error(ERROR_MESSAGES.TIMEOUT));
-    }, EXTRACTION_TIMEOUT_MS);
-  });
+  if (force) {
+    generation = markModeForManualGenerate(generation, activeMode);
+  } else {
+    if (canReuseModeResults(generation, { mode: activeMode, pageKey })) {
+      showActiveModeResults();
+      return;
+    }
+    if (!shouldAutoGenerate(generation, { mode: activeMode, pageKey })) {
+      return;
+    }
+  }
 
-  setLoading(true, config.loadingBuild);
+  // Rebuild curated results from a still-valid page scan (covers the other tab
+  // and Generate-after-Reset without a duplicate injection).
+  if (canReuseRawExtraction(generation, { pageKey })) {
+    applyRawToGeneration(generation.rawExtraction, pageKey, generation.requestId);
+    if (hasResultsForMode(activeMode)) return;
+    if (!force && generation.dismissed[activeMode]) return;
+  }
 
-  let result;
-  try {
-    result = await Promise.race([scriptPromise, timeoutPromise]);
-  } catch (error) {
-    showError(error, {
-      timedOut,
-      injectionFailed: Boolean(error?.injectionFailed),
-      unsupportedPage: isUnsupportedPageUrl(tabUrl)
+  if (generation.inFlight) {
+    setLoading(true, config.loadingStart);
+    try {
+      await generation.inFlight;
+    } catch {
+      /* error surfaced by owner */
+    }
+    if (canReuseModeResults(generation, { mode: activeMode, pageKey })) {
+      showActiveModeResults();
+    }
+    return;
+  }
+
+  clearError();
+  setLoading(true, config.loadingStart);
+  generation = beginRequest(generation);
+  const requestId = generation.requestId;
+
+  const scanPromise = scanPage(tab, requestId)
+    .then((result) => {
+      generation = clearInFlight(generation);
+      if (!result || isStaleRequest(generation, requestId)) return null;
+      applyRawToGeneration(result, pageKey, requestId);
+      return result;
+    })
+    .catch((error) => {
+      generation = clearInFlight(generation);
+      throw error;
     });
-    return;
-  }
 
-  if (isFontExtractionEmpty(result)) {
-    showError(null, { noFonts: true });
-    return;
-  }
+  generation = setInFlight(generation, scanPromise);
 
-  const curatedFonts = curateFonts(result);
-  if (!curatedFonts.hasFonts || !curatedFonts.fonts.length) {
-    showError(null, { noFonts: true });
-    return;
+  try {
+    await scanPromise;
+  } catch {
+    /* showError already called from scanPage */
   }
-
-  currentFonts = curatedFonts.fonts;
-  setResultsState();
-  renderFonts(currentFonts);
-  setLoading(false);
-  reportHeight();
 }
 
 async function runExtraction() {
   extractBtn.disabled = true;
   try {
-    if (activeMode === "fonts") {
-      await extractFonts();
-    } else {
-      await extractColors();
-    }
+    await ensureResultsForActiveMode({ force: true, reason: "manual" });
   } finally {
     extractBtn.disabled = false;
   }
@@ -1511,6 +1805,14 @@ extractBtn.addEventListener("click", runExtraction);
 resetBtn.addEventListener("click", resetCurrentMode);
 shuffleBtn.addEventListener("click", shufflePalette);
 
+if (colorViewToggleEl) {
+  colorViewToggleEl.addEventListener("click", (event) => {
+    const btn = event.target.closest("[data-view]");
+    if (!btn || !colorViewToggleEl.contains(btn)) return;
+    setColorViewMode(btn.dataset.view);
+  });
+}
+
 copyBtn.addEventListener("click", async () => {
   if (!currentPalette.length) {
     showError(null, { noPalette: true });
@@ -1528,26 +1830,49 @@ copyBtn.addEventListener("click", async () => {
   }
 });
 
-async function showGuidanceForCurrentTab() {
+async function bootstrapPopup() {
+  colorViewMode = await loadColorViewMode();
+  applyColorViewToggleUi();
+  updateModeChrome();
+
   if (isRestrictedPopupContext()) {
+    setIntroState();
     showBanner(GUIDANCE_COPY.message, { guidance: true, title: GUIDANCE_COPY.title });
     return;
   }
 
+  let tab = null;
   try {
-    const tab = await getTargetTab();
-    if (!tab?.id) {
-      showBanner(ERROR_MESSAGES.NO_TAB, { guidance: true, title: "No active tab" });
+    tab = await getTargetTab();
+  } catch {
+    tab = null;
+  }
+
+  if (!tab?.id) {
+    setIntroState();
+    showBanner(ERROR_MESSAGES.NO_TAB, { guidance: true, title: "No active tab" });
+    return;
+  }
+
+  if (isUnsupportedPageUrl(tab.url)) {
+    setIntroState();
+    showBanner(GUIDANCE_COPY.message, { guidance: true, title: GUIDANCE_COPY.title });
+    return;
+  }
+
+  const pageKey = makePageKey(tab);
+  const cached = await loadGenerationCache(pageKey);
+  if (cached?.pageKey === pageKey) {
+    generation = restoreGenerationCache(cached);
+    syncGenerationMirrors();
+    if (canReuseModeResults(generation, { mode: activeMode, pageKey })) {
+      showActiveModeResults();
       return;
     }
-    if (isUnsupportedPageUrl(tab.url)) {
-      showBanner(GUIDANCE_COPY.message, { guidance: true, title: GUIDANCE_COPY.title });
-    }
-  } catch {
-    /* tab query unavailable — keep default intro */
   }
+
+  setIntroState();
+  await ensureResultsForActiveMode({ reason: "auto" });
 }
 
-updateModeChrome();
-setIntroState();
-showGuidanceForCurrentTab();
+bootstrapPopup();

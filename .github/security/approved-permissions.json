@@ -1,0 +1,8 @@
+{
+  "$comment": "Allowlist for Chrome extension capability surfaces. Update this file intentionally when adding a permission; see .github/SECURITY_GATES.md.",
+  "permissions": ["activeTab", "scripting", "clipboardWrite"],
+  "optional_permissions": [],
+  "host_permissions": [],
+  "optional_host_permissions": [],
+  "web_accessible_resources_matches": ["<all_urls>"]
+}

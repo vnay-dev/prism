@@ -10,8 +10,10 @@ import {
   attachFoundationAreaShare,
   contributesFoundationArea,
   inferLegacySampleFields,
+  shouldKeepSample,
   stripBrowserDefaultLinks
 } from "./paletteSafeguards.js";
+import { addSampleUsage, emptyUsage, snapshotUsage } from "./usageRoles.js";
 
 const NEUTRAL_MERGE_DE = 5;
 const CHROMA_MERGE_DE = 8;
@@ -158,6 +160,9 @@ function mergeClusterStats(cluster, sample) {
     cluster.representative = sample;
     cluster.peakImportance = sample.importance || 0;
   }
+
+  if (!cluster.usage) cluster.usage = emptyUsage();
+  addSampleUsage(cluster.usage, sample);
 }
 
 function newCluster(sample, lab, isNeutral) {
@@ -193,7 +198,8 @@ function newCluster(sample, lab, isNeutral) {
     // shuffle rotate the *displayed* swatch among visually-similar sampled
     // colors instead of always the single peak-importance representative,
     // which matters most on low-diversity pages where clusters are few.
-    memberHexes: { [sample.hex]: { hex: sample.hex, rgb: sample.rgb, hsl: sample.hsl } }
+    memberHexes: { [sample.hex]: { hex: sample.hex, rgb: sample.rgb, hsl: sample.hsl } },
+    usage: addSampleUsage(emptyUsage(), sample)
   };
 }
 
@@ -211,6 +217,15 @@ function finalizeCluster(cluster, maxima, sectionCount) {
   cluster.isUtility = classifyClusterUtility(cluster, sectionCount);
   cluster.designSystemScore = designSystemScore(cluster, maxima, sectionCount);
   return cluster;
+}
+
+function stampSurfacePageShare(clusters) {
+  const totalSurfaceArea =
+    clusters.reduce((sum, cluster) => sum + (cluster.usage?.background?.area || 0), 0) || 1;
+  for (const cluster of clusters) {
+    if (!cluster.usage?.background) continue;
+    cluster.usage.background.pageShare = cluster.usage.background.area / totalSurfaceArea;
+  }
 }
 
 function clusterSamples(samples, threshold, isNeutralFn) {
@@ -272,7 +287,8 @@ function clusterToOutput(cluster) {
     foundationSurfaceHex: foundationSurface?.hex,
     foundationSurfaceRgb: foundationSurface?.rgb,
     foundationSurfaceHsl: foundationSurface?.hsl,
-    memberHexes: Object.values(cluster.memberHexes || {})
+    memberHexes: Object.values(cluster.memberHexes || {}),
+    usage: snapshotUsage(cluster.usage)
   };
 }
 
@@ -534,7 +550,8 @@ function legacyCandidatesToSamples(rawExtraction) {
           sectionId: `section-${i % 3}`,
           context: c.context || "surface",
           contrast: 0.4,
-          areaSourceType: c.areaSourceType
+          areaSourceType: c.areaSourceType,
+          observedUsage: Boolean(c.context || c.areaSourceType || c.sourceCategory)
         },
         i
       );
@@ -566,7 +583,7 @@ export function curatePalette(rawExtraction, options = {}) {
   const avoid = normalizeAvoidHexes(options.avoidHexes);
 
   const enriched = samples
-    .filter((s) => !isPureBlackOrWhite(s.hex))
+    .filter((s) => shouldKeepSample(s))
     .map((s) => ({
       ...s,
       hsl: s.hsl || rgbToHsl(s.rgb),
@@ -586,6 +603,7 @@ export function curatePalette(rawExtraction, options = {}) {
 
   const neutralClusters = clusterSamples(neutrals, NEUTRAL_MERGE_DE, () => true);
   const chromaClusters = clusterSamples(chromatics, CHROMA_MERGE_DE, () => false);
+  stampSurfacePageShare([...neutralClusters, ...chromaClusters]);
 
   const built = buildPalette(neutralClusters, chromaClusters, sectionCount, totalSampleArea, rng, avoid);
   const adjusted = qualityAdjust(built, sectionCount);

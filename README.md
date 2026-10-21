@@ -2,14 +2,16 @@
 
 Chrome extension that extracts a curated **8-color design palette** and **font families** from any live web page. Colors are sampled from rendered DOM styles (backgrounds, text, borders, icons), clustered, scored, and assigned semantic roles. Typography is sampled from computed `font-family` and `font-weight` on visible text, then ranked and filtered so you get the families and weights that actually matter on the page.
 
-**Version:** 0.4.1 · [Release notes](./RELEASE_NOTES.md)
+**Version:** 0.5.0 · [Release notes](./RELEASE_NOTES.md)
 
 ## Features
 
 ### Color palette
 - Full-page virtual section scan with importance weighting (not just CSS variables)
 - Semantic role assignment — foundation, primary, secondary, accent, and neutral
+- **Usage labels** — Background, Text, and Accent based on how colors are painted on the page
 - Bento-style 8-swatch preview with hex tooltips and per-swatch edit (in-place picker with HEX / RGB / HSL)
+- **Organized** and **Stack** layout toggle — stack orders colors as a hue progression
 - **Shuffle** alternate palettes from the same page using real sampled site colors
 - Palettes keep a **primary** hero swatch whenever the page has usable color
 - Copy palette as a PNG image to the clipboard — includes the site logo and name, at retina resolution, matching the on-screen layout
@@ -24,6 +26,7 @@ Chrome extension that extracts a curated **8-color design palette** and **font f
 
 ### Panel
 - Two tabs: **Color palette** and **Font families** — separate extract and reset flows per tab
+- **Auto-extract** when you open Prism on a supported page (Reset returns to manual Extract)
 - In-page panel (iframe) on normal sites; guidance-only popup on restricted pages (`chrome://`, New Tab, etc.)
 - Extraction runs locally in the browser; page data is not sent to our servers
 
@@ -36,11 +39,11 @@ Chrome extension that extracts a curated **8-color design palette** and **font f
 ## Usage
 
 1. Open a tab with the site you want to sample.
-2. Click the **Prism** extension icon to open the panel.
+2. Click the **Prism** extension icon to open the panel — extraction starts automatically on supported pages.
 3. Choose a tab:
-   - **Color palette** — click **Extract color palette**, optionally **Shuffle** or edit swatches, then **Copy to clipboard** to paste the PNG into Figma or another tool.
-   - **Font families** — click **Extract font families**, then use the copy icon on any card to copy that family name, or select a card to highlight that font's text on the page.
-4. Wait for the scan to finish (~10–20 seconds on long pages).
+   - **Color palette** — review usage-labeled swatches, switch **Organized** / **Stack**, optionally **Shuffle** or edit swatches, then **Copy to clipboard** to paste the PNG into Figma or another tool.
+   - **Font families** — use the copy icon on any card to copy that family name, or select a card to highlight that font's text on the page.
+4. Wait for the scan to finish (~10–20 seconds on long pages). Use **Reset** if you want to return to manual Extract.
 
 See [RELEASE_NOTES.md](./RELEASE_NOTES.md) for version history and store publish notes.
 
@@ -52,7 +55,7 @@ Build an upload-ready ZIP (runtime files only — no tests, scripts, or `node_mo
 npm run package:store
 ```
 
-Output: `dist/prism-0.4.1.zip`
+Output: `dist/prism-0.5.0.zip`
 
 **Privacy policy:** See [PRIVACY.md](./PRIVACY.md). Host it at a public URL (for example GitHub Pages on this repo) and paste that link into the Chrome Web Store listing.
 

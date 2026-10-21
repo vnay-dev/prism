@@ -1,5 +1,36 @@
 # Release notes
 
+## 0.5.0 — Usage labels, auto-extract & stack view
+
+**Date:** October 21, 2026
+
+### New
+
+- **Usage labels** — colors are labeled by how they appear on the page (**Background**, **Text**, **Accent**), so the palette reads as a real design system instead of only semantic roles.
+- **Auto-extract on open** — opening Prism on a supported page starts extraction immediately; Reset still returns to Generate and does not auto-run again until you click Extract.
+- **Organized / Stack views** — toggle between the role-organized grid and a Stack layout ordered as a color-wheel progression (light→dark within each hue family, neutrals after).
+
+### Improved
+
+- **Background classification** — page canvases (including pure white/black) stay foundational; badge chips and accent greens no longer steal the Background category.
+- **One tile per color** — the same hex is not repeated across categories; secondary uses stay on the swatch as metadata.
+- **Results chrome** — swatches scroll when tall; footer CTAs stay pinned with even padding; panel height hugs content when switching tabs or views.
+
+### Technical
+
+- New `usageRoles.js`, `paletteViews.js`, and `generationController.js`; session cache via the service worker for same-page reopen.
+- Palette safeguards retain pure `#fff`/`#000` only for foundation surfaces and text; `pageShare` gates Background labels.
+- Expanded unit tests for usage roles, view layout, auto-generate/Reset/cache, and X/Reddit-like regressions.
+
+### Package
+
+```bash
+npm run package:store
+# → dist/prism-0.5.0.zip
+```
+
+---
+
 ## 0.4.1 — Store listing name & summary
 
 **Date:** September 19, 2026

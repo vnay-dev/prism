@@ -32,6 +32,30 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
     return { r: +m[1], g: +m[2], b: +m[3], a: m[4] === undefined ? 1 : +m[4] };
   }
 
+  // Modern CSS (oklch, oklab, color(), lab(), …) often comes back from
+  // getComputedStyle untouched. Canvas fillStyle accepts those forms and
+  // getImageData always yields sRGB bytes — the reliable conversion path.
+  let colorResolveCtx = null;
+  function resolveCssColorViaCanvas(raw) {
+    try {
+      if (!colorResolveCtx) {
+        const canvas = document.createElement("canvas");
+        canvas.width = 1;
+        canvas.height = 1;
+        colorResolveCtx = canvas.getContext("2d", { willReadFrequently: true, colorSpace: "srgb" });
+      }
+      if (!colorResolveCtx) return null;
+      colorResolveCtx.clearRect(0, 0, 1, 1);
+      colorResolveCtx.fillStyle = "#000000";
+      colorResolveCtx.fillStyle = raw;
+      colorResolveCtx.fillRect(0, 0, 1, 1);
+      const data = colorResolveCtx.getImageData(0, 0, 1, 1).data;
+      return { r: data[0], g: data[1], b: data[2], a: data[3] / 255 };
+    } catch (_err) {
+      return null;
+    }
+  }
+
   function rgbaFromCssColor(raw) {
     if (!raw || typeof raw !== "string") return null;
     const key = raw.trim().toLowerCase();
@@ -40,7 +64,7 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
       colorCache.set(key, null);
       return null;
     }
-    const parsed = parseRgb(key) || parseHex(key);
+    const parsed = parseRgb(key) || parseHex(key) || resolveCssColorViaCanvas(raw.trim());
     if (!parsed || parsed.a < 0.04) {
       colorCache.set(key, null);
       return null;
@@ -251,19 +275,39 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
     }
 
     if (context === "button" || tag === "BUTTON" || role === "button") return "primary_button";
+    // Link fills are interactive accents (chips, pills, styled anchors) — not
+    // page surfaces. Treating them as major_container inflated repeated small
+    // elements over real backgrounds once modern CSS colors began parsing.
+    if (context === "link" && prop === "backgroundColor") return "default";
     if ((tag === "BODY" || tag === "HTML") && (prop === "backgroundColor" || context === "surface")) return "global_background";
     if (inHeader && (prop === "backgroundColor" || context === "surface")) return "global_background";
     if (sectionIndex === 0 && (prop === "backgroundColor" || context === "surface") && rect.width * rect.height > vw * vh * 0.5) {
       return "global_background";
     }
     if (prop === "backgroundColor" || context === "surface") {
+      const surfaceArea = rect.width * rect.height;
+      const viewportArea = Math.max(vw * vh, 1);
+      // Badges, chips, tags, and other localized fills are not page canvas.
+      // Keep them out of major_container so they cannot enter Background via
+      // page-surface attribution — large cards/panels still qualify below.
+      const localSurface =
+        surfaceArea > 0 && surfaceArea < Math.max(10000, viewportArea * 0.012);
+      if (localSurface) {
+        if (isStatusLike(blob, context) || /badge|chip|pill|tag|label/.test(blob)) {
+          return "status_chip";
+        }
+        return "default";
+      }
+      if (/card|tile|feature/.test(blob) || el.closest?.('[class*="card" i], article')) {
+        return "card";
+      }
       if (/section|container|wrapper|layout|shell|page/.test(blob)) return "repeated_section_bg";
       if (tag === "MAIN" || tag === "SECTION" || tag === "ARTICLE") return "repeated_section_bg";
       return "major_container";
     }
 
     if (context === "icon" || tag === "SVG") return "illustration";
-    if (/card|tile|feature/.test(blob) || el.closest('[class*="card" i], article')) return "card";
+    if (/card|tile|feature/.test(blob) || el.closest("article")) return "card";
     if (inFooter) return "default";
 
     return "default";
@@ -653,6 +697,9 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
 
       for (const { js, css } of props) {
         if (isSyntax(el) && (js === "color" || js === "fill" || js === "stroke")) continue;
+        // Default CSS `fill` on non-SVG nodes is black and invents huge false
+        // samples on html/body/div. Only measure real SVG paint.
+        if ((js === "fill" || js === "stroke") && el.tagName !== "SVG" && !el.closest("svg")) continue;
 
         const rgba = rgbaFromCssColor(styles.getPropertyValue(css) || styles[js]);
         if (!rgba) continue;
