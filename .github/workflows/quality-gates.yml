@@ -1,5 +1,5 @@
-# First CI quality gate for Prism.
-# Runs unit + benchmark regression tests and builds the Chrome Web Store ZIP.
+# Prism quality + security gates.
+# Runs unit/benchmark tests, store packaging, and blocking security checks.
 # Does not publish, deploy, or regenerate benchmark baselines.
 
 name: Quality Gates
@@ -11,24 +11,24 @@ on:
     branches: [dev, main]
   workflow_dispatch:
 
-# Least privilege: checkout + run tests/package only. No write, packages, or id-token.
+# Least privilege for untrusted PR code: read-only contents, no secrets beyond
+# the default GITHUB_TOKEN (unused by security steps below).
 permissions:
   contents: read
 
 jobs:
   quality:
+    name: Tests and packaging
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # Avoid writing GITHUB_TOKEN into local git config (safer for fork PRs).
           persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          # LTS compatible with README (Node 18+) and local development (22.x).
           node-version: "22"
 
       # No package-lock.json and no package.json dependencies today.
@@ -40,3 +40,73 @@ jobs:
 
       - name: Build store package
         run: npm run package:store
+
+  security:
+    name: Secrets, permissions, dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Full history so gitleaks can scan commits, not only the tip tree.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install Gitleaks
+        env:
+          GITLEAKS_VERSION: "8.30.1"
+          # From https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_checksums.txt
+          GITLEAKS_LINUX_X64_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+        run: |
+          set -euo pipefail
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfL \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${archive}" \
+            -o "${archive}"
+          echo "${GITLEAKS_LINUX_X64_SHA256}  ${archive}" | sha256sum -c -
+          tar -xzf "${archive}" gitleaks
+          sudo install -m 0755 gitleaks /usr/local/bin/gitleaks
+          gitleaks version
+
+      - name: Scan for secrets
+        # --redact hides secret values in logs; non-zero exit fails the job.
+        run: gitleaks detect --source . --verbose --redact --exit-code 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+
+      - name: Check extension permissions allowlist
+        run: node scripts/security/check-extension-permissions.mjs
+
+      - name: Check dependency security
+        run: node scripts/security/check-dependency-security.mjs
+
+  sast:
+    name: Semgrep static analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run Semgrep (ERROR severity blocks)
+        # Severity policy: only ERROR findings fail CI (see .github/SECURITY_GATES.md).
+        # Image: semgrep/semgrep:1.182.0 pinned by multi-arch index digest (Docker Hub).
+        # Run via docker on the host so actions/checkout keeps the runner Node runtime.
+        run: |
+          docker run --rm \
+            -v "$PWD:/src" \
+            -w /src \
+            semgrep/semgrep@sha256:4a34048c04fef049f71665047f074cffb00cc3d89482f965a5cd151d589237af \
+            semgrep scan \
+              --config=p/javascript \
+              --config=p/security-audit \
+              --severity=ERROR \
+              --error \
+              --metrics=off \
+              --exclude=node_modules \
+              --exclude=dist \
+              --exclude=.git
