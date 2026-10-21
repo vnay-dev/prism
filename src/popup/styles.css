@@ -27,22 +27,38 @@ html,
 body {
   margin: 0;
   height: auto;
+  min-height: 0;
+  max-height: none;
   overflow: hidden;
 }
 
 body {
   background: #fefefe;
   color: #1a1d26;
+  width: 380px;
+  display: block;
 }
 
 .app {
+  --app-pad: 16px;
   width: 380px;
-  padding: 16px;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  padding: var(--app-pad);
   position: relative;
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
   gap: 16px;
   background: #fefefe;
+  box-sizing: border-box;
+}
+
+.app.state-results {
+  /* Footer owns the bottom inset so CTA padding stays even. */
+  padding-bottom: 0;
 }
 
 .app.is-loading {
@@ -142,7 +158,11 @@ body.standalone-window .app.state-guidance #intro {
 }
 
 .tab-panel.state-results:not([hidden]) {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  min-height: 0;
+  height: auto;
 }
 
 .panel-header {
@@ -228,8 +248,10 @@ body.embedded .panel-header.is-dragging {
   position: relative;
   display: flex;
   flex-direction: column;
+  flex: 0 0 auto;
   gap: 12px;
   min-height: 0;
+  height: auto;
 }
 
 .app.is-loading .panel-body {
@@ -260,6 +282,16 @@ body.embedded .panel-header.is-dragging {
   flex-direction: column;
   gap: 8px;
   flex-shrink: 0;
+}
+
+.app.state-results .panel-footer {
+  position: relative;
+  z-index: 4;
+  flex-shrink: 0;
+  margin: 0 calc(-1 * var(--app-pad)) 0;
+  padding: var(--app-pad);
+  background: #fefefe;
+  box-shadow: 0 -10px 18px -14px rgba(15, 23, 42, 0.22);
 }
 
 .app.is-loading .panel-footer {
@@ -518,14 +550,89 @@ button:focus-visible {
 .results-toolbar {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 8px;
   margin-bottom: 14px;
+  flex-shrink: 0;
+  width: 100%;
 }
 
 .results-toolbar .status {
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
+}
+
+.results-toolbar .status:not(:empty) {
+  flex: 1 1 auto;
+}
+
+.view-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 999px;
+  background: #eef1f6;
+  border: 1px solid #d8dde8;
+  flex-shrink: 0;
+  isolation: isolate;
+}
+
+.view-toggle-indicator {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  transition: left 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 0;
+  will-change: left;
+}
+
+.view-toggle[data-active="stack"] .view-toggle-indicator {
+  left: calc(2px + 28px + 2px);
+}
+
+.view-toggle-btn {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 180ms ease, transform 80ms ease;
+}
+
+.view-toggle-btn .material-symbols-outlined {
+  font-size: 16px;
+}
+
+.view-toggle-btn:hover:not(:disabled) {
+  color: #3d4455;
+}
+
+.view-toggle-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.view-toggle-btn.is-active {
+  color: #1a1d26;
+}
+
+.view-toggle-btn.is-active:hover:not(:disabled) {
+  color: #1a1d26;
 }
 
 .btn-toolbar {
@@ -567,6 +674,101 @@ button:focus-visible {
 .swatches {
   display: flex;
   flex-direction: column;
+  flex: 0 0 auto;
+  gap: 16px;
+  height: auto;
+  max-height: 340px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px 4px 8px 0;
+  margin-right: -2px;
+  scrollbar-width: thin;
+  scrollbar-color: #c5ccd9 transparent;
+}
+
+.swatches::-webkit-scrollbar {
+  width: 6px;
+}
+
+.swatches::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.swatches::-webkit-scrollbar-thumb {
+  background: #c5ccd9;
+  border-radius: 999px;
+}
+
+.swatches::-webkit-scrollbar-thumb:hover {
+  background: #a8b0c0;
+}
+
+.swatches[data-view="stack"] {
+  gap: 4px;
+}
+
+.stack-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.swatch.swatch-stack {
+  flex: 0 0 auto;
+  width: 100%;
+  aspect-ratio: auto;
+  height: 44px;
+  border-radius: 6px;
+}
+
+/* Keep hex tooltips inside the slab so the scrollport does not clip them. */
+.swatch.swatch-stack .swatch-tooltip {
+  left: 10px;
+  right: auto;
+  bottom: auto;
+  top: 50%;
+  transform: translateY(calc(-50% + 3px)) scale(0.96);
+}
+
+.swatch.swatch-stack:hover .swatch-tooltip,
+.swatch.swatch-stack:focus-within .swatch-tooltip {
+  transform: translateY(-50%) scale(1);
+}
+
+.swatch.swatch-stack.is-editing .swatch-tooltip {
+  transform: translateY(calc(-50% + 2px)) scale(0.98);
+}
+
+.swatch.swatch-stack .swatch-meta {
+  right: 8px;
+  bottom: 50%;
+  transform: translateY(calc(50% + 4px));
+}
+
+.swatch.swatch-stack:hover .swatch-meta,
+.swatch.swatch-stack:focus-within .swatch-meta,
+.swatch.swatch-stack.is-editing .swatch-meta {
+  transform: translateY(50%);
+}
+
+.role-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.role-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #1a1d26;
+}
+
+.role-rows {
+  display: flex;
+  flex-direction: column;
   gap: 6px;
 }
 
@@ -577,7 +779,10 @@ button:focus-visible {
 }
 
 .swatch {
-  flex: 1;
+  flex: 0 0 calc((100% - 18px) / 4);
+  aspect-ratio: 1;
+  width: auto;
+  height: auto;
   border-radius: 6px;
   overflow: visible;
   border: 0;
@@ -1264,7 +1469,34 @@ button:focus-visible {
 .fonts {
   display: flex;
   flex-direction: column;
+  flex: 0 0 auto;
   gap: 8px;
+  height: auto;
+  max-height: 340px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2px 4px 8px 0;
+  margin-right: -2px;
+  scrollbar-width: thin;
+  scrollbar-color: #c5ccd9 transparent;
+}
+
+.fonts::-webkit-scrollbar {
+  width: 6px;
+}
+
+.fonts::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.fonts::-webkit-scrollbar-thumb {
+  background: #c5ccd9;
+  border-radius: 999px;
+}
+
+.fonts::-webkit-scrollbar-thumb:hover {
+  background: #a8b0c0;
 }
 
 .font-card {

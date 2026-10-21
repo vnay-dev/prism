@@ -63,5 +63,88 @@
       { "hex": "#ef4444", "rgb": { "r": 239, "g": 68, "b": 68 }, "hsl": { "h": 0, "s": 84, "l": 60 }, "area": 130, "importance": 130, "sourceCategory": "error_state", "sectionId": "section-3", "context": "surface", "contrast": 0.5 },
       { "hex": "#fafafa", "rgb": { "r": 250, "g": 250, "b": 250 }, "hsl": { "h": 0, "s": 0, "l": 98 }, "area": 35, "importance": 75, "sourceCategory": "default", "sectionId": "section-0", "context": "text", "contrast": 0.9 }
     ]
+  },
+  {
+    "name": "light-grayscale-marketplace",
+    "sectionCount": 5,
+    "sampledElements": 1600,
+    "samples": [
+      { "hex": "#f5f5f5", "rgb": { "r": 245, "g": 245, "b": 245 }, "hsl": { "h": 0, "s": 0, "l": 96 }, "area": 900000, "importance": 24, "sourceCategory": "global_background", "sectionId": "section-0", "context": "surface", "contrast": 0.1, "areaSourceType": "Background" },
+      { "hex": "#f5f5f5", "rgb": { "r": 245, "g": 245, "b": 245 }, "hsl": { "h": 0, "s": 0, "l": 96 }, "area": 700000, "importance": 21, "sourceCategory": "repeated_section_bg", "sectionId": "section-1", "context": "surface", "contrast": 0.1, "areaSourceType": "Background" },
+      { "hex": "#f5f5f5", "rgb": { "r": 245, "g": 245, "b": 245 }, "hsl": { "h": 0, "s": 0, "l": 96 }, "area": 500000, "importance": 21, "sourceCategory": "repeated_section_bg", "sectionId": "section-2", "context": "surface", "contrast": 0.1, "areaSourceType": "Background" },
+      { "hex": "#ffffff", "rgb": { "r": 255, "g": 255, "b": 255 }, "hsl": { "h": 0, "s": 0, "l": 100 }, "area": 280000, "importance": 48, "sourceCategory": "major_container", "sectionId": "section-1", "context": "surface", "contrast": 0.05, "areaSourceType": "Background" },
+      { "hex": "#0a0a0a", "rgb": { "r": 10, "g": 10, "b": 10 }, "hsl": { "h": 0, "s": 0, "l": 4 }, "area": 42000, "importance": 30, "sourceCategory": "default", "sectionId": "section-0", "context": "text", "contrast": 0.9, "areaSourceType": "Text" },
+      { "hex": "#0a0a0a", "rgb": { "r": 10, "g": 10, "b": 10 }, "hsl": { "h": 0, "s": 0, "l": 4 }, "area": 28000, "importance": 30, "sourceCategory": "default", "sectionId": "section-1", "context": "text", "contrast": 0.9, "areaSourceType": "Text" },
+      { "hex": "#0a0a0a", "rgb": { "r": 10, "g": 10, "b": 10 }, "hsl": { "h": 0, "s": 0, "l": 4 }, "area": 18000, "importance": 30, "sourceCategory": "default", "sectionId": "section-2", "context": "heading", "contrast": 0.9, "areaSourceType": "Text" },
+      { "hex": "#8e8e8e", "rgb": { "r": 142, "g": 142, "b": 142 }, "hsl": { "h": 0, "s": 0, "l": 56 }, "area": 12000, "importance": 30, "sourceCategory": "default", "sectionId": "section-0", "context": "text", "contrast": 0.45, "areaSourceType": "Text" },
+      { "hex": "#8e8e8e", "rgb": { "r": 142, "g": 142, "b": 142 }, "hsl": { "h": 0, "s": 0, "l": 56 }, "area": 9000, "importance": 30, "sourceCategory": "default", "sectionId": "section-1", "context": "text", "contrast": 0.45, "areaSourceType": "Text" },
+      { "hex": "#171717", "rgb": { "r": 23, "g": 23, "b": 23 }, "hsl": { "h": 0, "s": 0, "l": 9 }, "area": 3200, "importance": 540, "sourceCategory": "primary_button", "sectionId": "section-0", "context": "button", "contrast": 0.85, "areaSourceType": "Background" },
+      { "hex": "#fafafa", "rgb": { "r": 250, "g": 250, "b": 250 }, "hsl": { "h": 0, "s": 0, "l": 98 }, "area": 900, "importance": 540, "sourceCategory": "primary_button", "sectionId": "section-0", "context": "button", "contrast": 0.85, "areaSourceType": "Text" },
+      { "hex": "#e6fff0", "rgb": { "r": 230, "g": 255, "b": 240 }, "hsl": { "h": 144, "s": 100, "l": 95 }, "area": 5200, "importance": 180, "sourceCategory": "default", "sectionId": "section-0", "context": "link", "contrast": 0.2, "areaSourceType": "Background" },
+      { "hex": "#e6fff0", "rgb": { "r": 230, "g": 255, "b": 240 }, "hsl": { "h": 144, "s": 100, "l": 95 }, "area": 5200, "importance": 180, "sourceCategory": "default", "sectionId": "section-0", "context": "link", "contrast": 0.2, "areaSourceType": "Background" },
+      { "hex": "#e6fff0", "rgb": { "r": 230, "g": 255, "b": 240 }, "hsl": { "h": 144, "s": 100, "l": 95 }, "area": 5200, "importance": 180, "sourceCategory": "default", "sectionId": "section-1", "context": "link", "contrast": 0.2, "areaSourceType": "Background" },
+      { "hex": "#e6fff0", "rgb": { "r": 230, "g": 255, "b": 240 }, "hsl": { "h": 144, "s": 100, "l": 95 }, "area": 5200, "importance": 180, "sourceCategory": "default", "sectionId": "section-1", "context": "link", "contrast": 0.2, "areaSourceType": "Background" },
+      { "hex": "#e6fff0", "rgb": { "r": 230, "g": 255, "b": 240 }, "hsl": { "h": 144, "s": 100, "l": 95 }, "area": 5200, "importance": 180, "sourceCategory": "default", "sectionId": "section-2", "context": "link", "contrast": 0.2, "areaSourceType": "Background" },
+      { "hex": "#ffe6e6", "rgb": { "r": 255, "g": 230, "b": 230 }, "hsl": { "h": 0, "s": 100, "l": 95 }, "area": 3800, "importance": 180, "sourceCategory": "default", "sectionId": "section-0", "context": "link", "contrast": 0.2, "areaSourceType": "Background" },
+      { "hex": "#ffe6e6", "rgb": { "r": 255, "g": 230, "b": 230 }, "hsl": { "h": 0, "s": 100, "l": 95 }, "area": 3800, "importance": 180, "sourceCategory": "default", "sectionId": "section-1", "context": "link", "contrast": 0.2, "areaSourceType": "Background" },
+      { "hex": "#e6f1ff", "rgb": { "r": 230, "g": 241, "b": 255 }, "hsl": { "h": 214, "s": 100, "l": 95 }, "area": 4400, "importance": 180, "sourceCategory": "default", "sectionId": "section-0", "context": "link", "contrast": 0.2, "areaSourceType": "Background" },
+      { "hex": "#c2410c", "rgb": { "r": 194, "g": 65, "b": 12 }, "hsl": { "h": 17, "s": 88, "l": 40 }, "area": 1800, "importance": 45, "sourceCategory": "default", "sectionId": "section-1", "context": "text", "contrast": 0.6, "areaSourceType": "Text" },
+      { "hex": "#c2410c", "rgb": { "r": 194, "g": 65, "b": 12 }, "hsl": { "h": 17, "s": 88, "l": 40 }, "area": 1600, "importance": 45, "sourceCategory": "default", "sectionId": "section-2", "context": "text", "contrast": 0.6, "areaSourceType": "Text" },
+      { "hex": "#c2410c", "rgb": { "r": 194, "g": 65, "b": 12 }, "hsl": { "h": 17, "s": 88, "l": 40 }, "area": 1400, "importance": 45, "sourceCategory": "default", "sectionId": "section-3", "context": "text", "contrast": 0.6, "areaSourceType": "Text" }
+    ]
+  },
+  {
+    "name": "light-grayscale-chips-only-regression",
+    "sectionCount": 3,
+    "sampledElements": 200,
+    "samples": [
+      { "hex": "#e6fff0", "rgb": { "r": 230, "g": 255, "b": 240 }, "hsl": { "h": 144, "s": 100, "l": 95 }, "area": 5200, "importance": 360, "sourceCategory": "major_container", "sectionId": "section-0", "context": "link", "contrast": 0.2, "areaSourceType": "Background" },
+      { "hex": "#e6fff0", "rgb": { "r": 230, "g": 255, "b": 240 }, "hsl": { "h": 144, "s": 100, "l": 95 }, "area": 5200, "importance": 360, "sourceCategory": "major_container", "sectionId": "section-0", "context": "link", "contrast": 0.2, "areaSourceType": "Background" },
+      { "hex": "#e6fff0", "rgb": { "r": 230, "g": 255, "b": 240 }, "hsl": { "h": 144, "s": 100, "l": 95 }, "area": 5200, "importance": 360, "sourceCategory": "major_container", "sectionId": "section-1", "context": "link", "contrast": 0.2, "areaSourceType": "Background" },
+      { "hex": "#e6fff0", "rgb": { "r": 230, "g": 255, "b": 240 }, "hsl": { "h": 144, "s": 100, "l": 95 }, "area": 5200, "importance": 360, "sourceCategory": "major_container", "sectionId": "section-1", "context": "link", "contrast": 0.2, "areaSourceType": "Background" },
+      { "hex": "#e6fff0", "rgb": { "r": 230, "g": 255, "b": 240 }, "hsl": { "h": 144, "s": 100, "l": 95 }, "area": 5200, "importance": 360, "sourceCategory": "major_container", "sectionId": "section-2", "context": "link", "contrast": 0.2, "areaSourceType": "Background" },
+      { "hex": "#ffe6e6", "rgb": { "r": 255, "g": 230, "b": 230 }, "hsl": { "h": 0, "s": 100, "l": 95 }, "area": 3800, "importance": 360, "sourceCategory": "major_container", "sectionId": "section-0", "context": "link", "contrast": 0.2, "areaSourceType": "Background" },
+      { "hex": "#e6f1ff", "rgb": { "r": 230, "g": 241, "b": 255 }, "hsl": { "h": 214, "s": 100, "l": 95 }, "area": 4400, "importance": 360, "sourceCategory": "major_container", "sectionId": "section-1", "context": "link", "contrast": 0.2, "areaSourceType": "Background" },
+      { "hex": "#000000", "rgb": { "r": 0, "g": 0, "b": 0 }, "hsl": { "h": 0, "s": 0, "l": 0 }, "area": 900000, "importance": 24, "sourceCategory": "illustration", "sectionId": "section-0", "context": "icon", "contrast": 0.1, "areaSourceType": "SVG Fill" }
+    ]
+  },
+  {
+    "name": "competing-accents-light-site",
+    "sectionCount": 5,
+    "sampledElements": 1100,
+    "samples": [
+      { "hex": "#f8fafc", "rgb": { "r": 248, "g": 250, "b": 252 }, "hsl": { "h": 210, "s": 40, "l": 98 }, "area": 800000, "importance": 24, "sourceCategory": "global_background", "sectionId": "section-0", "context": "surface", "contrast": 0.1, "areaSourceType": "Background" },
+      { "hex": "#f8fafc", "rgb": { "r": 248, "g": 250, "b": 252 }, "hsl": { "h": 210, "s": 40, "l": 98 }, "area": 600000, "importance": 21, "sourceCategory": "repeated_section_bg", "sectionId": "section-1", "context": "surface", "contrast": 0.1, "areaSourceType": "Background" },
+      { "hex": "#f8fafc", "rgb": { "r": 248, "g": 250, "b": 252 }, "hsl": { "h": 210, "s": 40, "l": 98 }, "area": 400000, "importance": 21, "sourceCategory": "repeated_section_bg", "sectionId": "section-2", "context": "surface", "contrast": 0.1, "areaSourceType": "Background" },
+      { "hex": "#0f172a", "rgb": { "r": 15, "g": 23, "b": 42 }, "hsl": { "h": 222, "s": 47, "l": 11 }, "area": 35000, "importance": 30, "sourceCategory": "default", "sectionId": "section-0", "context": "text", "contrast": 0.9, "areaSourceType": "Text" },
+      { "hex": "#0f172a", "rgb": { "r": 15, "g": 23, "b": 42 }, "hsl": { "h": 222, "s": 47, "l": 11 }, "area": 22000, "importance": 30, "sourceCategory": "default", "sectionId": "section-1", "context": "text", "contrast": 0.9, "areaSourceType": "Text" },
+      { "hex": "#2563eb", "rgb": { "r": 37, "g": 99, "b": 235 }, "hsl": { "h": 217, "s": 91, "l": 53 }, "area": 4800, "importance": 900, "sourceCategory": "hero_cta", "sectionId": "section-0", "context": "button", "contrast": 0.75, "areaSourceType": "Background" },
+      { "hex": "#2563eb", "rgb": { "r": 37, "g": 99, "b": 235 }, "hsl": { "h": 217, "s": 91, "l": 53 }, "area": 2200, "importance": 480, "sourceCategory": "navigation", "sectionId": "section-0", "context": "link", "contrast": 0.7, "areaSourceType": "Text" },
+      { "hex": "#f97316", "rgb": { "r": 249, "g": 115, "b": 22 }, "hsl": { "h": 25, "s": 95, "l": 53 }, "area": 3600, "importance": 495, "sourceCategory": "primary_button", "sectionId": "section-1", "context": "button", "contrast": 0.7, "areaSourceType": "Background" },
+      { "hex": "#22c55e", "rgb": { "r": 34, "g": 197, "b": 94 }, "hsl": { "h": 142, "s": 71, "l": 45 }, "area": 900, "importance": 40, "sourceCategory": "success_state", "sectionId": "section-2", "context": "surface", "contrast": 0.5, "areaSourceType": "Background" },
+      { "hex": "#a855f7", "rgb": { "r": 168, "g": 85, "b": 247 }, "hsl": { "h": 271, "s": 91, "l": 65 }, "area": 1100, "importance": 120, "sourceCategory": "illustration", "sectionId": "section-3", "context": "icon", "contrast": 0.6, "areaSourceType": "SVG Fill" }
+    ]
+  },
+  {
+    "name": "dark-site-restrained-accent",
+    "sectionCount": 5,
+    "sampledElements": 1300,
+    "samples": [
+      { "hex": "#0b0d10", "rgb": { "r": 11, "g": 13, "b": 16 }, "hsl": { "h": 216, "s": 18, "l": 5 }, "area": 850000, "importance": 24, "sourceCategory": "global_background", "sectionId": "section-0", "context": "surface", "contrast": 0.1, "areaSourceType": "Background" },
+      { "hex": "#0b0d10", "rgb": { "r": 11, "g": 13, "b": 16 }, "hsl": { "h": 216, "s": 18, "l": 5 }, "area": 650000, "importance": 21, "sourceCategory": "repeated_section_bg", "sectionId": "section-1", "context": "surface", "contrast": 0.1, "areaSourceType": "Background" },
+      { "hex": "#0b0d10", "rgb": { "r": 11, "g": 13, "b": 16 }, "hsl": { "h": 216, "s": 18, "l": 5 }, "area": 500000, "importance": 21, "sourceCategory": "repeated_section_bg", "sectionId": "section-2", "context": "surface", "contrast": 0.1, "areaSourceType": "Background" },
+      { "hex": "#151922", "rgb": { "r": 21, "g": 25, "b": 34 }, "hsl": { "h": 222, "s": 24, "l": 11 }, "area": 120000, "importance": 48, "sourceCategory": "major_container", "sectionId": "section-1", "context": "surface", "contrast": 0.2, "areaSourceType": "Background" },
+      { "hex": "#151922", "rgb": { "r": 21, "g": 25, "b": 34 }, "hsl": { "h": 222, "s": 24, "l": 11 }, "area": 90000, "importance": 48, "sourceCategory": "major_container", "sectionId": "section-2", "context": "surface", "contrast": 0.2, "areaSourceType": "Background" },
+      { "hex": "#f4f4f5", "rgb": { "r": 244, "g": 244, "b": 245 }, "hsl": { "h": 240, "s": 5, "l": 96 }, "area": 38000, "importance": 30, "sourceCategory": "default", "sectionId": "section-0", "context": "text", "contrast": 0.9, "areaSourceType": "Text" },
+      { "hex": "#f4f4f5", "rgb": { "r": 244, "g": 244, "b": 245 }, "hsl": { "h": 240, "s": 5, "l": 96 }, "area": 26000, "importance": 30, "sourceCategory": "default", "sectionId": "section-1", "context": "text", "contrast": 0.9, "areaSourceType": "Text" },
+      { "hex": "#a1a1aa", "rgb": { "r": 161, "g": 161, "b": 170 }, "hsl": { "h": 240, "s": 5, "l": 65 }, "area": 14000, "importance": 30, "sourceCategory": "default", "sectionId": "section-0", "context": "text", "contrast": 0.5, "areaSourceType": "Text" },
+      { "hex": "#22d3ee", "rgb": { "r": 34, "g": 211, "b": 238 }, "hsl": { "h": 188, "s": 86, "l": 53 }, "area": 2400, "importance": 900, "sourceCategory": "hero_cta", "sectionId": "section-0", "context": "button", "contrast": 0.75, "areaSourceType": "Background" },
+      { "hex": "#22d3ee", "rgb": { "r": 34, "g": 211, "b": 238 }, "hsl": { "h": 188, "s": 86, "l": 53 }, "area": 900, "importance": 480, "sourceCategory": "navigation", "sectionId": "section-0", "context": "link", "contrast": 0.7, "areaSourceType": "Text" },
+      { "hex": "#fbbf24", "rgb": { "r": 251, "g": 191, "b": 36 }, "hsl": { "h": 43, "s": 96, "l": 56 }, "area": 400, "importance": 20, "sourceCategory": "illustration", "sectionId": "section-3", "context": "icon", "contrast": 0.6, "areaSourceType": "SVG Fill" },
+      { "hex": "#fbbf24", "rgb": { "r": 251, "g": 191, "b": 36 }, "hsl": { "h": 43, "s": 96, "l": 56 }, "area": 400, "importance": 20, "sourceCategory": "illustration", "sectionId": "section-3", "context": "icon", "contrast": 0.6, "areaSourceType": "SVG Fill" },
+      { "hex": "#fbbf24", "rgb": { "r": 251, "g": 191, "b": 36 }, "hsl": { "h": 43, "s": 96, "l": 56 }, "area": 400, "importance": 20, "sourceCategory": "illustration", "sectionId": "section-4", "context": "icon", "contrast": 0.6, "areaSourceType": "SVG Fill" },
+      { "hex": "#fbbf24", "rgb": { "r": 251, "g": 191, "b": 36 }, "hsl": { "h": 43, "s": 96, "l": 56 }, "area": 400, "importance": 20, "sourceCategory": "illustration", "sectionId": "section-4", "context": "icon", "contrast": 0.6, "areaSourceType": "SVG Fill" },
+      { "hex": "#fbbf24", "rgb": { "r": 251, "g": 191, "b": 36 }, "hsl": { "h": 43, "s": 96, "l": 56 }, "area": 400, "importance": 20, "sourceCategory": "illustration", "sectionId": "section-4", "context": "icon", "contrast": 0.6, "areaSourceType": "SVG Fill" }
+    ]
   }
 ]

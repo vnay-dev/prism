@@ -1,4 +1,4 @@
-import { isNeutralHsl, rgbToHsl } from "./colorLab.js";
+import { isNeutralHsl, isPureBlackOrWhite, rgbToHsl } from "./colorLab.js";
 
 export const FOUNDATION_SURFACE_SOURCES = new Set([
   "global_background",
@@ -22,6 +22,21 @@ export function contributesFoundationArea(sample) {
   if (!FOUNDATION_SURFACE_SOURCES.has(src)) return false;
   if (sample.areaSourceType === "Background") return true;
   if (!sample.areaSourceType && sample.context === "surface") return true;
+  return false;
+}
+
+/**
+ * Pure #000/#fff are usually noise (default SVG fill, unset borders). Keep them
+ * only when they paint the real page canvas or body text — otherwise X/Reddit
+ * light canvases vanish and accent greens inherit the Background category.
+ */
+export function shouldKeepSample(sample) {
+  if (!sample) return false;
+  if (!isPureBlackOrWhite(sample.hex)) return true;
+  if (contributesFoundationArea(sample)) return true;
+  const paint = sample.areaSourceType || "";
+  const context = sample.context || "";
+  if (paint === "Text" || context === "text" || context === "heading") return true;
   return false;
 }
 

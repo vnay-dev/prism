@@ -253,7 +253,9 @@ export function classifySourceFromSignals({
   isSyntax = false,
   isChart = false,
   contentZone = "page_content",
-  text = ""
+  text = "",
+  area = 0,
+  viewportArea = 0
 }) {
   const blob = `${classText} ${idText} ${ariaLabel} ${text}`.toLowerCase();
   const tag = tagName.toUpperCase();
@@ -299,11 +301,24 @@ export function classifySourceFromSignals({
   }
 
   if (context === "button" || tag === "BUTTON" || role === "button") return "primary_button";
+  // Styled link fills are accents/chips, not page surfaces.
+  if (context === "link" && prop === "backgroundColor") return "default";
   if (inHeader && (prop === "backgroundColor" || context === "surface")) return "global_background";
   if (sectionIndex === 0 && (prop === "backgroundColor" || context === "surface") && /body|html|main|app|root|page/.test(blob)) {
     return "global_background";
   }
   if (prop === "backgroundColor" || context === "surface") {
+    const vp = Math.max(Number(viewportArea) || 0, 1);
+    const surfaceArea = Number(area) || 0;
+    const localSurface =
+      surfaceArea > 0 && vp > 1 && surfaceArea < Math.max(10000, vp * 0.012);
+    if (localSurface) {
+      if (isStatusLike(blob, context) || /badge|chip|pill|tag|label/.test(blob)) {
+        return "status_chip";
+      }
+      return "default";
+    }
+    if (/card|tile|feature/.test(blob)) return "card";
     if (/section|container|wrapper|layout|shell|page/.test(blob)) return "repeated_section_bg";
     if (tag === "MAIN" || tag === "SECTION" || tag === "ARTICLE") return "repeated_section_bg";
     return "major_container";

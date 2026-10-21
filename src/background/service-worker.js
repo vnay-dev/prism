@@ -2,6 +2,10 @@ const RESTRICTED_PREFIXES = ["chrome://", "chrome-extension://", "edge://", "abo
 
 const IS_DEV_BUILD = /\bdev\b/i.test(chrome.runtime.getManifest().name);
 
+/** In-memory page results so reopening Prism on the same tab can skip a re-scan. */
+const generationCacheByPage = new Map();
+const colorViewModeByExtension = { value: "roles" };
+
 function applyBuildBadge() {
   if (!IS_DEV_BUILD) return;
   chrome.action.setBadgeText({ text: "DEV" });
@@ -12,6 +16,36 @@ function applyBuildBadge() {
 chrome.runtime.onInstalled.addListener(applyBuildBadge);
 chrome.runtime.onStartup.addListener(applyBuildBadge);
 applyBuildBadge();
+
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  const type = message?.type;
+  if (type === "prism-generation-cache-get") {
+    sendResponse({ cache: generationCacheByPage.get(message.pageKey) || null });
+    return false;
+  }
+  if (type === "prism-generation-cache-set") {
+    if (message.pageKey && message.cache) {
+      generationCacheByPage.set(message.pageKey, message.cache);
+    }
+    sendResponse({ ok: true });
+    return false;
+  }
+  if (type === "prism-generation-cache-clear") {
+    if (message.pageKey) generationCacheByPage.delete(message.pageKey);
+    sendResponse({ ok: true });
+    return false;
+  }
+  if (type === "prism-color-view-get") {
+    sendResponse({ mode: colorViewModeByExtension.value || "roles" });
+    return false;
+  }
+  if (type === "prism-color-view-set") {
+    if (message.mode) colorViewModeByExtension.value = message.mode;
+    sendResponse({ ok: true });
+    return false;
+  }
+  return false;
+});
 
 chrome.action.onClicked.addListener(async (tab) => {
   if (!tab?.id) return;

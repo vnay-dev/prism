@@ -2,10 +2,10 @@
 
 Prism is a Chrome extension that extracts **design-system colors** and **typography** from live web pages.
 
-- **Colors** — an 8-color palette with semantic roles (foundation, primary, secondary, accent, neutral) derived from rendered DOM colors, not CSS variables alone.
+- **Colors** — an 8-color palette with semantic roles (foundation, primary, secondary, accent, neutral) and **usage labels** (Background, Text, Accent) derived from rendered DOM colors, not CSS variables alone.
 - **Fonts** — ranked font families with meaningful CSS weights, derived from computed styles on visible text.
 
-The panel has two tabs (**Color palette** / **Font families**). Each tab runs the same in-page scan but curates a different slice of the extraction output.
+The panel has two tabs (**Color palette** / **Font families**). Each tab runs the same in-page scan but curates a different slice of the extraction output. Color results support **Organized** and **Stack** layout views; extraction auto-starts on first open of a supported page.
 
 ### Color pipeline
 
@@ -29,7 +29,13 @@ The panel has two tabs (**Color palette** / **Font families**). Each tab runs th
 └───────────────────────────────────┬─────────────────────────────────────┘
                                     │ swatches[8]
                                     ▼
-                         Color tab / PNG export
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         usageRoles.js                                   │
+│  Background · Text · Accent (+ pageShare gates, one tile per hex)      │
+└───────────────────────────────────┬─────────────────────────────────────┘
+                                    │ role sections
+                                    ▼
+              Color tab (Organized / Stack) / PNG export
 ```
 
 ### Font pipeline
@@ -53,11 +59,14 @@ Popup (Font families tab)  →  cards with family name + weights · per-card cli
 | `src/content/extractInPage.js` | Full-page virtual section scan, area measurement, color + font sampling |
 | `src/content/highlightFont.js` | On-page highlighting of text matching a selected font family (CSS Highlight API, viewport-first, span-wrap fallback) |
 | `src/popup/paletteLayout.js` | Shared bento geometry used by both the popup render and the PNG export |
+| `src/popup/paletteViews.js` | Organized vs Stack layout modes and hue-family stack ordering |
+| `src/popup/generationController.js` | Auto-extract on open, Reset/dismissed state, in-flight dedupe |
 | `src/core/sourceClassification.js` | Source categories, weights, product demo detection, utility classification, scoring |
 | `src/core/curateFonts.js` | Font family curation and weight significance filtering |
 | `src/core/fontUtils.js` | Font weight snapping and emoji-font filtering |
 | `src/core/scoreAndCluster.js` | LAB clustering, palette curation, quality adjustment |
 | `src/core/assignRoles.js` | Semantic role assignment on curated colors |
+| `src/core/usageRoles.js` | Usage labels (Background / Text / Accent) from sample roles and pageShare |
 | `src/core/paletteSafeguards.js` | Foundation surface filter, browser link exclusion, legacy sample inference |
 | `src/core/colorLab.js` | RGB ↔ HSL ↔ LAB, Delta-E |
 | `benchmark/benchmark-lib.mjs` | Frozen 9-site regression baseline |
@@ -448,6 +457,22 @@ Browser default link colors demoted from primary/secondary/accent → neutral (u
 
 ---
 
+## 8b. Usage roles
+
+**Module:** `usageRoles.js`
+
+Maps each swatch to how it is used on the page for display grouping:
+
+| Label | Typical evidence |
+|-------|------------------|
+| **Background** | Large foundation / canvas surfaces (`pageShare` ≥ ~5%); pure white/black kept only for foundation surfaces |
+| **Text** | Text paint samples; pure black/white retained for text |
+| **Accent** | Brand / CTA / secondary chromatics and badge chips |
+
+Each hex appears once (primary usage wins); secondary uses stay as metadata on the tile. Badge and chip backgrounds are not promoted to Background.
+
+---
+
 ## 9. Font curation
 
 **Module:** `curateFonts.js` (helpers in `fontUtils.js`)
@@ -571,14 +596,18 @@ fontSamples[] + fontTokens[]
 | `src/content/extractInPage.js` | Injected into page tab; returns raw extraction JSON (colors + fonts) |
 | `src/core/scoreAndCluster.js` | `curatePalette(extraction, options?)` → curated colors (optional shuffle seed) |
 | `src/core/assignRoles.js` | `assignRoles(curated)` → final swatches |
+| `src/core/usageRoles.js` | `buildRoleSections(swatches, samples)` → usage-labeled sections |
 | `src/core/curateFonts.js` | `curateFonts(extraction)` → ranked families + weights |
-| `src/popup/App.js` | Tabbed UI — extract, shuffle, swatch edit/lock, copy, and font-highlight flows |
+| `src/popup/App.js` | Tabbed UI — auto-extract, Organized/Stack views, shuffle, edit/lock, copy, font highlight |
+| `src/popup/generationController.js` | Per-page auto-generate / Reset / in-flight guards |
+| `src/popup/paletteViews.js` | View mode helpers and stack sort order |
 | `src/popup/colorPicker.js` | Custom HSV color picker for swatch editing |
 | `src/popup/exportPaletteImage.js` | Palette PNG generation (color tab only), using `paletteLayout.js` geometry |
 | `src/popup/paletteLayout.js` | Shared bento layout for popup render and PNG export |
+| `src/background/service-worker.js` | Session cache for generation + view mode across reopen |
 | `src/content/highlightFont.js` | Injected on demand to highlight visible text matching a selected font family |
 
-The popup injects `extractInPage.js` via `chrome.scripting.executeScript`, then runs color or font curation in the extension context using shared core modules. The Font families tab additionally injects `highlightFont.js` to mark on-page text in the selected family.
+The popup injects `extractInPage.js` via `chrome.scripting.executeScript`, then runs color or font curation (including usage roles) in the extension context using shared core modules. On first open of a page, color extraction starts automatically unless the user has Reset for that page. The Font families tab additionally injects `highlightFont.js` to mark on-page text in the selected family.
 
 ---
 
