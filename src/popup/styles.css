@@ -567,6 +567,26 @@ button:focus-visible {
 .swatches {
   display: flex;
   flex-direction: column;
+  gap: 16px;
+}
+
+.role-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.role-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #1a1d26;
+}
+
+.role-rows {
+  display: flex;
+  flex-direction: column;
   gap: 6px;
 }
 
@@ -577,7 +597,10 @@ button:focus-visible {
 }
 
 .swatch {
-  flex: 1;
+  flex: 0 0 calc((100% - 18px) / 4);
+  aspect-ratio: 1;
+  width: auto;
+  height: auto;
   border-radius: 6px;
   overflow: visible;
   border: 0;

@@ -4,7 +4,8 @@ import { curateFonts } from "../core/curateFonts.js";
 import { shadeColor, hexToRgb, rgbToHsl, rgbToHex, isPureBlackOrWhite } from "../core/colorLab.js";
 import { openColorPicker, closeColorPicker } from "./colorPicker.js";
 import { copyPaletteImage, readPageMetaFromTab } from "./exportPaletteImage.js";
-import { buildBentoRows, isLightSwatch, isDarkSwatch } from "./paletteLayout.js";
+import { buildRoleSections, isLightSwatch, isDarkSwatch } from "./paletteLayout.js";
+import { usageRoleLabels } from "../core/usageRoles.js";
 import { getTargetTab } from "./tabs.js";
 import {
   ERROR_MESSAGES,
@@ -524,7 +525,8 @@ function mergeLockedIntoPalette(nextSwatches, previousPalette) {
         rgb: lock.rgb,
         hsl: lock.hsl,
         locked: true,
-        id: lock.id || `slot-${i}`
+        id: lock.id || `slot-${i}`,
+        usageRoles: Array.isArray(lock.usageRoles) ? [...lock.usageRoles] : []
       };
     }
     return { ...s, locked: false, id: s.id || `slot-${i}` };
@@ -541,7 +543,8 @@ function mergeLockedIntoPalette(nextSwatches, previousPalette) {
       rgb: lock.rgb,
       hsl: lock.hsl,
       locked: true,
-      id: lock.id || merged[i].id
+      id: lock.id || merged[i].id,
+      usageRoles: Array.isArray(lock.usageRoles) ? [...lock.usageRoles] : []
     };
   }
 
@@ -570,7 +573,8 @@ function resolveLockedDuplicates(swatches, rawExtraction = lastRawExtraction) {
       ...swatch,
       hex: replacement.hex,
       rgb: replacement.rgb,
-      hsl: replacement.hsl || rgbToHsl(replacement.rgb)
+      hsl: replacement.hsl || rgbToHsl(replacement.rgb),
+      usageRoles: []
     };
   });
 }
@@ -596,12 +600,27 @@ function samplePoolFromExtraction(rawExtraction, blockedHexes = new Set()) {
 function applyColorToSwatchState(swatchId, hex) {
   const parsed = normalizePickerColor(hex);
   if (!parsed) return null;
+  const baseline = activePickerBaseline?.id === swatchId ? activePickerBaseline : null;
+  const matchesBaseline =
+    baseline && parsed.hex === String(baseline.hex || "").toLowerCase();
   currentPalette = currentPalette.map((s) =>
     s.id === swatchId
-      ? { ...s, hex: parsed.hex, rgb: parsed.rgb, hsl: parsed.hsl, locked: true }
+      ? {
+          ...s,
+          hex: parsed.hex,
+          rgb: parsed.rgb,
+          hsl: parsed.hsl,
+          locked: true,
+          usageRoles: matchesBaseline ? [...(baseline.usageRoles || [])] : []
+        }
       : s
   );
   return parsed;
+}
+
+function swatchAriaLabel(swatch) {
+  const labels = usageRoleLabels(swatch?.usageRoles);
+  return labels.length ? `${swatch.hex}, ${labels.join(", ")}` : swatch.hex;
 }
 
 function paintSwatchTile(tile, swatch) {
@@ -609,7 +628,7 @@ function paintSwatchTile(tile, swatch) {
   tile.style.backgroundColor = swatch.hex;
   tile.classList.toggle("swatch-light", isLightSwatch(swatch.hex));
   tile.classList.toggle("swatch-dark", isDarkSwatch(swatch.hex));
-  tile.setAttribute("aria-label", swatch.hex);
+  tile.setAttribute("aria-label", swatchAriaLabel(swatch));
   tile.dataset.hex = swatch.hex;
   const tip = tile.querySelector(".swatch-tooltip");
   if (tip) tip.textContent = swatch.hex.toUpperCase();
@@ -625,19 +644,13 @@ function updateSwatchColor(swatchId, hex, { commit = false, tile = null } = {}) 
   if (!parsed) return;
 
   const swatch = currentPalette.find((s) => s.id === swatchId);
-  if (commit) {
-    const liveTile =
-      tile ||
-      [...swatchesEl.querySelectorAll(".swatch")].find((el) => {
-        const btn = el.querySelector(".swatch-edit-btn");
-        return btn?.dataset.swatchId === swatchId;
-      });
-    if (liveTile) paintSwatchTile(liveTile, swatch);
-    if (!appEl.classList.contains("is-picking-color")) reportHeight();
-    return;
-  }
-
-  if (tile) paintSwatchTile(tile, swatch);
+  const liveTiles = [...swatchesEl.querySelectorAll(".swatch")].filter((el) => {
+    const btn = el.querySelector(".swatch-edit-btn");
+    return btn?.dataset.swatchId === swatchId;
+  });
+  if (tile && !liveTiles.includes(tile)) liveTiles.push(tile);
+  for (const liveTile of liveTiles) paintSwatchTile(liveTile, swatch);
+  if (commit && !appEl.classList.contains("is-picking-color")) reportHeight();
 }
 
 let activePickerSwatchId = null;
@@ -654,7 +667,8 @@ function snapshotSwatchForPicker(swatch) {
     hex: swatch.hex,
     rgb: swatch.rgb ? { ...swatch.rgb } : null,
     hsl: swatch.hsl ? { ...swatch.hsl } : null,
-    locked: Boolean(swatch.locked)
+    locked: Boolean(swatch.locked),
+    usageRoles: Array.isArray(swatch.usageRoles) ? [...swatch.usageRoles] : []
   };
 }
 
@@ -668,7 +682,8 @@ function revertPickerBaseline() {
           hex: baseline.hex,
           rgb: baseline.rgb,
           hsl: baseline.hsl,
-          locked: baseline.locked
+          locked: baseline.locked,
+          usageRoles: Array.isArray(baseline.usageRoles) ? [...baseline.usageRoles] : []
         }
       : s
   );
@@ -937,6 +952,41 @@ function openSwatchColorPicker(swatch, tile) {
   });
 }
 
+function createSwatchTile(swatch) {
+  const tile = document.createElement("article");
+  tile.className = `swatch role-${swatch.role}`;
+  if (isLightSwatch(swatch.hex)) tile.classList.add("swatch-light");
+  if (isDarkSwatch(swatch.hex)) tile.classList.add("swatch-dark");
+  tile.setAttribute("aria-label", swatchAriaLabel(swatch));
+  tile.dataset.hex = swatch.hex;
+  tile.style.backgroundColor = swatch.hex;
+
+  const tooltip = document.createElement("div");
+  tooltip.className = "swatch-tooltip";
+  tooltip.textContent = swatch.hex.toUpperCase();
+  tooltip.setAttribute("role", "tooltip");
+
+  const meta = document.createElement("div");
+  meta.className = "swatch-meta";
+
+  const editBtn = document.createElement("button");
+  editBtn.type = "button";
+  editBtn.className = "swatch-edit-btn";
+  editBtn.dataset.swatchId = swatch.id;
+  editBtn.title = "Edit color";
+  editBtn.setAttribute("aria-label", `Edit ${swatch.hex}`);
+  editBtn.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">edit</span>';
+  editBtn.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    openSwatchColorPicker(swatch, tile);
+  });
+
+  meta.appendChild(editBtn);
+  tile.append(tooltip, meta);
+  return tile;
+}
+
 function renderSwatches(swatches) {
   closeColorPicker({ immediate: true });
   activePickerSwatchId = null;
@@ -945,47 +995,27 @@ function renderSwatches(swatches) {
   exitPickingMode();
   swatchesEl.innerHTML = "";
 
-  for (const { tiles, height } of buildBentoRows(swatches)) {
-    const row = document.createElement("div");
-    row.className = "bento-row";
-    row.style.height = `${height}px`;
+  for (const section of buildRoleSections(swatches)) {
+    const block = document.createElement("section");
+    block.className = "role-section";
 
-    for (const swatch of tiles) {
-      const tile = document.createElement("article");
-      tile.className = `swatch role-${swatch.role}`;
-      if (isLightSwatch(swatch.hex)) tile.classList.add("swatch-light");
-      if (isDarkSwatch(swatch.hex)) tile.classList.add("swatch-dark");
-      tile.setAttribute("aria-label", swatch.hex);
-      tile.dataset.hex = swatch.hex;
-      tile.style.backgroundColor = swatch.hex;
-
-      const tooltip = document.createElement("div");
-      tooltip.className = "swatch-tooltip";
-      tooltip.textContent = swatch.hex.toUpperCase();
-      tooltip.setAttribute("role", "tooltip");
-
-      const meta = document.createElement("div");
-      meta.className = "swatch-meta";
-
-      const editBtn = document.createElement("button");
-      editBtn.type = "button";
-      editBtn.className = "swatch-edit-btn";
-      editBtn.dataset.swatchId = swatch.id;
-      editBtn.title = "Edit color";
-      editBtn.setAttribute("aria-label", `Edit ${swatch.hex}`);
-      editBtn.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">edit</span>';
-      editBtn.addEventListener("click", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        openSwatchColorPicker(swatch, tile);
-      });
-
-      meta.appendChild(editBtn);
-      tile.append(tooltip, meta);
-      row.appendChild(tile);
+    if (section.label) {
+      const title = document.createElement("h2");
+      title.className = "role-title";
+      title.textContent = section.label;
+      block.appendChild(title);
     }
 
-    swatchesEl.appendChild(row);
+    const rows = document.createElement("div");
+    rows.className = "role-rows";
+    for (const { tiles } of section.rows) {
+      const row = document.createElement("div");
+      row.className = "bento-row";
+      for (const swatch of tiles) row.appendChild(createSwatchTile(swatch));
+      rows.appendChild(row);
+    }
+    block.appendChild(rows);
+    swatchesEl.appendChild(block);
   }
 }
 
@@ -1044,7 +1074,8 @@ function forceAlternatePalette(swatches, rawExtraction, seed) {
         ...swatch,
         hex: candidate.hex,
         rgb: candidate.rgb,
-        hsl: candidate.hsl || rgbToHsl(candidate.rgb)
+        hsl: candidate.hsl || rgbToHsl(candidate.rgb),
+        usageRoles: []
       };
     }
     return swatch;

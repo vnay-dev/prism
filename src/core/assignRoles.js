@@ -1,5 +1,6 @@
 import { hasVisibleChroma, isNeutralHsl, isPureBlackOrWhite } from "./colorLab.js";
 import { isBrowserDefaultLinkColor, stripBrowserDefaultLinks } from "./paletteSafeguards.js";
+import { labelsFromUsage } from "./usageRoles.js";
 
 const FOUNDATION_AREA_THRESHOLD = 0.3;
 const FOUNDATION_SECTION_RATIO = 0.5;
@@ -234,6 +235,7 @@ export function assignRoles(curated) {
       hsl: entry.hsl,
       areaShare: Number(((entry.areaShare || 0) * 100).toFixed(1)),
       isUtility: !!entry.isUtility,
+      usageRoles: labelsFromUsage(entry.usage),
       source: {
         usageWeight: Number((entry.usageWeight || 0).toFixed(0)),
         semanticWeight: Number((entry.semanticWeight || 0).toFixed(0)),

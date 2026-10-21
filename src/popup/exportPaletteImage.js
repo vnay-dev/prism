@@ -3,8 +3,12 @@ import {
   BENTO_GAP,
   CONTENT_WIDTH,
   LIGHT_BORDER_COLOR,
+  ROLE_SECTION_GAP,
+  ROLE_TITLE_GAP,
+  ROLE_TITLE_SIZE,
   TILE_RADIUS,
-  buildBentoRows,
+  TILE_SIZE,
+  buildRoleSections,
   isLightSwatch
 } from "./paletteLayout.js";
 import { getTargetTab } from "./tabs.js";
@@ -90,7 +94,8 @@ async function ensureGoogleSansLoaded() {
   try {
     await Promise.all([
       document.fonts.load(`${TITLE_FONT_WEIGHT} ${px}px "Google Sans"`),
-      document.fonts.load(`700 ${px}px "Google Sans"`)
+      document.fonts.load(`700 ${px}px "Google Sans"`),
+      document.fonts.load(`600 ${ROLE_TITLE_SIZE * EXPORT_SCALE}px "Google Sans"`)
     ]);
     await document.fonts.ready;
   } catch {
@@ -316,15 +321,13 @@ export async function readPageMetaFromTab(tab) {
 
 /**
  * Render the palette exactly as the popup shows it: a branded header (site logo
- * + title) above a bento grid of pure color blocks (foundation/primary as hero
- * rows, supporting roles as half-height rows) with matching gaps, corner radius
- * and light-swatch borders.
+ * + title) above role titles, each followed by its color tiles.
  */
 export async function renderPalettePng(swatches, pageMeta = {}) {
   await ensureGoogleSansLoaded();
 
   const palette = Array.isArray(swatches) ? swatches : [];
-  const rows = buildBentoRows(palette);
+  const sections = buildRoleSections(palette);
 
   const scale = EXPORT_SCALE;
   const pad = APP_PADDING * scale;
@@ -341,16 +344,24 @@ export async function renderPalettePng(swatches, pageMeta = {}) {
   const titleFont = `${TITLE_FONT_WEIGHT} ${titlePx}px "Google Sans", sans-serif`;
   const headerHeight = Math.max(logoSize, titlePx);
 
-  const rowsHeight =
-    rows.reduce((sum, row) => sum + row.height * scale, 0) +
-    gap * Math.max(0, rows.length - 1);
+  const sectionGap = ROLE_SECTION_GAP * scale;
+  const titleGap = ROLE_TITLE_GAP * scale;
+  const roleTitlePx = ROLE_TITLE_SIZE * scale;
+  const roleTitleFont = `600 ${roleTitlePx}px "Google Sans", sans-serif`;
+  const sectionsHeight = sections.reduce((sum, section, index) => {
+    const rowsHeight =
+      section.rows.reduce((rowSum, row) => rowSum + row.height * scale, 0) +
+      gap * Math.max(0, section.rows.length - 1);
+    const titleHeight = section.label ? roleTitlePx + titleGap : 0;
+    return sum + (index > 0 ? sectionGap : 0) + titleHeight + rowsHeight;
+  }, 0);
 
   const logo = await loadImage(pageMeta.iconDataUrl);
   const heading = formatExportTitle(pageMeta);
 
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(contentWidth + pad * 2);
-  canvas.height = Math.round(pad + headerHeight + headerGap + rowsHeight + pad);
+  canvas.height = Math.round(pad + headerHeight + headerGap + sectionsHeight + pad);
 
   const ctx = canvas.getContext("2d");
   ctx.fillStyle = "#ffffff";
@@ -371,37 +382,47 @@ export async function renderPalettePng(swatches, pageMeta = {}) {
   const headingText = truncateText(ctx, heading, contentWidth + pad - textX);
   ctx.fillText(headingText, textX, headerCenterY);
 
-  // Palette: bento grid identical to the popup.
   let y = pad + headerHeight + headerGap;
-  for (const row of rows) {
-    const rowHeight = row.height * scale;
-    const count = row.tiles.length;
-    if (count === 0) continue;
+  sections.forEach((section, sectionIndex) => {
+    if (sectionIndex > 0) y += sectionGap;
 
-    const tileWidth = (contentWidth - gap * (count - 1)) / count;
+    if (section.label) {
+      ctx.font = roleTitleFont;
+      ctx.fillStyle = TITLE_COLOR;
+      ctx.textBaseline = "top";
+      ctx.fillText(truncateText(ctx, section.label, contentWidth), pad, y);
+      y += roleTitlePx + titleGap;
+    }
 
-    row.tiles.forEach((swatch, index) => {
-      const x = pad + index * (tileWidth + gap);
+    section.rows.forEach((row, rowIndex) => {
+      const rowHeight = (row.height || TILE_SIZE) * scale;
+      const count = row.tiles.length;
+      if (count === 0) return;
+      if (rowIndex > 0) y += gap;
 
-      ctx.fillStyle = swatch.hex;
-      fillRoundRect(ctx, x, y, tileWidth, rowHeight, radius);
+      const tileWidth = row.tileSize * scale;
+      row.tiles.forEach((swatch, index) => {
+        const x = pad + index * (tileWidth + gap);
+        ctx.fillStyle = swatch.hex;
+        fillRoundRect(ctx, x, y, tileWidth, rowHeight, radius);
 
-      if (isLightSwatch(swatch.hex)) {
-        ctx.strokeStyle = LIGHT_BORDER_COLOR;
-        ctx.lineWidth = borderWidth;
-        strokeRoundRect(
-          ctx,
-          x + borderWidth / 2,
-          y + borderWidth / 2,
-          tileWidth - borderWidth,
-          rowHeight - borderWidth,
-          Math.max(0, radius - borderWidth / 2)
-        );
-      }
+        if (isLightSwatch(swatch.hex)) {
+          ctx.strokeStyle = LIGHT_BORDER_COLOR;
+          ctx.lineWidth = borderWidth;
+          strokeRoundRect(
+            ctx,
+            x + borderWidth / 2,
+            y + borderWidth / 2,
+            tileWidth - borderWidth,
+            rowHeight - borderWidth,
+            Math.max(0, radius - borderWidth / 2)
+          );
+        }
+      });
+
+      y += rowHeight;
     });
-
-    y += rowHeight + gap;
-  }
+  });
 
   return canvas;
 }
