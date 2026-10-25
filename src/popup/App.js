@@ -1,6 +1,9 @@
 import { curatePalette } from "../core/scoreAndCluster.js";
 import { assignRoles } from "../core/assignRoles.js";
 import { curateFonts } from "../core/curateFonts.js";
+import { curateImages } from "../core/curateImages.js";
+import { curateIcons } from "../core/curateIcons.js";
+import { curateGradients } from "../core/curateGradients.js";
 import { shadeColor, hexToRgb, rgbToHsl, rgbToHex, isPureBlackOrWhite } from "../core/colorLab.js";
 import { openColorPicker, closeColorPicker } from "./colorPicker.js";
 import { copyPaletteImage, readPageMetaFromTab } from "./exportPaletteImage.js";
@@ -16,16 +19,18 @@ import {
   shouldAutoGenerate,
   canReuseModeResults,
   canReuseRawExtraction,
+  canReuseRawAssets,
   beginRequest,
   isStaleRequest,
   setInFlight,
   clearInFlight,
   applyExtractionSuccess,
-  resetMode,
+  applyAssetsSuccess,
   markModeForManualGenerate,
   invalidatePage,
   serializeGenerationCache,
-  restoreGenerationCache
+  restoreGenerationCache,
+  isAssetMode
 } from "./generationController.js";
 import { usageRoleLabels } from "../core/usageRoles.js";
 import { getTargetTab } from "./tabs.js";
@@ -36,15 +41,28 @@ import {
   classifyExtractionError,
   isExtractionResultEmpty,
   isFontExtractionEmpty,
+  isAssetExtractionEmpty,
   isRestrictedPopupContext,
   isUnsupportedPageUrl,
   normalizeUserMessage
 } from "./errors.js";
+import {
+  renderAssetGrid,
+  flashAssetDownloadFeedback,
+  syncAssetCardSelectionState
+} from "./assetsView.js";
+import {
+  downloadAsset,
+  downloadAssetsAsZip,
+  downloadErrorMessage
+} from "./downloadAsset.js";
 
 const appEl = document.querySelector(".app");
 const introEl = document.getElementById("intro");
 const colorResultsEl = document.getElementById("colorResults");
 const fontResultsEl = document.getElementById("fontResults");
+const imageResultsEl = document.getElementById("imageResults");
+const iconResultsEl = document.getElementById("iconResults");
 const loadingEl = document.getElementById("loading");
 const loadingTextEl = document.getElementById("loadingText");
 const errorBannerEl = document.getElementById("errorBanner");
@@ -60,15 +78,21 @@ const resultsFooterEl = document.getElementById("resultsFooter");
 const copyBtn = document.getElementById("copyBtn");
 const copyBtnLabel = document.getElementById("copyBtnLabel");
 const copyBtnIcon = document.getElementById("copyBtnIcon");
-const resetBtn = document.getElementById("resetBtn");
+const reloadBtn = document.getElementById("reloadBtn");
+const reloadBtnLabel = document.getElementById("reloadBtnLabel");
+const clearSelectionBtn = document.getElementById("clearSelectionBtn");
 const shuffleBtn = document.getElementById("shuffleBtn");
 const closeBtn = document.getElementById("closeBtn");
 const statusEl = document.getElementById("status");
 const swatchesEl = document.getElementById("swatches");
 const fontsEl = document.getElementById("fonts");
+const imagesEl = document.getElementById("images");
+const iconsEl = document.getElementById("icons");
 const tabBarEl = document.getElementById("tabBar");
 const tabColorsBtn = document.getElementById("tabColors");
 const tabFontsBtn = document.getElementById("tabFonts");
+const tabImagesBtn = document.getElementById("tabImages");
+const tabIconsBtn = document.getElementById("tabIcons");
 const colorViewToggleEl = document.getElementById("colorViewToggle");
 const panelHeaderEl = document.querySelector(".panel-header");
 const dragHandleEl = document.getElementById("dragHandle");
@@ -94,13 +118,33 @@ const MODE_COPY = {
     intro: "Extract the font families used on this webpage",
     loadingStart: "Scanning font families on the page…",
     loadingBuild: "Identifying used font families…"
+  },
+  images: {
+    extractLabel: "Extract images",
+    extractIcon: "image",
+    intro: "Find downloadable images on this webpage",
+    loadingStart: "Scanning images on the page…",
+    loadingBuild: "Collecting image assets…"
+  },
+  icons: {
+    extractLabel: "Extract icons",
+    extractIcon: "imagesmode",
+    intro: "Find downloadable icons on this webpage",
+    loadingStart: "Scanning icons on the page…",
+    loadingBuild: "Collecting icon assets…"
   }
 };
 
+const VALID_MODES = new Set(["colors", "fonts", "images", "icons"]);
+
 let activeMode = "colors";
 let currentPalette = [];
+let currentGradients = [];
 let currentFonts = [];
+let currentImages = [];
+let currentIcons = [];
 let highlightedFontFamily = null;
+let selectedAssetIds = new Set();
 let exportPageMeta = { title: "", siteName: "", hostname: "", url: "", iconDataUrl: "" };
 let copyFeedbackTimer = null;
 let colorViewMode = COLOR_VIEW_MODES.ROLES;
@@ -121,7 +165,10 @@ const SHUFFLE_MAX_ATTEMPTS = 60;
 
 function syncGenerationMirrors() {
   currentPalette = generation.palette || [];
+  currentGradients = generation.gradients || [];
   currentFonts = generation.fonts || [];
+  currentImages = generation.images || [];
+  currentIcons = generation.icons || [];
   lastRawExtraction = generation.rawExtraction || null;
 }
 
@@ -391,11 +438,17 @@ function flashCopyFeedback(success) {
 function applyTabVisuals() {
   if (tabBarEl) tabBarEl.dataset.active = activeMode;
 
-  if (tabColorsBtn && tabFontsBtn) {
-    tabColorsBtn.classList.toggle("is-active", activeMode === "colors");
-    tabFontsBtn.classList.toggle("is-active", activeMode === "fonts");
-    tabColorsBtn.setAttribute("aria-selected", activeMode === "colors" ? "true" : "false");
-    tabFontsBtn.setAttribute("aria-selected", activeMode === "fonts" ? "true" : "false");
+  const tabButtons = [
+    [tabColorsBtn, "colors"],
+    [tabFontsBtn, "fonts"],
+    [tabImagesBtn, "images"],
+    [tabIconsBtn, "icons"]
+  ];
+  for (const [btn, mode] of tabButtons) {
+    if (!btn) continue;
+    const active = activeMode === mode;
+    btn.classList.toggle("is-active", active);
+    btn.setAttribute("aria-selected", active ? "true" : "false");
   }
 }
 
@@ -403,6 +456,8 @@ function updateModeChrome() {
   const config = modeConfig();
   appEl.classList.toggle("mode-colors", activeMode === "colors");
   appEl.classList.toggle("mode-fonts", activeMode === "fonts");
+  appEl.classList.toggle("mode-images", activeMode === "images");
+  appEl.classList.toggle("mode-icons", activeMode === "icons");
 
   if (extractBtnLabel) extractBtnLabel.textContent = config.extractLabel;
   if (extractBtnIcon) extractBtnIcon.textContent = config.extractIcon;
@@ -417,47 +472,76 @@ function updateModeChrome() {
   updateFooterForMode();
 }
 
+function setReloadButtonChrome({ action = "reload", count = 0 } = {}) {
+  if (!reloadBtn) return;
+  const iconEl = reloadBtn.querySelector(".material-symbols-outlined");
+  const downloading = action === "download-selected" && count > 0;
+
+  reloadBtn.dataset.action = downloading ? "download-selected" : "reload";
+  if (iconEl) iconEl.textContent = downloading ? "download" : "refresh";
+  if (reloadBtnLabel) {
+    reloadBtnLabel.textContent = downloading ? `Download zip (${count})` : "Reload";
+  }
+  const label = downloading ? `Download ${count} selected as zip` : "Reload";
+  reloadBtn.title = label;
+  reloadBtn.setAttribute("aria-label", label);
+}
+
 function updateFooterForMode() {
-  const inResults = appEl.classList.contains("state-results");
-  const toolbar = colorResultsEl?.querySelector(".results-toolbar");
+  const assetOrFonts = activeMode === "fonts" || activeMode === "images" || activeMode === "icons";
+  const assetModeActive = activeMode === "images" || activeMode === "icons";
+  const selectedCount = selectedAssetIds.size;
+  // Only show download/unselect chrome while at least one tile is checked.
+  const selecting = assetModeActive && selectedCount > 0;
+
+  appEl.classList.toggle("is-asset-selecting", selecting);
 
   if (activeMode === "colors") {
-    // Colors: Reset lives in the results toolbar; Shuffle sits in the footer.
-    if (toolbar && resetBtn.parentElement !== toolbar) {
-      toolbar.appendChild(resetBtn);
-    }
-    resetBtn.className = "btn-toolbar";
-    resetBtn.title = "Reset color palette";
-    resetBtn.setAttribute("aria-label", "Reset color palette");
+    // Colors: Shuffle + Copy in the footer.
     shuffleBtn.hidden = false;
     copyBtn.hidden = false;
+    if (reloadBtn) reloadBtn.hidden = true;
+    if (clearSelectionBtn) {
+      clearSelectionBtn.hidden = true;
+      clearSelectionBtn.setAttribute("hidden", "");
+    }
     if (!copyFeedbackTimer) {
       setCopyButtonState(MODE_COPY.colors.copyLabel, COPY_ICON_DEFAULT);
     }
     return;
   }
 
-  // Fonts: Reset returns to the footer; Shuffle is colors-only.
-  if (resultsFooterEl && resetBtn.parentElement !== resultsFooterEl) {
-    resultsFooterEl.insertBefore(resetBtn, copyBtn);
-  }
+  // Fonts: Reload only. Images / Icons: Reload, or Download + Unselect when selecting.
   shuffleBtn.hidden = true;
   copyBtn.hidden = true;
-  resetBtn.className = "btn";
-  resetBtn.title = "Reset";
-  resetBtn.setAttribute("aria-label", "Reset");
-  if (inResults) {
-    resetBtn.classList.add("btn-primary");
-  } else {
-    resetBtn.classList.add("btn-secondary");
+  if (reloadBtn) {
+    reloadBtn.hidden = !assetOrFonts;
+    setReloadButtonChrome({
+      action: selecting ? "download-selected" : "reload",
+      count: selecting ? selectedCount : 0
+    });
+  }
+  if (clearSelectionBtn) {
+    clearSelectionBtn.hidden = !selecting;
+    if (selecting) clearSelectionBtn.removeAttribute("hidden");
+    else clearSelectionBtn.setAttribute("hidden", "");
   }
 }
 
 function hasResultsForMode(mode) {
   syncGenerationMirrors();
-  return mode === "colors" ? currentPalette.length > 0 : currentFonts.length > 0;
+  if (mode === "fonts") return currentFonts.length > 0;
+  if (mode === "images") return currentImages.length > 0;
+  if (mode === "icons") return currentIcons.length > 0;
+  return currentPalette.length > 0;
 }
 
+function hideAllResultPanels() {
+  colorResultsEl.hidden = true;
+  fontResultsEl.hidden = true;
+  if (imageResultsEl) imageResultsEl.hidden = true;
+  if (iconResultsEl) iconResultsEl.hidden = true;
+}
 function applyColorViewToggleUi() {
   if (!colorViewToggleEl) return;
   colorViewToggleEl.dataset.active = colorViewMode;
@@ -495,37 +579,39 @@ function clearError() {
   appEl.classList.remove("state-guidance");
 }
 
-function showBanner(message, { guidance = false, title } = {}) {
+function showBanner(message, { guidance = false, title, keepResults = false } = {}) {
   setLoading(false);
-  appEl.classList.remove("state-results");
-  appEl.classList.add("state-intro");
-  appEl.classList.toggle("state-guidance", guidance);
-  introEl.hidden = false;
-  colorResultsEl.hidden = true;
-  fontResultsEl.hidden = true;
-  resultsFooterEl.classList.remove("is-visible");
 
-  if (panelFooterEl) panelFooterEl.hidden = guidance;
-  if (introDescEl) introDescEl.hidden = guidance;
-  if (tabBarEl) tabBarEl.hidden = guidance;
+  if (!keepResults) {
+    appEl.classList.remove("state-results");
+    appEl.classList.add("state-intro");
+    introEl.hidden = false;
+    hideAllResultPanels();
+    resultsFooterEl.classList.remove("is-visible");
+    if (panelFooterEl) panelFooterEl.hidden = guidance;
+    if (introDescEl) introDescEl.hidden = guidance;
+    if (tabBarEl) tabBarEl.hidden = guidance;
+  }
+
+  appEl.classList.toggle("state-guidance", guidance && !keepResults);
 
   const bannerTitle = title || (guidance ? GUIDANCE_COPY.title : ERROR_BANNER_TITLE);
-  const bannerMessage = guidance ? GUIDANCE_COPY.message : message;
+  const bannerMessage = guidance && !keepResults ? GUIDANCE_COPY.message : message;
 
   if (errorBannerTitleEl) errorBannerTitleEl.textContent = bannerTitle;
   if (errorMessageEl) errorMessageEl.textContent = bannerMessage;
   if (errorBannerEl) {
     errorBannerEl.hidden = false;
-    errorBannerEl.classList.toggle("is-guidance", guidance);
+    errorBannerEl.classList.toggle("is-guidance", guidance && !keepResults);
   }
   if (errorBannerIconEl) {
-    errorBannerIconEl.textContent = guidance ? "lightbulb" : "info";
+    errorBannerIconEl.textContent = guidance && !keepResults ? "lightbulb" : "info";
   }
 
-  statusEl.textContent = "";
+  if (!keepResults) statusEl.textContent = "";
   updateFooterForMode();
   reportHeight();
-  if (!isEmbedded && guidance) {
+  if (!isEmbedded && guidance && !keepResults) {
     setTimeout(resizeStandaloneWindow, 0);
     setTimeout(resizeStandaloneWindow, 150);
   }
@@ -542,8 +628,7 @@ function setIntroState() {
   appEl.classList.remove("state-results", "state-guidance");
   appEl.classList.add("state-intro");
   introEl.hidden = false;
-  colorResultsEl.hidden = true;
-  fontResultsEl.hidden = true;
+  hideAllResultPanels();
   resultsFooterEl.classList.remove("is-visible");
   if (panelFooterEl) panelFooterEl.hidden = false;
   if (introDescEl) introDescEl.hidden = false;
@@ -558,6 +643,8 @@ function setResultsState() {
   introEl.hidden = true;
   colorResultsEl.hidden = activeMode !== "colors";
   fontResultsEl.hidden = activeMode !== "fonts";
+  if (imageResultsEl) imageResultsEl.hidden = activeMode !== "images";
+  if (iconResultsEl) iconResultsEl.hidden = activeMode !== "icons";
   resultsFooterEl.classList.add("is-visible");
   if (tabBarEl) tabBarEl.hidden = false;
   clearError();
@@ -576,8 +663,7 @@ function setLoading(active, message) {
   if (active) {
     clearError();
     introEl.hidden = true;
-    colorResultsEl.hidden = true;
-    fontResultsEl.hidden = true;
+    hideAllResultPanels();
     if (tabBarEl) tabBarEl.hidden = false;
   }
 
@@ -589,30 +675,93 @@ function setLoading(active, message) {
   }
 }
 
-function resetCurrentMode() {
-  clearTimeout(copyFeedbackTimer);
-  copyFeedbackTimer = null;
-  setCopyButtonState(MODE_COPY.colors.copyLabel, COPY_ICON_DEFAULT);
+/** Re-scan the page for fonts / images / icons (single results CTA). */
+async function reloadCurrentMode() {
+  if (activeMode === "colors" || !reloadBtn || reloadBtn.disabled) return;
 
   if (activeMode === "fonts") {
     clearFontHighlightOnPage();
   }
-
-  generation = resetMode(generation, activeMode);
-  syncGenerationMirrors();
-
-  if (activeMode === "colors") {
-    swatchesEl.innerHTML = "";
-    statusEl.textContent = "";
-  } else {
-    fontsEl.innerHTML = "";
+  if (activeMode === "images" || activeMode === "icons") {
+    clearAssetMultiSelection();
   }
 
-  persistGenerationCache();
-  setIntroState();
-  reportHeightAfterLayout();
+  // Drop the cached scan so Reload always re-injects into the page.
+  if (isAssetMode(activeMode)) {
+    generation = { ...generation, rawAssets: null };
+  } else {
+    generation = { ...generation, rawExtraction: null };
+  }
+  syncGenerationMirrors();
+
+  reloadBtn.disabled = true;
+  try {
+    await ensureResultsForActiveMode({ force: true, reason: "reload" });
+  } finally {
+    reloadBtn.disabled = false;
+  }
 }
 
+async function downloadSelectedAssets() {
+  if (!reloadBtn || reloadBtn.disabled) return;
+  if (activeMode !== "images" && activeMode !== "icons") return;
+
+  const pool = activeMode === "images" ? currentImages : currentIcons;
+  const selected = pool.filter((asset) => selectedAssetIds.has(asset.id));
+  if (!selected.length) return;
+
+  reloadBtn.disabled = true;
+  if (clearSelectionBtn) clearSelectionBtn.disabled = true;
+
+  let result = null;
+  try {
+    const tab = await getTargetTab();
+    const zipFilename =
+      activeMode === "icons" ? "prism-icons.zip" : "prism-images.zip";
+    result = await downloadAssetsAsZip(selected, {
+      tabId: tab?.id,
+      zipFilename
+    });
+  } finally {
+    reloadBtn.disabled = false;
+    if (clearSelectionBtn) clearSelectionBtn.disabled = false;
+  }
+
+  if (!result?.ok) {
+    showBanner(ERROR_MESSAGES.DOWNLOAD_FAILED || "Download failed.", {
+      guidance: false
+    });
+    return;
+  }
+
+  if (result.mode === "individual" && result.failed) {
+    const message =
+      result.failed === result.total
+        ? ERROR_MESSAGES.DOWNLOAD_FAILED || "Download failed."
+        : `${result.failed} of ${result.total} downloads failed.`;
+    showBanner(message, { guidance: false });
+    return;
+  }
+
+  if (result.mode === "zip" && result.failed > 0) {
+    showBanner(
+      `${result.failed} of ${result.total} downloads failed.`,
+      { guidance: false }
+    );
+  }
+}
+
+function onReloadOrDownloadClick() {
+  if (
+    reloadBtn?.dataset?.action === "download-selected" &&
+    selectedAssetIds.size > 0 &&
+    (activeMode === "images" || activeMode === "icons")
+  ) {
+    downloadSelectedAssets();
+    return;
+  }
+  reloadCurrentMode();
+}
 function normalizePickerColor(hex) {
   const rgb = hexToRgb(hex);
   if (!rgb) return null;
@@ -793,13 +942,18 @@ function swatchAriaLabel(swatch) {
 
 function paintSwatchTile(tile, swatch) {
   if (!tile || !swatch) return;
+  const hexLabel = String(swatch.hex || "").toUpperCase();
   tile.style.backgroundColor = swatch.hex;
   tile.classList.toggle("swatch-light", isLightSwatch(swatch.hex));
   tile.classList.toggle("swatch-dark", isDarkSwatch(swatch.hex));
   tile.setAttribute("aria-label", swatchAriaLabel(swatch));
   tile.dataset.hex = swatch.hex;
+  tile.title = "Click to copy hex";
   const tip = tile.querySelector(".swatch-tooltip");
-  if (tip) tip.textContent = swatch.hex.toUpperCase();
+  if (tip) {
+    tip.dataset.hexLabel = hexLabel;
+    tip.textContent = hexLabel;
+  }
   const editBtn = tile.querySelector(".swatch-edit-btn");
   if (editBtn) {
     editBtn.setAttribute("aria-label", `Edit ${swatch.hex}`);
@@ -1124,6 +1278,88 @@ function openSwatchColorPicker(swatch, tile) {
   });
 }
 
+function truncateGradientLabel(css, max = 56) {
+  const value = String(css || "").replace(/\s+/g, " ").trim();
+  if (value.length <= max) return value;
+  return `${value.slice(0, max - 1)}…`;
+}
+
+const TOOLTIP_EDGE_PAD = 6;
+
+function resetSwatchTooltipShift(tip) {
+  if (!tip) return;
+  tip.style.setProperty("--swatch-tooltip-shift", "0px");
+}
+
+/** Nudge centered tooltips so long CSS labels stay inside the swatches scrollport. */
+function clampSwatchTooltip(tile) {
+  const tip = tile?.querySelector(".swatch-tooltip");
+  if (!tip || !swatchesEl || tile.classList.contains("swatch-stack")) return false;
+  resetSwatchTooltipShift(tip);
+  // Measure the centered position, then shift just enough to clear the edges.
+  const port = swatchesEl.getBoundingClientRect();
+  const tipRect = tip.getBoundingClientRect();
+  if (!tipRect.width) return false;
+  let shift = 0;
+  if (tipRect.left < port.left + TOOLTIP_EDGE_PAD) {
+    shift = port.left + TOOLTIP_EDGE_PAD - tipRect.left;
+  } else if (tipRect.right > port.right - TOOLTIP_EDGE_PAD) {
+    shift = port.right - TOOLTIP_EDGE_PAD - tipRect.right;
+  }
+  tip.style.setProperty("--swatch-tooltip-shift", `${shift}px`);
+  return true;
+}
+
+function restoreTileTooltipLabel(tip) {
+  if (!tip) return;
+  if (tip.dataset.fullCss) {
+    tip.textContent = truncateGradientLabel(tip.dataset.fullCss);
+    return;
+  }
+  if (tip.dataset.hexLabel) {
+    tip.textContent = tip.dataset.hexLabel;
+    return;
+  }
+}
+
+function flashTileCopyFeedback(tile, success) {
+  const tip = tile?.querySelector(".swatch-tooltip");
+  if (!tip) return;
+  tip.textContent = success ? "Copied!" : "Copy failed";
+  tip.classList.add("is-pinned");
+  clearTimeout(tile._copyFeedbackTimer);
+  tile._copyFeedbackTimer = window.setTimeout(() => {
+    restoreTileTooltipLabel(tip);
+    tip.classList.remove("is-pinned");
+    // Recenter after the shorter "Copied!" label is restored to the long CSS.
+    requestAnimationFrame(() => clampSwatchTooltip(tile));
+    tile._copyFeedbackTimer = null;
+  }, 1200);
+  requestAnimationFrame(() => clampSwatchTooltip(tile));
+}
+
+async function copySwatchHex(swatch, tile) {
+  const hex = String(swatch?.hex || tile?.dataset?.hex || "").toUpperCase();
+  if (!hex) return;
+  try {
+    await navigator.clipboard.writeText(hex);
+    flashTileCopyFeedback(tile, true);
+  } catch {
+    flashTileCopyFeedback(tile, false);
+  }
+}
+
+async function copyGradientCss(gradient, tile) {
+  const css = gradient?.css;
+  if (!css) return;
+  try {
+    await navigator.clipboard.writeText(css);
+    flashTileCopyFeedback(tile, true);
+  } catch {
+    flashTileCopyFeedback(tile, false);
+  }
+}
+
 function createSwatchTile(swatch, { variant = "roles" } = {}) {
   const tile = document.createElement("article");
   tile.className = `swatch role-${swatch.role || "neutral"}`;
@@ -1132,10 +1368,12 @@ function createSwatchTile(swatch, { variant = "roles" } = {}) {
   if (isDarkSwatch(swatch.hex)) tile.classList.add("swatch-dark");
   tile.setAttribute("aria-label", swatchAriaLabel(swatch));
   tile.dataset.hex = swatch.hex;
+  tile.title = "Click to copy hex";
   tile.style.backgroundColor = swatch.hex;
 
   const tooltip = document.createElement("div");
   tooltip.className = "swatch-tooltip";
+  tooltip.dataset.hexLabel = swatch.hex.toUpperCase();
   tooltip.textContent = swatch.hex.toUpperCase();
   tooltip.setAttribute("role", "tooltip");
 
@@ -1157,13 +1395,55 @@ function createSwatchTile(swatch, { variant = "roles" } = {}) {
 
   meta.appendChild(editBtn);
   tile.append(tooltip, meta);
+  tile.addEventListener("click", () => {
+    const latest = currentPalette.find((s) => s.id === swatch.id) || swatch;
+    copySwatchHex(latest, tile);
+  });
+  return tile;
+}
+
+function createGradientTile(gradient, { variant = "grid" } = {}) {
+  const tile = document.createElement("article");
+  tile.className = "swatch gradient-swatch";
+  if (variant === "bar") tile.classList.add("gradient-swatch-bar");
+  tile.setAttribute("aria-label", `Gradient: ${gradient.css}`);
+  tile.title = "Click to copy CSS";
+  tile.dataset.gradientId = gradient.id || "";
+  tile.style.backgroundImage = gradient.css;
+  tile.style.backgroundColor = "transparent";
+
+  const tooltip = document.createElement("div");
+  tooltip.className = "swatch-tooltip";
+  tooltip.dataset.fullCss = gradient.css;
+  tooltip.textContent = truncateGradientLabel(gradient.css);
+  tooltip.setAttribute("role", "tooltip");
+
+  const meta = document.createElement("div");
+  meta.className = "swatch-meta";
+
+  const copyBtn = document.createElement("button");
+  copyBtn.type = "button";
+  copyBtn.className = "swatch-edit-btn gradient-copy-btn";
+  copyBtn.title = "Copy CSS";
+  copyBtn.setAttribute("aria-label", "Copy gradient CSS");
+  copyBtn.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">content_copy</span>';
+  copyBtn.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    copyGradientCss(gradient, tile);
+  });
+
+  meta.appendChild(copyBtn);
+  tile.append(tooltip, meta);
+  tile.addEventListener("click", () => copyGradientCss(gradient, tile));
   return tile;
 }
 
 function renderOrganizedSwatches(swatches) {
-  for (const section of buildRoleSections(swatches)) {
+  for (const section of buildRoleSections(swatches, { gradients: currentGradients })) {
     const block = document.createElement("section");
     block.className = "role-section";
+    if (section.kind === "gradients") block.classList.add("role-section-gradients");
 
     if (section.label) {
       const title = document.createElement("h2");
@@ -1174,11 +1454,17 @@ function renderOrganizedSwatches(swatches) {
 
     const rows = document.createElement("div");
     rows.className = "role-rows";
-    for (const { tiles } of section.rows) {
-      const row = document.createElement("div");
-      row.className = "bento-row";
-      for (const swatch of tiles) row.appendChild(createSwatchTile(swatch, { variant: "roles" }));
-      rows.appendChild(row);
+    for (const row of section.rows) {
+      const rowEl = document.createElement("div");
+      rowEl.className = "bento-row";
+      for (const tile of row.tiles) {
+        if (section.kind === "gradients") {
+          rowEl.appendChild(createGradientTile(tile, { variant: "grid" }));
+        } else {
+          rowEl.appendChild(createSwatchTile(tile, { variant: "roles" }));
+        }
+      }
+      rows.appendChild(rowEl);
     }
     block.appendChild(rows);
     swatchesEl.appendChild(block);
@@ -1194,6 +1480,28 @@ function renderStackSwatches(swatches) {
   swatchesEl.appendChild(strip);
 }
 
+function renderGradientSection() {
+  if (!currentGradients.length) return;
+  const block = document.createElement("section");
+  block.className = "role-section role-section-gradients";
+
+  const title = document.createElement("h2");
+  title.className = "role-title";
+  title.textContent = "Gradients";
+  block.appendChild(title);
+
+  const rows = document.createElement("div");
+  rows.className = "role-rows";
+  for (const gradient of currentGradients) {
+    const row = document.createElement("div");
+    row.className = "bento-row bento-row-gradient";
+    row.appendChild(createGradientTile(gradient, { variant: "bar" }));
+    rows.appendChild(row);
+  }
+  block.appendChild(rows);
+  swatchesEl.appendChild(block);
+}
+
 function renderSwatches(swatches) {
   closeColorPicker({ immediate: true });
   activePickerSwatchId = null;
@@ -1205,6 +1513,7 @@ function renderSwatches(swatches) {
 
   if (colorViewMode === COLOR_VIEW_MODES.STACK) {
     renderStackSwatches(swatches);
+    renderGradientSection();
     return;
   }
   renderOrganizedSwatches(swatches);
@@ -1382,6 +1691,24 @@ async function runHighlightScript(callback, args = []) {
   return injection?.result ?? null;
 }
 
+async function openImageLightboxOnPage(url) {
+  const tab = await getTargetTab();
+  if (!tab?.id || isUnsupportedPageUrl(tab.url || "") || !url) return false;
+
+  await chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    files: ["src/content/imageLightbox.js"]
+  });
+
+  const [injection] = await chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    func: (imageUrl) => window.__prismOpenImageLightbox(imageUrl),
+    args: [url]
+  });
+
+  return Boolean(injection?.result?.ok);
+}
+
 async function clearFontHighlightOnPage() {
   try {
     await runHighlightScript(() => window.__prismClearFontHighlight());
@@ -1389,6 +1716,35 @@ async function clearFontHighlightOnPage() {
     /* tab may be unavailable */
   }
   setHighlightedFontCard(null);
+}
+
+function syncAssetCardSelection() {
+  syncAssetCardSelectionState([imagesEl, iconsEl], {
+    selectedAssetIds
+  });
+}
+
+function clearAssetMultiSelection() {
+  if (!selectedAssetIds.size) {
+    updateFooterForMode();
+    return;
+  }
+  selectedAssetIds = new Set();
+  syncAssetCardSelection();
+  updateFooterForMode();
+}
+
+function toggleAssetMultiSelect(asset) {
+  if (!asset?.id) return;
+  if (selectedAssetIds.has(asset.id)) {
+    selectedAssetIds.delete(asset.id);
+  } else {
+    selectedAssetIds.add(asset.id);
+  }
+  // Reassign so callers holding the old Set reference aren't needed.
+  selectedAssetIds = new Set(selectedAssetIds);
+  syncAssetCardSelection();
+  updateFooterForMode();
 }
 
 function setHighlightedFontCard(family) {
@@ -1507,16 +1863,99 @@ function renderFonts(fonts) {
   }
 }
 
+async function handleAssetDownload(asset, button) {
+  const result = await downloadAsset(asset);
+  flashAssetDownloadFeedback(button, Boolean(result.ok));
+  if (!result.ok) {
+    const message = downloadErrorMessage(result.error) || ERROR_MESSAGES.DOWNLOAD_FAILED;
+    showBanner(message, { guidance: false });
+  }
+  return result;
+}
+
+async function handleImagePreview(asset) {
+  if (!asset?.url) return;
+  try {
+    const ok = await openImageLightboxOnPage(asset.url);
+    if (!ok) {
+      showBanner("Couldn’t open the image preview on this page.", { guidance: false });
+    }
+  } catch (error) {
+    const message = normalizeUserMessage(error?.message) || ERROR_MESSAGES.INJECTION_FAILED;
+    showBanner(message, { guidance: false });
+  }
+}
+
+function pruneSelectedAssetIds(assets) {
+  const valid = new Set((assets || []).map((asset) => asset.id));
+  let changed = false;
+  for (const id of [...selectedAssetIds]) {
+    if (!valid.has(id)) {
+      selectedAssetIds.delete(id);
+      changed = true;
+    }
+  }
+  if (changed) {
+    selectedAssetIds = new Set(selectedAssetIds);
+    updateFooterForMode();
+  }
+}
+
+function renderImages(images) {
+  pruneSelectedAssetIds(images);
+  renderAssetGrid(imagesEl, images, {
+    onDownload: handleAssetDownload,
+    onPreview: handleImagePreview,
+    onToggleSelect: toggleAssetMultiSelect,
+    selectedAssetIds
+  });
+}
+
+function renderIcons(icons) {
+  pruneSelectedAssetIds(icons);
+  renderAssetGrid(iconsEl, icons, {
+    onDownload: handleAssetDownload,
+    onToggleSelect: toggleAssetMultiSelect,
+    selectedAssetIds
+  });
+}
+
+function renderActiveModeResults() {
+  syncGenerationMirrors();
+  if (activeMode === "colors") {
+    renderSwatches(currentPalette);
+    statusEl.textContent = "";
+    return;
+  }
+  if (activeMode === "fonts") {
+    renderFonts(currentFonts);
+    return;
+  }
+  if (activeMode === "images") {
+    renderImages(currentImages);
+    return;
+  }
+  if (activeMode === "icons") {
+    renderIcons(currentIcons);
+  }
+}
+
 function switchMode(mode) {
-  if ((mode !== "colors" && mode !== "fonts") || mode === activeMode) return;
+  if (!VALID_MODES.has(mode) || mode === activeMode) return;
 
   closeColorPicker({ immediate: true });
   exitPickingMode();
 
   appEl.classList.add("is-switching");
 
-  if (activeMode === "fonts" && mode === "colors") {
+  if (activeMode === "fonts" && mode !== "fonts") {
     clearFontHighlightOnPage();
+  }
+  if (
+    (activeMode === "images" || activeMode === "icons") &&
+    mode !== activeMode
+  ) {
+    clearAssetMultiSelection();
   }
 
   activeMode = mode;
@@ -1525,14 +1964,15 @@ function switchMode(mode) {
   const config = modeConfig();
   appEl.classList.toggle("mode-colors", activeMode === "colors");
   appEl.classList.toggle("mode-fonts", activeMode === "fonts");
+  appEl.classList.toggle("mode-images", activeMode === "images");
+  appEl.classList.toggle("mode-icons", activeMode === "icons");
   if (extractBtnLabel) extractBtnLabel.textContent = config.extractLabel;
   if (extractBtnIcon) extractBtnIcon.textContent = config.extractIcon;
   if (introDescEl) introDescEl.textContent = config.intro;
 
   if (hasResultsForMode(mode)) {
     setResultsState();
-    if (mode === "colors") renderSwatches(currentPalette);
-    else renderFonts(currentFonts);
+    renderActiveModeResults();
   } else if (generation.dismissed?.[mode]) {
     setIntroState();
   } else if (generation.inFlight) {
@@ -1553,7 +1993,6 @@ function switchMode(mode) {
   // Auto-generate for tabs that still need results (never after Reset).
   ensureResultsForActiveMode({ reason: "tab-switch" });
 }
-
 async function runExtractionOnTab(tab) {
   await chrome.scripting.executeScript({
     target: { tabId: tab.id },
@@ -1578,6 +2017,26 @@ async function runExtractionOnTab(tab) {
   return injection.result;
 }
 
+async function runAssetExtractionOnTab(tab) {
+  await chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    files: ["src/content/extractAssets.js"]
+  });
+
+  const [injection] = await chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    func: () => window.__prismExtractAssets({ maxCandidates: 400 })
+  });
+
+  if (!injection) {
+    const err = new Error("Script injection returned no result.");
+    err.injectionFailed = true;
+    throw err;
+  }
+
+  return injection.result;
+}
+
 function curateColorsFromRaw(result) {
   if (isExtractionResultEmpty(result)) return null;
   let curated;
@@ -1591,6 +2050,14 @@ function curateColorsFromRaw(result) {
   return withSlotMeta(assigned.swatches.slice(0, 8));
 }
 
+function curateGradientsFromRaw(result) {
+  try {
+    return curateGradients(result?.gradients || []);
+  } catch {
+    return [];
+  }
+}
+
 function curateFontsFromRaw(result) {
   if (isFontExtractionEmpty(result)) return null;
   const curatedFonts = curateFonts(result);
@@ -1600,18 +2067,9 @@ function curateFontsFromRaw(result) {
 
 function showActiveModeResults() {
   syncGenerationMirrors();
-  if (activeMode === "colors") {
-    if (!currentPalette.length) return false;
-    setResultsState();
-    renderSwatches(currentPalette);
-    statusEl.textContent = "";
-    setLoading(false);
-    reportHeightAfterLayout();
-    return true;
-  }
-  if (!currentFonts.length) return false;
+  if (!hasResultsForMode(activeMode)) return false;
   setResultsState();
-  renderFonts(currentFonts);
+  renderActiveModeResults();
   setLoading(false);
   reportHeightAfterLayout();
   return true;
@@ -1619,12 +2077,16 @@ function showActiveModeResults() {
 
 function applyRawToGeneration(result, pageKey, requestId) {
   const palette = generation.dismissed.colors ? generation.palette : curateColorsFromRaw(result);
+  const gradients = generation.dismissed.colors
+    ? generation.gradients
+    : curateGradientsFromRaw(result);
   const fonts = generation.dismissed.fonts ? generation.fonts : curateFontsFromRaw(result);
 
   generation = applyExtractionSuccess(generation, {
     pageKey,
     rawExtraction: result,
     palette: palette || [],
+    gradients: gradients || [],
     fonts: fonts || [],
     requestId
   });
@@ -1636,14 +2098,57 @@ function applyRawToGeneration(result, pageKey, requestId) {
       showError(null, { noPalette: true });
       return false;
     }
-  } else if (!fonts?.length && !generation.dismissed.fonts) {
+  } else if (activeMode === "fonts" && !fonts?.length && !generation.dismissed.fonts) {
     showError(null, { noFonts: true });
     return false;
   }
 
-  return showActiveModeResults();
+  if (!isAssetMode(activeMode)) {
+    return showActiveModeResults();
+  }
+  return false;
 }
 
+function curateImagesFromRaw(result) {
+  if (isAssetExtractionEmpty(result)) return null;
+  const images = curateImages(result.candidates || [], { baseHref: result.baseHref });
+  return images.length ? images : null;
+}
+
+function curateIconsFromRaw(result) {
+  if (isAssetExtractionEmpty(result)) return null;
+  const icons = curateIcons(result.candidates || [], { baseHref: result.baseHref });
+  return icons.length ? icons : null;
+}
+
+function applyRawAssetsToGeneration(result, pageKey, requestId) {
+  const images = generation.dismissed.images ? generation.images : curateImagesFromRaw(result);
+  const icons = generation.dismissed.icons ? generation.icons : curateIconsFromRaw(result);
+
+  generation = applyAssetsSuccess(generation, {
+    pageKey,
+    rawAssets: result,
+    images: images || [],
+    icons: icons || [],
+    requestId
+  });
+  syncGenerationMirrors();
+  persistGenerationCache();
+
+  if (activeMode === "images") {
+    if (!images?.length && !generation.dismissed.images) {
+      showError(null, { noImages: true });
+      return false;
+    }
+  } else if (activeMode === "icons") {
+    if (!icons?.length && !generation.dismissed.icons) {
+      showError(null, { noIcons: true });
+      return false;
+    }
+  }
+
+  return showActiveModeResults();
+}
 async function scanPage(tab, requestId) {
   const config = modeConfig();
   const tabUrl = tab.url || "";
@@ -1679,12 +2184,47 @@ async function scanPage(tab, requestId) {
   }
 }
 
+async function scanAssets(tab, requestId) {
+  const config = modeConfig();
+  const tabUrl = tab.url || "";
+
+  let timedOut = false;
+  const scriptPromise = runAssetExtractionOnTab(tab).catch((error) => {
+    error.injectionFailed = true;
+    throw error;
+  });
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => {
+      timedOut = true;
+      reject(new Error(ERROR_MESSAGES.TIMEOUT));
+    }, EXTRACTION_TIMEOUT_MS);
+  });
+
+  setLoading(true, config.loadingBuild);
+
+  try {
+    const result = await Promise.race([scriptPromise, timeoutPromise]);
+    if (isStaleRequest(generation, requestId)) return null;
+    return result;
+  } catch (error) {
+    if (isStaleRequest(generation, requestId)) return null;
+    generation = clearInFlight(generation);
+    showError(error, {
+      timedOut,
+      injectionFailed: Boolean(error?.injectionFailed),
+      unsupportedPage: isUnsupportedPageUrl(tabUrl)
+    });
+    return null;
+  }
+}
+
 /**
  * Shared entry for auto-open, tab switches, and explicit Generate.
  * Dedupes in-flight scans; reuses page cache; never auto-runs after Reset.
  */
 async function ensureResultsForActiveMode({ force = false, reason = "auto" } = {}) {
   const config = modeConfig();
+  const assetMode = isAssetMode(activeMode);
 
   if (isRestrictedPopupContext()) {
     if (reason === "auto" || reason === "tab-switch") return;
@@ -1733,7 +2273,13 @@ async function ensureResultsForActiveMode({ force = false, reason = "auto" } = {
 
   // Rebuild curated results from a still-valid page scan (covers the other tab
   // and Generate-after-Reset without a duplicate injection).
-  if (canReuseRawExtraction(generation, { pageKey })) {
+  if (assetMode) {
+    if (canReuseRawAssets(generation, { pageKey })) {
+      applyRawAssetsToGeneration(generation.rawAssets, pageKey, generation.requestId);
+      if (hasResultsForMode(activeMode)) return;
+      if (!force && generation.dismissed[activeMode]) return;
+    }
+  } else if (canReuseRawExtraction(generation, { pageKey })) {
     applyRawToGeneration(generation.rawExtraction, pageKey, generation.requestId);
     if (hasResultsForMode(activeMode)) return;
     if (!force && generation.dismissed[activeMode]) return;
@@ -1748,20 +2294,45 @@ async function ensureResultsForActiveMode({ force = false, reason = "auto" } = {
     }
     if (canReuseModeResults(generation, { mode: activeMode, pageKey })) {
       showActiveModeResults();
+      return;
     }
-    return;
+    // A shared in-flight scan may have been for the other pipeline
+    // (palette vs assets). Fall through and start the correct scan.
+    if (!force && generation.dismissed?.[activeMode]) return;
+    if (assetMode && canReuseRawAssets(generation, { pageKey })) {
+      applyRawAssetsToGeneration(generation.rawAssets, pageKey, generation.requestId);
+      if (hasResultsForMode(activeMode)) return;
+    }
+    if (!assetMode && canReuseRawExtraction(generation, { pageKey })) {
+      applyRawToGeneration(generation.rawExtraction, pageKey, generation.requestId);
+      if (hasResultsForMode(activeMode)) return;
+    }
+    if (generation.inFlight) {
+      // Another request started while we awaited — join it once more.
+      try {
+        await generation.inFlight;
+      } catch {
+        /* owner surfaces errors */
+      }
+      if (canReuseModeResults(generation, { mode: activeMode, pageKey })) {
+        showActiveModeResults();
+      }
+      return;
+    }
   }
 
   clearError();
   setLoading(true, config.loadingStart);
   generation = beginRequest(generation);
   const requestId = generation.requestId;
+  const scanIsAssets = assetMode;
 
-  const scanPromise = scanPage(tab, requestId)
+  const scanPromise = (scanIsAssets ? scanAssets(tab, requestId) : scanPage(tab, requestId))
     .then((result) => {
       generation = clearInFlight(generation);
       if (!result || isStaleRequest(generation, requestId)) return null;
-      applyRawToGeneration(result, pageKey, requestId);
+      if (scanIsAssets) applyRawAssetsToGeneration(result, pageKey, requestId);
+      else applyRawToGeneration(result, pageKey, requestId);
       return result;
     })
     .catch((error) => {
@@ -1774,11 +2345,9 @@ async function ensureResultsForActiveMode({ force = false, reason = "auto" } = {
   try {
     await scanPromise;
   } catch {
-    /* showError already called from scanPage */
+    /* showError already called from scan helpers */
   }
-}
-
-async function runExtraction() {
+}async function runExtraction() {
   extractBtn.disabled = true;
   try {
     await ensureResultsForActiveMode({ force: true, reason: "manual" });
@@ -1801,8 +2370,13 @@ function bindTabSwitch(button, mode) {
 
 bindTabSwitch(tabColorsBtn, "colors");
 bindTabSwitch(tabFontsBtn, "fonts");
+bindTabSwitch(tabImagesBtn, "images");
+bindTabSwitch(tabIconsBtn, "icons");
 extractBtn.addEventListener("click", runExtraction);
-resetBtn.addEventListener("click", resetCurrentMode);
+if (reloadBtn) reloadBtn.addEventListener("click", onReloadOrDownloadClick);
+if (clearSelectionBtn) {
+  clearSelectionBtn.addEventListener("click", clearAssetMultiSelection);
+}
 shuffleBtn.addEventListener("click", shufflePalette);
 
 if (colorViewToggleEl) {
@@ -1813,14 +2387,45 @@ if (colorViewToggleEl) {
   });
 }
 
+if (swatchesEl) {
+  swatchesEl.addEventListener("pointerover", (event) => {
+    const tile = event.target.closest?.(".swatch");
+    if (!tile || !swatchesEl.contains(tile) || tile.classList.contains("swatch-stack")) return;
+    if (tile._tooltipClampBound) return;
+    tile._tooltipClampBound = true;
+    requestAnimationFrame(() => {
+      if (!clampSwatchTooltip(tile)) tile._tooltipClampBound = false;
+    });
+  });
+  swatchesEl.addEventListener("pointerout", (event) => {
+    const tile = event.target.closest?.(".swatch");
+    if (!tile || !swatchesEl.contains(tile)) return;
+    const next = event.relatedTarget?.closest?.(".swatch");
+    if (next === tile) return;
+    tile._tooltipClampBound = false;
+    resetSwatchTooltipShift(tile.querySelector(".swatch-tooltip"));
+  });
+  swatchesEl.addEventListener("focusin", (event) => {
+    const tile = event.target.closest?.(".swatch");
+    if (!tile || !swatchesEl.contains(tile) || tile.classList.contains("swatch-stack")) return;
+    requestAnimationFrame(() => clampSwatchTooltip(tile));
+  });
+}
+
 copyBtn.addEventListener("click", async () => {
+  syncGenerationMirrors();
   if (!currentPalette.length) {
     showError(null, { noPalette: true });
     return;
   }
 
   try {
-    await copyPaletteImage(currentPalette, exportPageMeta);
+    await copyPaletteImage(currentPalette, exportPageMeta, {
+      viewMode: colorViewMode,
+      gradients: currentGradients.length
+        ? currentGradients
+        : generation.gradients || []
+    });
     statusEl.textContent = "";
     flashCopyFeedback(true);
   } catch (error) {
@@ -1829,6 +2434,9 @@ copyBtn.addEventListener("click", async () => {
     flashCopyFeedback(false);
   }
 });
+
+// Lightbox close is handled in-page; keep the pink highlight so the selection
+// remains visible afterward (toggle off by clicking the same tile again).
 
 async function bootstrapPopup() {
   colorViewMode = await loadColorViewMode();

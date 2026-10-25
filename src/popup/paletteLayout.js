@@ -16,15 +16,19 @@ import {
 export const APP_PADDING = 16;
 export const CONTENT_WIDTH = 348; // 380px panel − 16px padding on each side
 export const BENTO_GAP = 6;
+export const STACK_GAP = 4;
+export const STACK_BAR_HEIGHT = 44;
 export const TILE_RADIUS = 6;
 export const TILE_COLUMNS = 4;
 export const TILE_SIZE = (CONTENT_WIDTH - BENTO_GAP * (TILE_COLUMNS - 1)) / TILE_COLUMNS;
 export const ROLE_SECTION_GAP = 16;
 export const ROLE_TITLE_GAP = 8;
 export const ROLE_TITLE_SIZE = 13;
+export const GRADIENT_BAR_HEIGHT = 44;
 export const LIGHT_BORDER_COLOR = "#e4e7ee";
 export const DARK_INK = "#1a1d26";
 export const LIGHT_INK = "#ffffff";
+export const GRADIENT_SECTION_LABEL = "Gradients";
 
 function hexChannels(hex) {
   const value = String(hex || "").replace("#", "");
@@ -117,13 +121,25 @@ function sectionPrimaryRole(swatch) {
   return swatch?.primaryUsageRole || primaryUsageRole(swatch?.usageRoles, swatch?.usage);
 }
 
+/** Full-width gradient bars — used under the stack (list) palette view. */
+export function buildGradientRows(gradients) {
+  const list = Array.isArray(gradients) ? gradients.filter((g) => g?.css) : [];
+  return list.map((gradient) => ({
+    tiles: [gradient],
+    height: GRADIENT_BAR_HEIGHT,
+    tileSize: CONTENT_WIDTH,
+    kind: "gradient"
+  }));
+}
+
 /**
  * Group swatches under role titles: Background, then Text, then Accent.
  * Each unique color appears in exactly one section (its primary usage role).
  * Full `usageRoles` stay on the swatch so secondary uses remain visible as metadata.
  * Colors with no measured role stay visible after the titled groups.
+ * Optional curated gradients append as square tiles under "Gradients".
  */
-export function buildRoleSections(swatches) {
+export function buildRoleSections(swatches, { gradients = [] } = {}) {
   const list = Array.isArray(swatches) ? swatches : [];
   const seen = new Set();
   const unique = [];
@@ -158,6 +174,16 @@ export function buildRoleSections(swatches) {
   });
   if (unlabeled.length) {
     sections.push({ role: "", label: "", rows: buildFilledRows(unlabeled) });
+  }
+
+  const gradientTiles = (Array.isArray(gradients) ? gradients : []).filter((g) => g?.css);
+  if (gradientTiles.length) {
+    sections.push({
+      role: "gradients",
+      label: GRADIENT_SECTION_LABEL,
+      rows: buildFilledRows(gradientTiles),
+      kind: "gradients"
+    });
   }
 
   return sections;

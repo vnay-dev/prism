@@ -1,9 +1,9 @@
 # Privacy Policy — Prism
 
-**Last updated:** June 6, 2026  
-**Version:** 0.2.1
+**Last updated:** October 25, 2026  
+**Version:** 0.6.0
 
-Prism (“the extension”) is a Chrome extension that helps designers extract color palettes and font families from web pages. This policy describes what the extension accesses and how that information is handled.
+Prism (“the extension”) is a Chrome extension that helps designers extract color palettes, font families, images, and icons from web pages. This policy describes what the extension accesses and how that information is handled.
 
 ## Summary
 
@@ -17,7 +17,9 @@ When you use Prism on a website tab, the extension may access:
 
 - **Rendered page styles** on the tab you selected, only while you run extraction:
   - **Colors** — background, text, border, and SVG fill/stroke colors from computed styles
+  - **Gradients** — CSS gradient values from computed backgrounds
   - **Typography** — `font-family`, `font-weight`, and related computed font properties on visible text elements
+- **Page asset URLs** (and inline SVG markup for icons) for images and icons you browse or download in the Images / Icons tabs.
 - **Page metadata** used for export labels (document title, hostname, and optional `og:site_name` / `application-name` meta tags).
 - **Tab information** for the active tab you invoked the extension on (such as URL and title), only to run extraction and label exports.
 
@@ -40,14 +42,15 @@ The extension **UI** loads typography from Google Fonts (`fonts.googleapis.com` 
 | Permission | Purpose |
 |------------|---------|
 | `activeTab` | Access the tab you clicked the extension icon on, only while you use Prism |
-| `scripting` | Inject a short-lived script to sample colors and typography on that tab |
+| `scripting` | Inject a short-lived script to sample colors, gradients, typography, and asset URLs on that tab |
 | `clipboardWrite` | Copy the generated palette PNG or a font family name when you click copy |
+| `downloads` | Save an image/icon (or a zip of your multi-select) to your Downloads folder when you click Download |
 
 `web_accessible_resources` allows the in-page panel (iframe) to load the extension UI on sites you visit. It does not grant ongoing access to all sites without your action.
 
 ## Data retention
 
-Extracted palettes and font results exist only in extension memory and your clipboard until you close the panel or copy elsewhere. Prism does not store results on remote servers.
+Extracted palettes, fonts, gradients, and asset lists exist only in extension memory (and your clipboard or Downloads folder when you copy or download) until you close the panel or save elsewhere. Prism does not store results on remote servers.
 
 ## Children
 
