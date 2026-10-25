@@ -1,11 +1,12 @@
 # Prism — Architecture
 
-Prism is a Chrome extension that extracts **design-system colors** and **typography** from live web pages.
+Prism is a Chrome extension that extracts **design-system colors**, **typography**, **images**, and **icons** from live web pages.
 
-- **Colors** — an 8-color palette with semantic roles (foundation, primary, secondary, accent, neutral) and **usage labels** (Background, Text, Accent) derived from rendered DOM colors, not CSS variables alone.
+- **Colors** — an 8-color palette with semantic roles (foundation, primary, secondary, accent, neutral) and **usage labels** (Background, Text, Accent) derived from rendered DOM colors, not CSS variables alone, plus curated **CSS gradients**.
 - **Fonts** — ranked font families with meaningful CSS weights, derived from computed styles on visible text.
+- **Images / Icons** — curated page assets (raster URLs and inline SVG) with lightbox preview and download / ZIP.
 
-The panel has two tabs (**Color palette** / **Font families**). Each tab runs the same in-page scan but curates a different slice of the extraction output. Color results support **Organized** and **Stack** layout views; extraction auto-starts on first open of a supported page.
+The panel has four tabs (**Color palette** / **Font families** / **Images** / **Icons**). Each tab runs an in-page scan but curates a different slice of the extraction output. Color results support **Organized** and **Stack** layout views; extraction auto-starts on first open of a supported page.
 
 ### Color pipeline
 
@@ -35,7 +36,7 @@ The panel has two tabs (**Color palette** / **Font families**). Each tab runs th
 └───────────────────────────────────┬─────────────────────────────────────┘
                                     │ role sections
                                     ▼
-              Color tab (Organized / Stack) / PNG export
+              Color tab (Organized / Stack + Gradients) / PNG export
 ```
 
 ### Font pipeline
@@ -50,19 +51,53 @@ curateFonts.js    →  aggregate by family · score weights · filter noise
 Popup (Font families tab)  →  cards with family name + weights · per-card clipboard copy
 ```
 
+### Asset pipeline
+
+```
+extractAssets.js  →  image + icon candidates (URLs, inline SVG, dimensions, area)
+        │
+        ├── curateImages.js  →  ranked raster/page images
+        └── curateIcons.js   →  ranked icons / logos (incl. inline SVG)
+                │
+                ▼
+Popup (Images / Icons tabs)  →  grid · lightbox · download / multi-select ZIP
+```
+
+### Gradient pipeline
+
+```
+extractInPage.js (background-image layers)  →  gradient candidates
+        │
+        ▼
+curateGradients.js (+ paintGradient.js)  →  distinct multi-stop CSS gradients
+        │
+        ▼
+Color tab (Gradients section)  →  tiles · copy CSS
+```
+
 ---
 
 ## Module map
 
 | Module | Responsibility |
 |--------|----------------|
-| `src/content/extractInPage.js` | Full-page virtual section scan, area measurement, color + font sampling |
+| `src/content/extractInPage.js` | Full-page virtual section scan, area measurement, color + font + gradient sampling |
+| `src/content/extractAssets.js` | Page image/icon candidate collection (URLs, inline SVG, geometry) |
 | `src/content/highlightFont.js` | On-page highlighting of text matching a selected font family (CSS Highlight API, viewport-first, span-wrap fallback) |
-| `src/popup/paletteLayout.js` | Shared bento geometry used by both the popup render and the PNG export |
+| `src/content/imageLightbox.js` | Full-page lightbox for previewing a selected image/icon |
+| `src/popup/paletteLayout.js` | Shared bento geometry used by both the popup render and the PNG export (incl. gradient rows) |
 | `src/popup/paletteViews.js` | Organized vs Stack layout modes and hue-family stack ordering |
-| `src/popup/generationController.js` | Auto-extract on open, Reset/dismissed state, in-flight dedupe |
+| `src/popup/generationController.js` | Auto-extract on open, Reset/dismissed state, in-flight dedupe (colors/fonts/assets) |
+| `src/popup/assetsView.js` | Images/Icons grid rendering, selection, and download feedback |
+| `src/popup/downloadAsset.js` | Single-asset and multi-select ZIP download via the service worker |
 | `src/core/sourceClassification.js` | Source categories, weights, product demo detection, utility classification, scoring |
 | `src/core/curateFonts.js` | Font family curation and weight significance filtering |
+| `src/core/curateGradients.js` | CSS gradient curation (area, distinct stops, cap) |
+| `src/core/curateImages.js` / `curateIcons.js` | Image and icon candidate ranking / filtering |
+| `src/core/paintGradient.js` | Gradient CSS parsing helpers for curation and preview |
+| `src/core/assetUtils.js` | Shared asset URL/filename helpers |
+| `src/core/inlineSvg.js` | Inline SVG normalization for icon download/preview |
+| `src/core/zipStore.js` | Client-side ZIP packing for multi-select downloads |
 | `src/core/fontUtils.js` | Font weight snapping and emoji-font filtering |
 | `src/core/scoreAndCluster.js` | LAB clustering, palette curation, quality adjustment |
 | `src/core/assignRoles.js` | Semantic role assignment on curated colors |
@@ -585,6 +620,12 @@ DOM element
 fontSamples[] + fontTokens[]
   → curateFonts → ranked families + weight labels
   → Font families tab + clipboard copy
+
+gradient candidates
+  → curateGradients → Color tab Gradients section
+
+asset candidates
+  → curateImages / curateIcons → Images / Icons tabs + download / ZIP
 ```
 
 ---
@@ -593,21 +634,26 @@ fontSamples[] + fontTokens[]
 
 | Component | Role |
 |-----------|------|
-| `src/content/extractInPage.js` | Injected into page tab; returns raw extraction JSON (colors + fonts) |
+| `src/content/extractInPage.js` | Injected into page tab; returns raw extraction JSON (colors + fonts + gradients) |
+| `src/content/extractAssets.js` | Injected for Images/Icons; returns image/icon candidates |
 | `src/core/scoreAndCluster.js` | `curatePalette(extraction, options?)` → curated colors (optional shuffle seed) |
 | `src/core/assignRoles.js` | `assignRoles(curated)` → final swatches |
 | `src/core/usageRoles.js` | `buildRoleSections(swatches, samples)` → usage-labeled sections |
 | `src/core/curateFonts.js` | `curateFonts(extraction)` → ranked families + weights |
-| `src/popup/App.js` | Tabbed UI — auto-extract, Organized/Stack views, shuffle, edit/lock, copy, font highlight |
+| `src/core/curateGradients.js` | `curateGradients(extraction)` → CSS gradient tiles |
+| `src/core/curateImages.js` / `curateIcons.js` | Ranked assets for Images / Icons tabs |
+| `src/popup/App.js` | Tabbed UI — auto-extract, Organized/Stack, gradients, shuffle, edit/lock, copy, fonts, assets |
 | `src/popup/generationController.js` | Per-page auto-generate / Reset / in-flight guards |
 | `src/popup/paletteViews.js` | View mode helpers and stack sort order |
 | `src/popup/colorPicker.js` | Custom HSV color picker for swatch editing |
 | `src/popup/exportPaletteImage.js` | Palette PNG generation (color tab only), using `paletteLayout.js` geometry |
 | `src/popup/paletteLayout.js` | Shared bento layout for popup render and PNG export |
-| `src/background/service-worker.js` | Session cache for generation + view mode across reopen |
+| `src/popup/assetsView.js` / `downloadAsset.js` | Asset grid UI and download / ZIP |
+| `src/background/service-worker.js` | Session cache + `chrome.downloads` for asset saves |
 | `src/content/highlightFont.js` | Injected on demand to highlight visible text matching a selected font family |
+| `src/content/imageLightbox.js` | Injected on demand for full-page asset preview |
 
-The popup injects `extractInPage.js` via `chrome.scripting.executeScript`, then runs color or font curation (including usage roles) in the extension context using shared core modules. On first open of a page, color extraction starts automatically unless the user has Reset for that page. The Font families tab additionally injects `highlightFont.js` to mark on-page text in the selected family.
+The popup injects `extractInPage.js` (and `extractAssets.js` for asset tabs) via `chrome.scripting.executeScript`, then runs curation in the extension context using shared core modules. On first open of a page, color extraction starts automatically unless the user has Reset for that page. The Font families tab additionally injects `highlightFont.js`; Images/Icons use `imageLightbox.js` for preview and the service worker for downloads.
 
 ---
 
