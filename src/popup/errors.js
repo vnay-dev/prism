@@ -11,6 +11,12 @@ export const ERROR_MESSAGES = {
     "No usable brand colors were found on this page. Try a homepage or marketing page with richer design, then click Extract palette again.",
   NO_FONTS:
     "No font families were found on this page. Try a homepage or marketing page with more text, then click Extract font families again.",
+  NO_IMAGES:
+    "No downloadable images were found on this page. Try a page with visible photos or graphics, then click Extract images again.",
+  NO_ICONS:
+    "No downloadable icons were found on this page. Try a site with favicons or SVG icons, then click Extract icons again.",
+  DOWNLOAD_FAILED:
+    "Download failed. The asset may be blocked, private, or unavailable.",
   EXTRACTION_FAILED:
     "Something unexpected went wrong. Refresh the page and click Extract palette again.",
   COPY_FAILED:
@@ -60,6 +66,8 @@ export function classifyExtractionError(error, context = {}) {
   if (context.noTab) return ERROR_MESSAGES.NO_TAB;
   if (context.noPalette) return ERROR_MESSAGES.NO_PALETTE;
   if (context.noFonts) return ERROR_MESSAGES.NO_FONTS;
+  if (context.noImages) return ERROR_MESSAGES.NO_IMAGES;
+  if (context.noIcons) return ERROR_MESSAGES.NO_ICONS;
   if (context.injectionFailed) return ERROR_MESSAGES.INJECTION_FAILED;
   if (context.timedOut) return ERROR_MESSAGES.TIMEOUT;
 
@@ -100,6 +108,12 @@ export function isExtractionResultEmpty(result) {
 export function isFontExtractionEmpty(result) {
   if (!result || typeof result !== "object") return true;
   if (!Array.isArray(result.fontSamples) || result.fontSamples.length === 0) return true;
+  return false;
+}
+
+export function isAssetExtractionEmpty(result) {
+  if (!result || typeof result !== "object") return true;
+  if (!Array.isArray(result.candidates) || result.candidates.length === 0) return true;
   return false;
 }
 

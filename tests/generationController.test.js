@@ -76,14 +76,19 @@ test("Reset clears mode results and blocks silent regeneration", () => {
   let state = createGenerationState({
     pageKey: "1::https://example.com",
     palette: [{ hex: "#fff" }],
+    gradients: [{ id: "grad-1", css: "linear-gradient(#f00,#00f)" }],
     fonts: [{ family: "Inter" }],
+    images: [{ url: "https://example.com/a.png" }],
+    icons: [{ url: "https://example.com/a.svg" }],
     rawExtraction: { samples: [1] }
   });
 
   state = resetMode(state, "colors");
   assert.deepEqual(state.palette, []);
+  assert.deepEqual(state.gradients, []);
   assert.equal(state.dismissed.colors, true);
   assert.equal(state.fonts.length, 1);
+  assert.equal(state.images.length, 1);
   assert.equal(state.rawExtraction.samples.length, 1);
   assert.equal(
     shouldAutoGenerate(state, { mode: "colors", pageKey: "1::https://example.com" }),
@@ -97,8 +102,12 @@ test("Reset clears mode results and blocks silent regeneration", () => {
     canReuseModeResults(state, { mode: "fonts", pageKey: "1::https://example.com" }),
     true
   );
-});
 
+  state = resetMode(state, "images");
+  assert.deepEqual(state.images, []);
+  assert.equal(state.dismissed.images, true);
+  assert.equal(state.icons.length, 1);
+});
 test("tab switch after Reset does not auto-generate the reset mode", () => {
   let state = createGenerationState({
     pageKey: "1::https://example.com",

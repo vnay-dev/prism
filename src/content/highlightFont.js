@@ -315,6 +315,31 @@
     window[STATE_KEY] = state;
     revealViewportMatches(state);
 
+    // Bring the first match into view when nothing is already on screen.
+    if (candidates.length) {
+      const scrollTarget =
+        candidates.find((node) => isTextNodeInViewport(node)) || candidates[0];
+      const anchor = scrollTarget?.parentElement;
+      if (anchor && !isTextNodeInViewport(scrollTarget)) {
+        try {
+          anchor.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+        } catch {
+          anchor.scrollIntoView(true);
+        }
+        // After scroll settles, paint newly visible matches.
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => revealViewportMatches(state));
+        });
+        window.setTimeout(() => revealViewportMatches(state), 350);
+      } else if (anchor) {
+        try {
+          anchor.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+
     return {
       family,
       count: candidates.length,
