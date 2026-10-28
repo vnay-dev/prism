@@ -93,7 +93,7 @@
 
         >
 
-          Color palette
+          Colors
 
         </button>
 
@@ -115,7 +115,51 @@
 
         >
 
-          Font families
+          Fonts
+
+        </button>
+
+        <button
+
+          id="tabImages"
+
+          class="tab"
+
+          type="button"
+
+          role="tab"
+
+          aria-selected="false"
+
+          aria-controls="imageResults"
+
+          data-mode="images"
+
+        >
+
+          Images
+
+        </button>
+
+        <button
+
+          id="tabIcons"
+
+          class="tab"
+
+          type="button"
+
+          role="tab"
+
+          aria-selected="false"
+
+          aria-controls="iconResults"
+
+          data-mode="icons"
+
+        >
+
+          Icons
 
         </button>
 
@@ -195,17 +239,6 @@
               </button>
             </div>
 
-            <button
-              id="resetBtn"
-              class="btn-toolbar"
-              type="button"
-              aria-label="Reset color palette"
-              title="Reset color palette"
-            >
-              <span class="material-symbols-outlined" aria-hidden="true">restart_alt</span>
-              <span>Reset</span>
-            </button>
-
           </div>
 
           <div id="swatches" class="swatches" data-view="roles"></div>
@@ -217,6 +250,18 @@
         <section id="fontResults" class="tab-panel state-results" hidden>
 
           <div id="fonts" class="fonts"></div>
+
+        </section>
+
+        <section id="imageResults" class="tab-panel state-results" hidden>
+
+          <div id="images" class="assets-grid"></div>
+
+        </section>
+
+        <section id="iconResults" class="tab-panel state-results" hidden>
+
+          <div id="icons" class="assets-grid"></div>
 
         </section>
 
@@ -253,6 +298,31 @@
 
             <span id="copyBtnLabel">Copy to clipboard</span>
 
+          </button>
+
+          <button
+            id="clearSelectionBtn"
+            class="btn btn-secondary"
+            type="button"
+            hidden
+            aria-label="Unselect all"
+            title="Unselect all"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">deselect</span>
+            <span>Unselect all</span>
+          </button>
+
+          <button
+            id="reloadBtn"
+            class="btn btn-primary"
+            type="button"
+            hidden
+            data-action="reload"
+            aria-label="Reload"
+            title="Reload"
+          >
+            <span class="material-symbols-outlined" aria-hidden="true">refresh</span>
+            <span id="reloadBtnLabel">Reload</span>
           </button>
 
         </div>

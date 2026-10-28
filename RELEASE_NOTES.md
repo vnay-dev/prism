@@ -1,5 +1,59 @@
 # Release notes
 
+## 0.6.1 — Layout polish & asset hover affordance
+
+**Date:** October 28, 2026
+
+### Improved
+
+- **Layout toggle** — Organized / Stack control sits on the right of the Colors toolbar with clearer spacing.
+- **Stack Gradients spacing** — more room between the color strip and the Gradients group in Stack view.
+- **Asset tile hover** — Images and Icons cards show a pink glow on hover so selection feels discoverable; left-column rings stay fully visible.
+
+### Package
+
+```bash
+npm run package:store
+# → dist/prism-0.6.1.zip
+```
+
+---
+
+## 0.6.0 — Images, icons, gradients & downloads
+
+**Date:** October 25, 2026
+
+### New
+
+- **Images tab** — extract prominent page images into a curated grid; open a lightbox preview and download originals.
+- **Icons tab** — surface logos and UI icons from the page, including inline SVG, with the same preview and download flow.
+- **Gradients** — CSS gradients from the page appear under the color palette (Organized and Stack), with one-click CSS copy.
+- **Multi-select download** — select several images or icons and download them as a ZIP.
+
+### Improved
+
+- **Gradient tooltips** — long CSS labels stay inside the panel on left- and right-edge tiles instead of clipping.
+- **Palette export** — PNG copy keeps pace with the denser color view (gradients + layouts).
+
+### Permissions
+
+- **`downloads`** — saves a single asset or a ZIP of your multi-select to your Downloads folder when you choose Download. Chrome may ask you to re-enable the extension after update.
+
+### Technical
+
+- New asset pipeline: `extractAssets.js`, `curateImages.js` / `curateIcons.js`, `assetsView.js`, `downloadAsset.js`, `zipStore.js`, and `imageLightbox.js`.
+- Gradient curation via `curateGradients.js` / `paintGradient.js`; tooltip clamp keeps overflow inside the swatches scrollport.
+- Service worker download messaging; security allowlist updated for `downloads`.
+
+### Package
+
+```bash
+npm run package:store
+# → dist/prism-0.6.0.zip
+```
+
+---
+
 ## 0.5.0 — Usage labels, auto-extract & stack view
 
 **Date:** October 21, 2026

@@ -3,7 +3,7 @@
  * caching, and in-flight request deduplication. UI wires these into App.js.
  */
 
-export const GENERATION_MODES = Object.freeze(["colors", "fonts"]);
+export const GENERATION_MODES = Object.freeze(["colors", "fonts", "images", "icons"]);
 
 export function makePageKey(tab) {
   if (!tab?.id) return null;
@@ -15,11 +15,17 @@ export function createGenerationState(seed = {}) {
   return {
     pageKey: seed.pageKey ?? null,
     rawExtraction: seed.rawExtraction ?? null,
+    rawAssets: seed.rawAssets ?? null,
     palette: Array.isArray(seed.palette) ? seed.palette : [],
+    gradients: Array.isArray(seed.gradients) ? seed.gradients : [],
     fonts: Array.isArray(seed.fonts) ? seed.fonts : [],
+    images: Array.isArray(seed.images) ? seed.images : [],
+    icons: Array.isArray(seed.icons) ? seed.icons : [],
     dismissed: {
       colors: Boolean(seed.dismissed?.colors),
-      fonts: Boolean(seed.dismissed?.fonts)
+      fonts: Boolean(seed.dismissed?.fonts),
+      images: Boolean(seed.dismissed?.images),
+      icons: Boolean(seed.dismissed?.icons)
     },
     inFlight: null,
     requestId: Number(seed.requestId) || 0
@@ -28,6 +34,8 @@ export function createGenerationState(seed = {}) {
 
 export function hasResultsForMode(state, mode) {
   if (mode === "fonts") return (state.fonts?.length || 0) > 0;
+  if (mode === "images") return (state.images?.length || 0) > 0;
+  if (mode === "icons") return (state.icons?.length || 0) > 0;
   return (state.palette?.length || 0) > 0;
 }
 
@@ -60,6 +68,12 @@ export function canReuseRawExtraction(state, { pageKey } = {}) {
   return Boolean(state.rawExtraction);
 }
 
+/** Asset scan still valid for Images / Icons tabs. */
+export function canReuseRawAssets(state, { pageKey } = {}) {
+  if (!pageKey || state.pageKey !== pageKey) return false;
+  return Boolean(state.rawAssets);
+}
+
 export function beginRequest(state) {
   const requestId = (state.requestId || 0) + 1;
   return { ...state, requestId };
@@ -81,7 +95,10 @@ export function clearInFlight(state) {
   return { ...state, inFlight: null };
 }
 
-export function applyExtractionSuccess(state, { pageKey, rawExtraction, palette, fonts, requestId }) {
+export function applyExtractionSuccess(
+  state,
+  { pageKey, rawExtraction, palette, gradients, fonts, requestId }
+) {
   if (isStaleRequest(state, requestId)) return state;
 
   const next = {
@@ -95,21 +112,53 @@ export function applyExtractionSuccess(state, { pageKey, rawExtraction, palette,
   if (Array.isArray(palette) && !state.dismissed.colors) {
     next.palette = palette;
   }
+  if (Array.isArray(gradients) && !state.dismissed.colors) {
+    next.gradients = gradients;
+  }
   if (Array.isArray(fonts) && !state.dismissed.fonts) {
     next.fonts = fonts;
   }
   return next;
 }
 
-export function applyModeFromCache(state, { mode, palette, fonts }) {
+export function applyAssetsSuccess(state, { pageKey, rawAssets, images, icons, requestId }) {
+  if (isStaleRequest(state, requestId)) return state;
+
+  const next = {
+    ...state,
+    pageKey,
+    rawAssets: rawAssets ?? state.rawAssets,
+    inFlight: null,
+    requestId: state.requestId
+  };
+
+  if (Array.isArray(images) && !state.dismissed.images) {
+    next.images = images;
+  }
+  if (Array.isArray(icons) && !state.dismissed.icons) {
+    next.icons = icons;
+  }
+  return next;
+}
+
+export function applyModeFromCache(state, { mode, palette, gradients, fonts, images, icons }) {
   const next = { ...state, dismissed: { ...state.dismissed } };
   if (mode === "colors" && Array.isArray(palette)) {
     next.palette = palette;
+    if (Array.isArray(gradients)) next.gradients = gradients;
     next.dismissed.colors = false;
   }
   if (mode === "fonts" && Array.isArray(fonts)) {
     next.fonts = fonts;
     next.dismissed.fonts = false;
+  }
+  if (mode === "images" && Array.isArray(images)) {
+    next.images = images;
+    next.dismissed.images = false;
+  }
+  if (mode === "icons" && Array.isArray(icons)) {
+    next.icons = icons;
+    next.dismissed.icons = false;
   }
   return next;
 }
@@ -122,8 +171,13 @@ export function resetMode(state, mode) {
   };
   if (mode === "colors") {
     next.palette = [];
+    next.gradients = [];
   } else if (mode === "fonts") {
     next.fonts = [];
+  } else if (mode === "images") {
+    next.images = [];
+  } else if (mode === "icons") {
+    next.icons = [];
   }
   return next;
 }
@@ -146,8 +200,12 @@ export function serializeGenerationCache(state) {
   return {
     pageKey: state.pageKey,
     rawExtraction: state.rawExtraction,
+    rawAssets: state.rawAssets,
     palette: state.palette,
+    gradients: state.gradients,
     fonts: state.fonts,
+    images: state.images,
+    icons: state.icons,
     dismissed: { ...state.dismissed }
   };
 }
@@ -157,8 +215,16 @@ export function restoreGenerationCache(cached) {
   return createGenerationState({
     pageKey: cached.pageKey ?? null,
     rawExtraction: cached.rawExtraction ?? null,
+    rawAssets: cached.rawAssets ?? null,
     palette: cached.palette,
+    gradients: cached.gradients,
     fonts: cached.fonts,
+    images: cached.images,
+    icons: cached.icons,
     dismissed: cached.dismissed
   });
+}
+
+export function isAssetMode(mode) {
+  return mode === "images" || mode === "icons";
 }

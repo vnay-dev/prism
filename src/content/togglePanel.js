@@ -3,6 +3,8 @@
   const existing = document.getElementById(HOST_ID);
   if (existing) {
     window.__prismClearFontHighlight?.();
+    window.__prismClearAssetHighlight?.();
+    window.__prismCloseImageLightbox?.();
     existing.remove();
     return;
   }
@@ -78,6 +80,8 @@
 
   backdrop.addEventListener("click", () => {
     window.__prismClearFontHighlight?.();
+    window.__prismClearAssetHighlight?.();
+    window.__prismCloseImageLightbox?.();
     host.remove();
   });
 
@@ -144,6 +148,8 @@
     const { type, height, dx, dy } = event.data || {};
     if (type === "prism-close") {
       window.__prismClearFontHighlight?.();
+      window.__prismClearAssetHighlight?.();
+      window.__prismCloseImageLightbox?.();
       host.remove();
       return;
     }

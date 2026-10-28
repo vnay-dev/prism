@@ -624,6 +624,7 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
 
   const samples = [];
   const fontSamples = [];
+  const gradientSamples = [];
   const fontTokens = collectFontTokens();
   const areaContributions = new Map();
   const sections = [];
@@ -635,6 +636,28 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
   const step = Math.max(Math.floor(vh * 0.72), 280);
   let scrollY = 0;
   let sectionIndex = 0;
+
+  function splitBackgroundImageLayers(value) {
+    if (!value || typeof value !== "string") return [];
+    const trimmed = value.trim();
+    if (!trimmed || trimmed.toLowerCase() === "none") return [];
+    const layers = [];
+    let depth = 0;
+    let start = 0;
+    for (let i = 0; i < trimmed.length; i += 1) {
+      const ch = trimmed[i];
+      if (ch === "(") depth += 1;
+      else if (ch === ")") depth = Math.max(0, depth - 1);
+      else if (ch === "," && depth === 0) {
+        const part = trimmed.slice(start, i).trim();
+        if (part) layers.push(part);
+        start = i + 1;
+      }
+    }
+    const last = trimmed.slice(start).trim();
+    if (last) layers.push(last);
+    return layers;
+  }
 
   const props = [
     { js: "backgroundColor", css: "background-color" },
@@ -743,6 +766,40 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
         });
       }
 
+      // CSS gradients (background-image) — collected separately from solid fills.
+      const bgImage = styles.backgroundImage || "";
+      if (bgImage && bgImage !== "none" && /gradient/i.test(bgImage)) {
+        const gradientArea = virtualRect.width * virtualRect.height;
+        if (gradientArea >= 2500) {
+          const gradientSource = classifySource(
+            el,
+            virtualRect,
+            sectionIndex,
+            vh,
+            "backgroundColor",
+            "surface",
+            contentZone
+          );
+          const gradientWeight = SOURCE_WEIGHT[gradientSource] || SOURCE_WEIGHT.default;
+          const gradientImportance = importance * gradientWeight;
+          for (const layer of splitBackgroundImageLayers(bgImage)) {
+            if (!/(?:repeating-)?(?:linear|radial|conic)-gradient\(/i.test(layer)) continue;
+            if (/^url\(/i.test(layer)) continue;
+            const gradKey = `${dedupeKey}:gradient:${layer.slice(0, 120)}`;
+            if (seenPerSection.has(gradKey)) continue;
+            seenPerSection.add(gradKey);
+            gradientSamples.push({
+              css: layer.trim(),
+              area: gradientArea,
+              importance: gradientImportance,
+              sourceCategory: gradientSource,
+              contentZone,
+              sectionId
+            });
+          }
+        }
+      }
+
       if (isSyntax(el)) continue;
 
       const textArea = measureTextArea(el, styles);
@@ -828,6 +885,7 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
     samples,
     fontSamples,
     fontTokens,
+    gradients: gradientSamples,
     areaContributions: [...areaContributions.values()]
       .map((c) => ({ hex: c.hex, sourceType: c.sourceType, area: Math.round(c.area), count: c.count }))
       .sort((a, b) => b.area - a.area)
