@@ -612,6 +612,8 @@ button:focus-visible {
   border: 1px solid #d8dde8;
   flex-shrink: 0;
   isolation: isolate;
+  margin-left: auto;
+  margin-right: 12px;
 }
 
 .view-toggle-indicator {
@@ -704,7 +706,7 @@ button:focus-visible {
 }
 
 .swatches[data-view="stack"] {
-  gap: 4px;
+  gap: 20px;
 }
 
 .stack-strip {
@@ -1655,8 +1657,9 @@ button:focus-visible {
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 2px 4px 8px 0;
-  margin-right: -2px;
+  /* Room for the pink selection/hover ring on left-column tiles. */
+  padding: 2px 4px 8px 3px;
+  margin: 0 -2px 0 -1px;
   scrollbar-width: thin;
   scrollbar-color: #c5ccd9 transparent;
 }
@@ -1705,6 +1708,15 @@ button:focus-visible {
   background: #f4f6f8;
   border: 1px solid #dfe3ea;
   min-width: 0;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.asset-card:hover:not(.is-checked) {
+  box-shadow: 0 0 0 2px rgba(186, 64, 147, 0.28);
 }
 
 /* Pink tile chrome is selection-only; find-in-page uses the active find icon. */
