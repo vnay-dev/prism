@@ -1,5 +1,24 @@
 # Release notes
 
+## 0.6.1 — Layout polish & asset hover affordance
+
+**Date:** October 28, 2026
+
+### Improved
+
+- **Layout toggle** — Organized / Stack control sits on the right of the Colors toolbar with clearer spacing.
+- **Stack Gradients spacing** — more room between the color strip and the Gradients group in Stack view.
+- **Asset tile hover** — Images and Icons cards show a pink glow on hover so selection feels discoverable; left-column rings stay fully visible.
+
+### Package
+
+```bash
+npm run package:store
+# → dist/prism-0.6.1.zip
+```
+
+---
+
 ## 0.6.0 — Images, icons, gradients & downloads
 
 **Date:** October 25, 2026
