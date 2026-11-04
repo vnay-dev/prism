@@ -114,6 +114,10 @@ export function createAssetCard(
     onToggleSelect?.(asset);
   });
 
+  const cardSkeleton = document.createElement("span");
+  cardSkeleton.className = "asset-card-skeleton";
+  cardSkeleton.setAttribute("aria-hidden", "true");
+
   const skeleton = document.createElement("span");
   skeleton.className = "asset-skeleton";
   skeleton.setAttribute("aria-hidden", "true");
@@ -127,6 +131,7 @@ export function createAssetCard(
   const markLoaded = () => {
     card.classList.remove("is-loading");
     card.classList.add("is-loaded");
+    card.removeAttribute("aria-busy");
   };
 
   img.addEventListener("load", markLoaded);
@@ -137,6 +142,7 @@ export function createAssetCard(
   });
 
   card.classList.add("is-loading");
+  card.setAttribute("aria-busy", "true");
   img.src = asset.url;
   if (img.complete && img.naturalWidth > 0) {
     markLoaded();
@@ -183,7 +189,7 @@ export function createAssetCard(
   });
 
   info.append(meta, downloadBtn);
-  card.append(preview, info);
+  card.append(cardSkeleton, preview, info);
 
   if (onPreview) {
     const actions = document.createElement("div");

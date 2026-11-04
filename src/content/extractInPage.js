@@ -3,7 +3,7 @@
  * Virtual section scan (no page scroll) — maps document bands, collects rendered colors.
  */
 window.__prismExtractPalette = async function extractPaletteInPage(options = {}) {
-  const maxMillis = options.maxMillis || 18000;
+  const maxMillis = options.maxMillis || 6000;
   const startedAt = performance.now();
   const colorCache = new Map();
 
@@ -677,8 +677,14 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
     return { l: 100, a: 0, b: 0 };
   }
 
+  // Queried once for the whole scan — re-running `querySelectorAll("*")` on
+  // every virtual section (up to 25x) was wasting most of the time budget on
+  // redundant full-tree traversal on large/hydrated pages instead of actual
+  // sampling.
+  const allNodes = document.querySelectorAll("*");
+
   function scanVirtualSection(virtualScrollY, sectionId, sectionIndex) {
-    const nodes = document.querySelectorAll("*");
+    const nodes = allNodes;
     const limit = options.maxElementsPerSection || 1800;
     let count = 0;
     const pageScrollY = window.scrollY;

@@ -213,7 +213,9 @@ chrome.action.onClicked.addListener(async (tab) => {
   try {
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      files: ["src/content/togglePanel.js"]
+      files: ["src/content/togglePanel.js"],
+      // Don't wait for a busy page's document_idle — open the shell right away.
+      injectImmediately: true
     });
   } catch (_error) {
     const fallbackUrl = `${popupUrl}${popupUrl.includes("?") ? "&" : "?"}tabId=${tab.id}`;
