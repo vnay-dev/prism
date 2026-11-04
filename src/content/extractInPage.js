@@ -3,7 +3,7 @@
  * Virtual section scan (no page scroll) — maps document bands, collects rendered colors.
  */
 window.__prismExtractPalette = async function extractPaletteInPage(options = {}) {
-  const maxMillis = options.maxMillis || 18000;
+  const maxMillis = options.maxMillis || 6000;
   const startedAt = performance.now();
   const colorCache = new Map();
 
@@ -327,9 +327,45 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
     stroke: "SVG Stroke"
   };
 
+  // Screen-reader-only / clipped nodes still report layout rects via
+  // getClientRects(), which would otherwise invent font samples (and later
+  // "highlights") for text the user cannot see — e.g. NYT's visually-hidden
+  // chrome that inherits body "Times New Roman".
+  function isVisuallyHidden(el, styles, rect) {
+    if (!el) return true;
+    const s = styles || getComputedStyle(el);
+    if (s.display === "none" || s.visibility === "hidden") return true;
+    if (Number(s.opacity) < 0.05) return true;
+
+    const clip = s.clip || "";
+    if (/rect\(\s*0(?:px)?\s*,\s*0(?:px)?\s*,\s*0(?:px)?\s*,\s*0(?:px)?\s*\)/i.test(clip)) {
+      return true;
+    }
+
+    const clipPath = s.clipPath || s.webkitClipPath || "";
+    if (clipPath && clipPath !== "none") {
+      if (/inset\(\s*50%\s*\)/i.test(clipPath)) return true;
+      if (/inset\(\s*100%\s*\)/i.test(clipPath)) return true;
+      if (/circle\(\s*0/i.test(clipPath)) return true;
+    }
+
+    const box = rect || el.getBoundingClientRect();
+    if (
+      (s.position === "absolute" || s.position === "fixed") &&
+      s.overflow === "hidden" &&
+      box.width <= 1 &&
+      box.height <= 1
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
   function measureTextArea(el, styles) {
     const rect = el.getBoundingClientRect();
     if (!rect.width || !rect.height) return 0;
+    if (isVisuallyHidden(el, styles, rect)) return 0;
 
     let area = 0;
     const hasTextElementChild = [...el.children].some((child) => {
@@ -677,26 +713,68 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
     return { l: 100, a: 0, b: 0 };
   }
 
+  // Queried once for the whole scan — re-running `querySelectorAll("*")` on
+  // every virtual section (up to 25x) was wasting most of the time budget on
+  // redundant full-tree traversal on large/hydrated pages instead of actual
+  // sampling.
+  const allNodes = document.querySelectorAll("*");
+
+  // Tags that never paint visible colors/fonts. Skipping them avoids burning the
+  // per-section element budget on <head> chrome (hundreds of <link>s) before
+  // <body> content is reached — a common failure on news/marketing sites.
+  const NON_VISUAL_TAGS = new Set([
+    "HEAD",
+    "SCRIPT",
+    "STYLE",
+    "LINK",
+    "META",
+    "NOSCRIPT",
+    "TEMPLATE",
+    "BR",
+    "WBR",
+    "SOURCE",
+    "TRACK",
+    "PARAM",
+    "BASE",
+    "TITLE"
+  ]);
+
   function scanVirtualSection(virtualScrollY, sectionId, sectionIndex) {
-    const nodes = document.querySelectorAll("*");
+    const nodes = allNodes;
     const limit = options.maxElementsPerSection || 1800;
     let count = 0;
     const pageScrollY = window.scrollY;
+    // When we hit a display:none root, skip its descendants without paying for
+    // getComputedStyle on each (consent modals, hidden menus, etc. can be 1k+ nodes).
+    let skipDescendantsOf = null;
 
     for (const el of nodes) {
       if (performance.now() - startedAt > maxMillis) return;
-      if (count++ > limit) break;
+
+      if (skipDescendantsOf) {
+        if (skipDescendantsOf.contains(el)) continue;
+        skipDescendantsOf = null;
+      }
 
       // Never analyze Prism's own injected panel — its chrome (e.g. the host's
       // `system-ui` font and white background) would otherwise pollute results.
       if (panelHost && panelHost.contains(el)) continue;
 
+      if (NON_VISUAL_TAGS.has(el.tagName)) continue;
+
       const styles = getComputedStyle(el);
-      if (styles.display === "none" || styles.visibility === "hidden") continue;
+      if (styles.display === "none") {
+        skipDescendantsOf = el;
+        continue;
+      }
+      if (styles.visibility === "hidden") continue;
       if (Number(styles.opacity) < 0.05) continue;
 
       const rect = el.getBoundingClientRect();
       if (!rect.width || !rect.height) continue;
+      // Clip / 1×1 sr-only boxes still have non-zero rects; skip them so their
+      // inherited body fonts (often "Times New Roman") don't enter the palette.
+      if (isVisuallyHidden(el, styles, rect)) continue;
       if (rect.right < 0 || rect.left > vw) continue;
 
       const docTop = rect.top + pageScrollY;
@@ -704,6 +782,13 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
       const virtualTop = docTop - virtualScrollY;
       const virtualBottom = docBottom - virtualScrollY;
       if (virtualBottom < 0 || virtualTop > vh) continue;
+
+      // Count only elements that fall in this virtual band and could contribute
+      // samples. Counting skipped/hidden nodes let early document chrome
+      // (hidden consent modals, head metadata) exhaust the budget before any
+      // visible brand UI was reached.
+      count += 1;
+      if (count > limit) break;
 
       const virtualRect = {
         top: virtualTop,

@@ -145,14 +145,64 @@
     return Boolean(el?.closest("#prism-panel-host"));
   }
 
+  const NON_TEXT_PARENT_TAGS = new Set([
+    "SCRIPT",
+    "STYLE",
+    "NOSCRIPT",
+    "TEMPLATE",
+    "SVG",
+    "TITLE"
+  ]);
+
+  // Screen-reader-only / clipped text still yields getClientRects(), so without
+  // this check we'd "highlight" invisible copy (e.g. NYT sr-only headlines that
+  // inherit body "Times New Roman") and the user would see nothing on the page.
+  function isVisuallyHidden(el, styles, rect) {
+    if (!el) return true;
+    const s = styles || getComputedStyle(el);
+    if (s.display === "none" || s.visibility === "hidden") return true;
+    if (Number(s.opacity) < 0.05) return true;
+
+    const clip = s.clip || "";
+    if (/rect\(\s*0(?:px)?\s*,\s*0(?:px)?\s*,\s*0(?:px)?\s*,\s*0(?:px)?\s*\)/i.test(clip)) {
+      return true;
+    }
+
+    const clipPath = s.clipPath || s.webkitClipPath || "";
+    if (clipPath && clipPath !== "none") {
+      if (/inset\(\s*50%\s*\)/i.test(clipPath)) return true;
+      if (/inset\(\s*100%\s*\)/i.test(clipPath)) return true;
+      if (/circle\(\s*0/i.test(clipPath)) return true;
+    }
+
+    const box = rect || el.getBoundingClientRect();
+    if (
+      (s.position === "absolute" || s.position === "fixed") &&
+      s.overflow === "hidden" &&
+      box.width <= 1 &&
+      box.height <= 1
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+  function isInsideVisuallyHidden(el) {
+    let cur = el;
+    for (let i = 0; i < 8 && cur && cur !== document.body; i += 1) {
+      if (isVisuallyHidden(cur)) return true;
+      cur = cur.parentElement;
+    }
+    return false;
+  }
+
   function isTextNodeRenderable(textNode) {
     const parent = textNode.parentElement;
     if (!parent || isPrismElement(parent)) return false;
+    if (NON_TEXT_PARENT_TAGS.has(parent.tagName)) return false;
     if (!textNode.textContent || !textNode.textContent.trim()) return false;
-
-    const styles = getComputedStyle(parent);
-    if (styles.display === "none" || styles.visibility === "hidden") return false;
-    if (Number(styles.opacity) < 0.05) return false;
+    if (isInsideVisuallyHidden(parent)) return false;
     return true;
   }
 

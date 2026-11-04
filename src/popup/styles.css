@@ -7,6 +7,8 @@
   --prism-primary-hover: #9e357c;
   --prism-primary-active: #872e69;
   --prism-primary-soft: rgba(186, 64, 147, 0.14);
+  --prism-ink: #1c1c1c;
+  --prism-surface: #fdfdfd;
   --btn-font-weight: 500;
   --icon-weight: 500;
   --icon-size: 18px;
@@ -34,7 +36,7 @@ body {
 
 body {
   background: #fefefe;
-  color: #1a1d26;
+  color: var(--prism-ink);
   width: 380px;
   display: block;
 }
@@ -123,25 +125,20 @@ body.standalone-window .app.state-guidance #intro {
   width: calc((100% - 8px - 18px) / 4);
   height: calc(100% - 8px);
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--prism-surface);
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-  transition: left 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    left 280ms cubic-bezier(0.4, 0, 0.2, 1),
+    width 280ms cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 180ms ease;
   transition-delay: 0ms;
   pointer-events: none;
   z-index: 0;
-  will-change: left;
+  will-change: left, width;
 }
 
-.tab-bar[data-active="fonts"] .tab-indicator {
-  left: calc(4px + (100% - 8px - 18px) / 4 + 6px);
-}
-
-.tab-bar[data-active="images"] .tab-indicator {
-  left: calc(4px + 2 * ((100% - 8px - 18px) / 4 + 6px));
-}
-
-.tab-bar[data-active="icons"] .tab-indicator {
-  left: calc(4px + 3 * ((100% - 8px - 18px) / 4 + 6px));
+.tab[hidden] {
+  display: none !important;
 }
 
 .tab {
@@ -163,11 +160,11 @@ body.standalone-window .app.state-guidance #intro {
 }
 
 .tab:hover {
-  color: #1a1d26;
+  color: var(--prism-ink);
 }
 
 .tab.is-active {
-  color: #1a1d26;
+  color: var(--prism-ink);
 }
 
 .tab-panel[hidden] {
@@ -253,7 +250,7 @@ body.embedded .panel-header.is-dragging {
 
 .btn-close:hover {
   background: #eef1f7;
-  color: #1a1d26;
+  color: var(--prism-ink);
 }
 
 .btn-close:active {
@@ -284,13 +281,14 @@ body.embedded .panel-header.is-dragging {
 .app.is-loading .loading {
   position: absolute;
   inset: 0;
-  display: flex;
+  display: inline-flex;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   gap: 10px;
   width: 100%;
   max-width: none;
-  padding: 0 8px;
+  padding: 0 16px;
   box-sizing: border-box;
 }
 
@@ -311,8 +309,9 @@ body.embedded .panel-header.is-dragging {
   box-shadow: 0 -10px 18px -14px rgba(15, 23, 42, 0.22);
 }
 
-.app.is-loading .panel-footer {
-  display: none;
+.app.is-loading .panel-footer,
+.app.is-loading .tab-bar {
+  display: none !important;
 }
 
 .footer-row {
@@ -434,7 +433,7 @@ body.embedded .panel-header.is-dragging {
   font-size: 14px;
   font-weight: 600;
   line-height: 1.3;
-  color: #1a1d26;
+  color: var(--prism-ink);
 }
 
 .error-banner .material-symbols-outlined {
@@ -453,7 +452,7 @@ body.embedded .panel-header.is-dragging {
 }
 
 .error-banner.is-guidance .error-banner-title {
-  color: #1a1d26;
+  color: var(--prism-ink);
 }
 
 .error-message {
@@ -481,8 +480,8 @@ body.embedded .panel-header.is-dragging {
 }
 
 .spinner {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
   border: 2px solid var(--prism-primary-soft);
   border-top-color: var(--prism-primary);
@@ -499,10 +498,17 @@ body.embedded .panel-header.is-dragging {
 .loading-text {
   margin: 0;
   min-width: 0;
+  max-width: 240px;
   font-size: 13px;
   font-weight: var(--btn-font-weight);
-  line-height: 20px;
+  line-height: 1.35;
+  text-align: left;
   color: #3d4455;
+  transition: opacity 180ms ease;
+}
+
+.loading-text.is-swapping {
+  opacity: 0;
 }
 
 .btn {
@@ -531,7 +537,7 @@ body.embedded .panel-header.is-dragging {
 
 .btn-primary {
   background: var(--prism-primary);
-  color: #fff;
+  color: var(--prism-surface);
   padding: 10px 14px;
 }
 
@@ -545,7 +551,7 @@ body.embedded .panel-header.is-dragging {
 }
 
 .btn-secondary {
-  background: #ffffff;
+  background: var(--prism-surface);
   color: #3d4455;
   border: 1px solid #d8dde8;
   padding: 8px 12px;
@@ -623,7 +629,7 @@ button:focus-visible {
   width: 28px;
   height: 28px;
   border-radius: 999px;
-  background: #ffffff;
+  background: var(--prism-surface);
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
   transition: left 280ms cubic-bezier(0.4, 0, 0.2, 1);
   pointer-events: none;
@@ -665,11 +671,11 @@ button:focus-visible {
 }
 
 .view-toggle-btn.is-active {
-  color: #1a1d26;
+  color: var(--prism-ink);
 }
 
 .view-toggle-btn.is-active:hover:not(:disabled) {
-  color: #1a1d26;
+  color: var(--prism-ink);
 }
 
 .swatches {
@@ -764,7 +770,7 @@ button:focus-visible {
   font-size: 13px;
   font-weight: 600;
   line-height: 1.2;
-  color: #1a1d26;
+  color: var(--prism-ink);
 }
 
 .role-rows {
@@ -810,10 +816,10 @@ button:focus-visible {
 }
 
 .swatch {
-  flex: 0 0 calc((100% - 18px) / 4);
+  flex: 0 0 48px;
   aspect-ratio: 1;
-  width: auto;
-  height: auto;
+  width: 48px;
+  height: 48px;
   border-radius: 6px;
   overflow: visible;
   border: 0;
@@ -1137,7 +1143,7 @@ button:focus-visible {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  border: 2.5px solid #ffffff;
+  border: 2.5px solid var(--prism-surface);
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.18),
     0 1px 4px rgba(0, 0, 0, 0.28);
@@ -1169,7 +1175,7 @@ button:focus-visible {
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #1a1d26;
+  color: var(--prism-ink);
   cursor: pointer;
   padding: 0;
   box-shadow: none;
@@ -1276,9 +1282,9 @@ button:focus-visible {
   width: 100%;
   max-width: 140px;
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--prism-surface);
   border: 1px solid #d8dde8;
-  color: #1a1d26;
+  color: var(--prism-ink);
   font-size: 12px;
   font-weight: 500;
   display: inline-flex;
@@ -1304,7 +1310,7 @@ button:focus-visible {
   height: 100%;
   border: 0;
   background: transparent;
-  color: #1a1d26;
+  color: var(--prism-ink);
   font-size: 12px;
   font-weight: 500;
   font-family: inherit;
@@ -1329,7 +1335,7 @@ button:focus-visible {
   gap: 6px;
   padding: 0 8px;
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--prism-surface);
   border: 1px solid #d8dde8;
   box-sizing: border-box;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
@@ -1351,7 +1357,7 @@ button:focus-visible {
   max-width: 3ch;
   border: 0;
   background: transparent;
-  color: #1a1d26;
+  color: var(--prism-ink);
   font-size: 12px;
   font-weight: 500;
   font-family: inherit;
@@ -1404,7 +1410,7 @@ button:focus-visible {
 }
 
 .cp-format-step:hover {
-  color: #1a1a1a;
+  color: var(--prism-ink);
 }
 
 .cp-format-step:active {
@@ -1443,7 +1449,7 @@ button:focus-visible {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: #1a1a1a;
+  color: var(--prism-ink);
   user-select: none;
   transform: translateX(0);
   opacity: 1;
@@ -1513,8 +1519,9 @@ button:focus-visible {
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 2px 4px 8px 0;
-  margin-right: -2px;
+  /* Room for the pink selection/hover ring (same trick as .assets-grid). */
+  padding: 2px 4px 8px 3px;
+  margin: 0 -2px 0 -1px;
   scrollbar-width: thin;
   scrollbar-color: #c5ccd9 transparent;
 }
@@ -1542,6 +1549,32 @@ button:focus-visible {
   border-radius: 8px;
   background: #f4f6f8;
   border: 1px solid #dfe3ea;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.font-card:hover:not(.is-checked) {
+  background: #faf2f7;
+  border-color: #f0d4e6;
+}
+
+.font-card.is-checked {
+  border-color: rgba(186, 64, 147, 0.7);
+  background: #faf2f7;
+  box-shadow: 0 0 0 2px rgba(186, 64, 147, 0.18);
+}
+
+.font-card:focus,
+.font-card:focus-visible {
+  outline: none;
+}
+
+.font-card:focus-visible:not(.is-checked) {
+  background: #faf2f7;
+  border-color: #f0d4e6;
 }
 
 .font-title-row {
@@ -1549,38 +1582,6 @@ button:focus-visible {
   align-items: center;
   gap: 8px;
   min-width: 0;
-}
-
-.font-select-checkbox {
-  appearance: none;
-  -webkit-appearance: none;
-  flex-shrink: 0;
-  width: 16px;
-  height: 16px;
-  margin: 0;
-  border: 1px solid #dfe3ea;
-  border-radius: 4px;
-  background: #ffffff;
-  cursor: pointer;
-  transition: border-color 120ms ease, background-color 120ms ease;
-}
-
-.font-select-checkbox:hover:not(:checked) {
-  border-color: #5c6478;
-}
-
-.font-select-checkbox:checked {
-  border-color: var(--prism-primary);
-  background-color: var(--prism-primary);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M3.5 8.2 6.4 11 12.5 5' stroke='%23ffffff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 14px 14px;
-}
-
-.font-select-checkbox:focus,
-.font-select-checkbox:focus-visible {
-  outline: none;
 }
 
 .font-copy-btn {
@@ -1603,7 +1604,7 @@ button:focus-visible {
 
 .font-copy-btn:hover {
   background: #eef1f7;
-  color: #1a1d26;
+  color: var(--prism-ink);
 }
 
 .font-copy-btn:active {
@@ -1621,7 +1622,7 @@ button:focus-visible {
   padding: 0 8px;
   font-size: 11px;
   font-weight: 500;
-  color: #1a1d26;
+  color: var(--prism-ink);
 }
 
 .font-copy-label {
@@ -1635,14 +1636,14 @@ button:focus-visible {
   min-width: 0;
   font-size: 18px;
   line-height: 1.25;
-  color: #16171b;
+  color: var(--prism-ink);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .font-weights {
-  margin: 4px 0 0 24px;
+  margin: 4px 0 0;
   font-size: 12px;
   line-height: 1.35;
   color: #3d4455;
@@ -1715,8 +1716,44 @@ button:focus-visible {
     background-color 160ms ease;
 }
 
-.asset-card:hover:not(.is-checked) {
+.asset-card:hover:not(.is-checked):not(.is-loading) {
   box-shadow: 0 0 0 2px rgba(186, 64, 147, 0.28);
+}
+
+/* Full-tile skeleton until the image is ready — no hover, select, or download. */
+.asset-card.is-loading {
+  pointer-events: none;
+  cursor: default;
+  border-color: #e4e8f0;
+  background: #eef1f7;
+  box-shadow: none;
+}
+
+.asset-card.is-loading .asset-preview,
+.asset-card.is-loading .asset-info,
+.asset-card.is-loading .asset-actions {
+  visibility: hidden;
+}
+
+.asset-card-skeleton {
+  display: none;
+  position: absolute;
+  inset: 0;
+  border-radius: 7px;
+  background: linear-gradient(
+    90deg,
+    #e8ebf0 0%,
+    #f4f6f8 45%,
+    #e8ebf0 90%
+  );
+  background-size: 200% 100%;
+  animation: asset-skeleton-shimmer 1.2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.asset-card.is-loading .asset-card-skeleton {
+  display: block;
 }
 
 /* Pink tile chrome is selection-only; find-in-page uses the active find icon. */
@@ -1744,7 +1781,7 @@ button:focus-visible {
   padding: 0;
   border: 0;
   border-radius: 5px;
-  background: #ffffff;
+  background: var(--prism-surface);
   overflow: hidden;
 }
 
@@ -1800,7 +1837,7 @@ div.asset-preview {
     linear-gradient(-45deg, transparent 75%, #edf0f5 75%);
   background-size: 12px 12px;
   background-position: 0 0, 0 6px, 6px -6px, -6px 0;
-  background-color: #ffffff;
+  background-color: var(--prism-surface);
 }
 
 .asset-card.is-loaded .asset-thumb {
@@ -1828,11 +1865,16 @@ div.asset-preview {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .asset-skeleton {
+  .asset-skeleton,
+  .asset-card-skeleton {
     animation: none;
   }
 
   .asset-thumb {
+    transition: none;
+  }
+
+  .loading-text {
     transition: none;
   }
 }
@@ -1869,7 +1911,7 @@ div.asset-preview {
 
 .asset-format {
   font-weight: 600;
-  color: #1a1d26;
+  color: var(--prism-ink);
 }
 
 .asset-actions {
@@ -1889,7 +1931,7 @@ div.asset-preview {
   padding: 0;
   border: 1px solid #dfe3ea;
   border-radius: 6px;
-  background: #ffffff;
+  background: var(--prism-surface);
   color: #5c6478;
   cursor: pointer;
   display: inline-flex;
@@ -1899,7 +1941,7 @@ div.asset-preview {
 }
 
 .asset-inspect-btn:hover {
-  color: #1a1d26;
+  color: var(--prism-ink);
   background: #eef1f7;
 }
 
@@ -1916,7 +1958,7 @@ div.asset-preview {
   padding: 0;
   border: 0;
   border-radius: 6px;
-  background: #ffffff;
+  background: var(--prism-surface);
   color: #5c6478;
   border: 1px solid #dfe3ea;
   cursor: pointer;
@@ -1926,7 +1968,7 @@ div.asset-preview {
 }
 
 .asset-download-btn:hover {
-  color: #1a1d26;
+  color: var(--prism-ink);
   background: #eef1f7;
 }
 

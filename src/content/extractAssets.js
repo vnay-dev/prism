@@ -7,6 +7,12 @@
 window.__prismExtractAssets = function extractAssetsInPage(options = {}) {
   const maxCandidates = options.maxCandidates || 400;
   const maxInlineSvgBytes = options.maxInlineSvgBytes || 400_000;
+  // Wall-clock safety net — on pages that already have an enormous number of
+  // image/icon-ish elements rendered (news homepages, social feeds), none of
+  // the per-category loops below should be allowed to run unbounded.
+  const maxMillis = options.maxMillis || 4000;
+  const startedAt = performance.now();
+  const timeExceeded = () => performance.now() - startedAt > maxMillis;
   const baseHref = location.href;
   const candidates = [];
   const byKey = new Map();
@@ -369,7 +375,11 @@ window.__prismExtractAssets = function extractAssetsInPage(options = {}) {
   }
 
   // --- <img> including lazy + responsive currentSrc ---
+  let imgScanned = 0;
+  const maxImgScan = options.maxImageScan || 4000;
   for (const img of queryAllDeep("img")) {
+    if (imgScanned >= maxImgScan || candidates.length >= maxCandidates || timeExceeded()) break;
+    imgScanned += 1;
     const dims = dimFromElement(img);
     const urls = new Set();
 
@@ -412,6 +422,7 @@ window.__prismExtractAssets = function extractAssetsInPage(options = {}) {
 
   // --- <picture><source srcset> ---
   for (const source of queryAllDeep("picture source[srcset], source[srcset]")) {
+    if (candidates.length >= maxCandidates || timeExceeded()) break;
     const best = bestSrcsetUrl(source.getAttribute("srcset"));
     const url = normalize(best);
     if (!url) continue;
@@ -433,7 +444,7 @@ window.__prismExtractAssets = function extractAssetsInPage(options = {}) {
   let bgScanned = 0;
   const maxBgScan = options.maxBackgroundScan || 2500;
   for (const el of bgRoots) {
-    if (bgScanned >= maxBgScan || candidates.length >= maxCandidates) break;
+    if (bgScanned >= maxBgScan || candidates.length >= maxCandidates || timeExceeded()) break;
     bgScanned += 1;
     let styles;
     try {
@@ -470,6 +481,7 @@ window.__prismExtractAssets = function extractAssetsInPage(options = {}) {
   for (const link of queryAllDeep(
     'link[rel~="icon"], link[rel~="apple-touch-icon"], link[rel~="apple-touch-icon-precomposed"], link[rel="shortcut icon"], link[rel="mask-icon"]'
   )) {
+    if (candidates.length >= maxCandidates || timeExceeded()) break;
     const url = normalize(link.getAttribute("href"));
     if (!url) continue;
     let width = null;
@@ -497,6 +509,7 @@ window.__prismExtractAssets = function extractAssetsInPage(options = {}) {
 
   // --- External SVG via <image>, <object>, <embed>, <use href> ---
   for (const el of queryAllDeep("image, object[data], embed[src]")) {
+    if (candidates.length >= maxCandidates || timeExceeded()) break;
     const raw =
       readHref(el) ||
       el.getAttribute("data") ||
@@ -519,7 +532,11 @@ window.__prismExtractAssets = function extractAssetsInPage(options = {}) {
     );
   }
 
+  let useScanned = 0;
+  const maxUseScan = options.maxUseScan || 4000;
   for (const el of queryAllDeep("use")) {
+    if (useScanned >= maxUseScan || candidates.length >= maxCandidates || timeExceeded()) break;
+    useScanned += 1;
     const raw = readHref(el);
     if (!raw || raw.startsWith("#")) continue;
     const url = normalize(raw.split("#")[0]);
@@ -543,7 +560,7 @@ window.__prismExtractAssets = function extractAssetsInPage(options = {}) {
   const exportedSymbolIds = new Set();
 
   for (const svg of rootSvgs) {
-    if (candidates.length >= maxCandidates) break;
+    if (candidates.length >= maxCandidates || timeExceeded()) break;
 
     // Sprite sheet: export each <symbol id> as its own icon.
     const symbols = [
@@ -551,7 +568,7 @@ window.__prismExtractAssets = function extractAssetsInPage(options = {}) {
     ];
     if (symbols.length) {
       for (const symbol of symbols) {
-        if (candidates.length >= maxCandidates) break;
+        if (candidates.length >= maxCandidates || timeExceeded()) break;
         const id = symbol.getAttribute("id") || "";
         if (id) exportedSymbolIds.add(id);
         const vb =

@@ -51,15 +51,15 @@
         padding: 0;
         border: 0;
         border-radius: var(--prism-lightbox-radius);
-        background: rgba(255, 255, 255, 0.95);
-        color: #111827;
+        background: rgba(253, 253, 253, 0.95);
+        color: #1c1c1c;
         cursor: pointer;
         display: grid;
         place-items: center;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
       }
       #${ROOT_ID} .prism-lightbox-close:hover {
-        background: #ffffff;
+        background: #fdfdfd;
       }
       #${ROOT_ID} .prism-lightbox-close:focus,
       #${ROOT_ID} .prism-lightbox-close:focus-visible {

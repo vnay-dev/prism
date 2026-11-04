@@ -67,7 +67,9 @@
     #${HOST_ID} .prism-panel-frame {
       display: block;
       width: 380px;
-      height: 0;
+      /* Placeholder height until the iframe reports its real size — keeps the
+         panel visible immediately instead of a 0-height flash on heavy pages. */
+      height: 220px;
       border: 0;
       border-radius: 12px;
       background: #fefefe;

@@ -1,5 +1,56 @@
 # Release notes
 
+## 0.6.3 — Reliable scans & font highlight polish
+
+**Date:** November 4, 2026
+
+### Improved
+
+- **Heavy-page color & font scans** — sites with large hidden early DOM (consent modals, head metadata) no longer exhaust the scan budget before real page content is reached, so brand colors and typefaces surface on pages like news homepages.
+- **Font highlight accuracy** — screen-reader-only and clipped text is ignored during font sampling and on-page highlight, so fallback faces that only appear on invisible chrome are not listed or “highlighted” with nothing visible.
+- **Font cards** — select a card (same pink hover/select pattern as Images and Icons) to highlight that family on the page; click again to clear. No checkbox.
+- **Panel contrast** — body text and light surfaces use soft ink/surface tones instead of pure black and white.
+
+### Technical
+
+- Per-section element budget counts only in-band visible nodes; non-visual tags and `display:none` subtrees are skipped cheaply.
+- Shared visually-hidden detection (clip / clip-path / 1×1 absolute overflow) in `extractInPage.js` and `highlightFont.js`.
+
+### Package
+
+```bash
+npm run package:store
+# → dist/prism-0.6.3.zip
+```
+
+---
+
+## 0.6.2 — Instant open & bounded scanning
+
+**Date:** November 4, 2026
+
+### Improved
+
+- **Instant open** — the panel appears the moment you click Prism instead of waiting on a heavy page; a single loader with rotating, plain-language status text covers colors, fonts, images, and icons together, then reveals only the tabs that actually have results (preferring Colors first).
+- **Asset tile loading** — Images and Icons tiles show a full skeleton while loading instead of a clickable/hoverable tile with a half-loaded image inside it.
+- **Grid tile sizing** — swatches use a fixed 48x48 tile and spread across the full row width instead of wrapping unevenly.
+- **Faster, bounded scanning** — on content-heavy pages (news homepages, social feeds) the color/font and image/icon scans now finish in a fixed, predictable time instead of running long on pages with a very large number of already-rendered elements.
+
+### Technical
+
+- `extractInPage.js` queries the page's elements once per scan instead of re-querying on every virtual section, so the existing time budget is spent on sampling rather than redundant DOM traversal.
+- `extractAssets.js` gained a wall-clock budget and missing element caps on its `<img>`, `<picture>`, icon-link, `<object>`/`<embed>`, and `<use>` loops, which previously had no bound at all beyond output count.
+- Popup-level timeouts (`FULL_SCAN_PAGE_MS`, `FULL_SCAN_ASSETS_MS`, `EXTRACTION_TIMEOUT_MS`) lowered to match, cutting the worst-case combined wait from roughly 44s to 12-14s.
+
+### Package
+
+```bash
+npm run package:store
+# → dist/prism-0.6.2.zip
+```
+
+---
+
 ## 0.6.1 — Layout polish & asset hover affordance
 
 **Date:** October 28, 2026

@@ -404,5 +404,5 @@ test("label ink follows how light or dark the tile is", () => {
   assert.equal(onSwatchInk("#5e6ad2"), LIGHT_INK);
   assert.equal(onSwatchInk("#f7f8f8"), DARK_INK);
   assert.equal(onSwatchInk("#e5edf5"), DARK_INK);
-  assert.equal(LIGHT_INK, "#ffffff");
+  assert.equal(LIGHT_INK, "#fdfdfd");
 });

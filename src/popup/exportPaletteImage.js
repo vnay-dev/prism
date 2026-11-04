@@ -82,7 +82,7 @@ const LOGO_RADIUS = 6;
 const HEADER_GAP = 24;
 const TITLE_FONT_SIZE = 20;
 const TITLE_FONT_WEIGHT = 600;
-const TITLE_COLOR = "#16171b";
+const TITLE_COLOR = "#1c1c1c";
 
 function roundRectPath(ctx, x, y, width, height, radius) {
   const r = Math.max(0, Math.min(radius, width / 2, height / 2));
@@ -489,7 +489,7 @@ async function drawGradientTile(ctx, gradient, x, y, width, height, radius, bord
 
   // Same light surface the panel uses — transparent stops composite over this,
   // matching what you see in the extension UI.
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = "#fdfdfd";
   ctx.fillRect(x, y, width, height);
 
   const parsed = parseCssGradient(gradient?.css || "");
@@ -603,7 +603,7 @@ export async function renderPalettePng(swatches, pageMeta = {}, options = {}) {
   canvas.height = Math.round(pad + headerHeight + headerGap + bodyHeight + pad);
 
   const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = "#fdfdfd";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   // Header: logo + site title, both vertically centered in the header band.

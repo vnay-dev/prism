@@ -93,13 +93,16 @@ const tabColorsBtn = document.getElementById("tabColors");
 const tabFontsBtn = document.getElementById("tabFonts");
 const tabImagesBtn = document.getElementById("tabImages");
 const tabIconsBtn = document.getElementById("tabIcons");
+const tabIndicatorEl = document.getElementById("tabIndicator");
 const colorViewToggleEl = document.getElementById("colorViewToggle");
 const panelHeaderEl = document.querySelector(".panel-header");
 const dragHandleEl = document.getElementById("dragHandle");
 const colorPickerStageEl = document.getElementById("colorPickerStage");
 
 const isEmbedded = window.parent !== window;
-const EXTRACTION_TIMEOUT_MS = 22000;
+const EXTRACTION_TIMEOUT_MS = 8000;
+const FULL_SCAN_PAGE_MS = 8000;
+const FULL_SCAN_ASSETS_MS = 6000;
 const STANDALONE_WINDOW_CHROME_X = 16;
 const STANDALONE_WINDOW_CHROME_Y = 40;
 
@@ -109,31 +112,110 @@ const MODE_COPY = {
     extractIcon: "palette",
     copyLabel: "Copy to clipboard",
     intro: "Extract the color palette used on this webpage",
-    loadingStart: "Scanning colors on the page…",
-    loadingBuild: "Creating the color palette…"
+    loadingStart: "Looking at colors on this page…",
+    loadingBuild: "Putting your palette together…",
+    loadingLines: [
+      "Looking at colors on this page…",
+      "Sorting backgrounds and text…",
+      "Picking up accents…",
+      "Checking for gradients…",
+      "Putting your palette together…"
+    ]
   },
   fonts: {
     extractLabel: "Extract font families",
     extractIcon: "text_fields",
     intro: "Extract the font families used on this webpage",
-    loadingStart: "Scanning font families on the page…",
-    loadingBuild: "Identifying used font families…"
+    loadingStart: "Looking at the type on this page…",
+    loadingBuild: "Keeping the fonts that matter…",
+    loadingLines: [
+      "Looking at the type on this page…",
+      "Finding the font families in use…",
+      "Keeping the ones that matter…"
+    ]
   },
   images: {
     extractLabel: "Extract images",
     extractIcon: "image",
     intro: "Find downloadable images on this webpage",
-    loadingStart: "Scanning images on the page…",
-    loadingBuild: "Collecting image assets…"
+    loadingStart: "Looking for images on this page…",
+    loadingBuild: "Picking the ones worth saving…",
+    loadingLines: [
+      "Looking for images on this page…",
+      "Picking the ones worth saving…",
+      "Almost there…"
+    ]
   },
   icons: {
     extractLabel: "Extract icons",
     extractIcon: "imagesmode",
     intro: "Find downloadable icons on this webpage",
-    loadingStart: "Scanning icons on the page…",
-    loadingBuild: "Collecting icon assets…"
+    loadingStart: "Looking for icons and logos…",
+    loadingBuild: "Sorting out the useful ones…",
+    loadingLines: [
+      "Looking for icons and logos…",
+      "Sorting out the useful ones…",
+      "Almost there…"
+    ]
   }
 };
+
+const LOADING_LINE_MS = 1200;
+const FULL_SCAN_LOADING_LINES = [
+  "Looking at colors on this page…",
+  "Sorting backgrounds and text…",
+  "Finding the fonts in use…",
+  "Checking for gradients…",
+  "Looking for images…",
+  "Picking up icons and logos…",
+  "Putting it all together…"
+];
+let loadingLineTimer = null;
+let loadingLineIndex = 0;
+let loadingSwapTimer = null;
+let loadingScope = "mode";
+
+function stopLoadingLines() {
+  if (loadingLineTimer) {
+    clearInterval(loadingLineTimer);
+    loadingLineTimer = null;
+  }
+  if (loadingSwapTimer) {
+    clearTimeout(loadingSwapTimer);
+    loadingSwapTimer = null;
+  }
+  loadingLineIndex = 0;
+  loadingTextEl?.classList.remove("is-swapping");
+}
+
+function loadingLinesForScope(scope = loadingScope, mode = activeMode) {
+  if (scope === "all") return FULL_SCAN_LOADING_LINES;
+  const config = MODE_COPY[mode] || MODE_COPY.colors;
+  return config.loadingLines?.length ? config.loadingLines : [config.loadingStart];
+}
+
+function startLoadingLines(mode = activeMode, firstLine = null, scope = loadingScope) {
+  stopLoadingLines();
+  loadingScope = scope;
+  const lines = loadingLinesForScope(scope, mode);
+  const match = firstLine ? lines.indexOf(firstLine) : -1;
+  loadingLineIndex = match >= 0 ? match : 0;
+  if (loadingTextEl) {
+    loadingTextEl.textContent = firstLine || lines[loadingLineIndex];
+  }
+  if (lines.length < 2) return;
+
+  loadingLineTimer = window.setInterval(() => {
+    if (!loadingTextEl) return;
+    loadingTextEl.classList.add("is-swapping");
+    loadingSwapTimer = window.setTimeout(() => {
+      loadingLineIndex = (loadingLineIndex + 1) % lines.length;
+      loadingTextEl.textContent = lines[loadingLineIndex];
+      loadingTextEl.classList.remove("is-swapping");
+      loadingSwapTimer = null;
+    }, 180);
+  }, LOADING_LINE_MS);
+}
 
 const VALID_MODES = new Set(["colors", "fonts", "images", "icons"]);
 
@@ -295,7 +377,10 @@ function reportHeight() {
 function reportHeightAfterLayout() {
   lastReportedHeight = 0; // allow shrink after dynamic content changes
   requestAnimationFrame(() => {
-    requestAnimationFrame(() => reportHeight());
+    requestAnimationFrame(() => {
+      layoutTabIndicator();
+      reportHeight();
+    });
   });
 }
 
@@ -435,6 +520,68 @@ function flashCopyFeedback(success) {
   }, 3500);
 }
 
+function layoutTabIndicator() {
+  if (!tabBarEl || !tabIndicatorEl) return;
+  const activeBtn = [tabColorsBtn, tabFontsBtn, tabImagesBtn, tabIconsBtn].find(
+    (btn) => btn && btn.dataset.mode === activeMode && !btn.hidden
+  );
+  if (!activeBtn) {
+    tabIndicatorEl.style.opacity = "0";
+    return;
+  }
+  tabIndicatorEl.style.opacity = "1";
+  tabIndicatorEl.style.width = `${activeBtn.offsetWidth}px`;
+  tabIndicatorEl.style.left = `${activeBtn.offsetLeft}px`;
+}
+
+/** Hide any tab whose pipeline finished with nothing to show. */
+function syncAssetTabVisibility() {
+  const pageKnown = Boolean(generation.rawExtraction);
+  const assetsKnown = Boolean(generation.rawAssets);
+  const showColors = !pageKnown || currentPalette.length > 0;
+  const showFonts = !pageKnown || currentFonts.length > 0;
+  const showImages = !assetsKnown || currentImages.length > 0;
+  const showIcons = !assetsKnown || currentIcons.length > 0;
+
+  if (tabColorsBtn) tabColorsBtn.hidden = !showColors;
+  if (tabFontsBtn) tabFontsBtn.hidden = !showFonts;
+  if (tabImagesBtn) tabImagesBtn.hidden = !showImages;
+  if (tabIconsBtn) tabIconsBtn.hidden = !showIcons;
+
+  if (tabBarEl) {
+    const visibleCount =
+      (showColors ? 1 : 0) +
+      (showFonts ? 1 : 0) +
+      (showImages ? 1 : 0) +
+      (showIcons ? 1 : 0);
+    tabBarEl.dataset.tabCount = String(visibleCount);
+  }
+
+  layoutTabIndicator();
+}
+
+function leaveEmptyAssetMode() {
+  setLoading(false);
+  const fallback =
+    currentPalette.length > 0 ? "colors" : currentFonts.length > 0 ? "fonts" : "colors";
+  if (activeMode === fallback) {
+    syncAssetTabVisibility();
+    if (hasResultsForMode(fallback)) showActiveModeResults();
+    else setIntroState();
+    reportHeightAfterLayout();
+    return;
+  }
+  activeMode = fallback;
+  updateModeChrome();
+  syncAssetTabVisibility();
+  if (hasResultsForMode(fallback)) showActiveModeResults();
+  else {
+    setIntroState();
+    setLoading(false);
+  }
+  reportHeightAfterLayout();
+}
+
 function applyTabVisuals() {
   if (tabBarEl) tabBarEl.dataset.active = activeMode;
 
@@ -450,6 +597,7 @@ function applyTabVisuals() {
     btn.classList.toggle("is-active", active);
     btn.setAttribute("aria-selected", active ? "true" : "false");
   }
+  syncAssetTabVisibility();
 }
 
 function updateModeChrome() {
@@ -610,6 +758,7 @@ function showBanner(message, { guidance = false, title, keepResults = false } = 
 
   if (!keepResults) statusEl.textContent = "";
   updateFooterForMode();
+  syncAssetTabVisibility();
   reportHeight();
   if (!isEmbedded && guidance && !keepResults) {
     setTimeout(resizeStandaloneWindow, 0);
@@ -635,6 +784,7 @@ function setIntroState() {
   if (tabBarEl) tabBarEl.hidden = false;
   clearError();
   updateFooterForMode();
+  syncAssetTabVisibility();
 }
 
 function setResultsState() {
@@ -651,20 +801,24 @@ function setResultsState() {
   updateFooterForMode();
 }
 
-function setLoading(active, message) {
-  const config = modeConfig();
+function setLoading(active, message, { scope = "mode" } = {}) {
   if (active) {
     closeColorPicker({ immediate: true });
     exitPickingMode();
   }
   appEl.classList.toggle("is-loading", active);
   loadingEl.hidden = !active;
-  loadingTextEl.textContent = message || config.loadingStart;
   if (active) {
     clearError();
     introEl.hidden = true;
     hideAllResultPanels();
-    if (tabBarEl) tabBarEl.hidden = false;
+    // Full-scan loader: chrome stays out of the way until everything is ready.
+    if (tabBarEl) tabBarEl.hidden = true;
+    if (panelFooterEl) panelFooterEl.hidden = true;
+    startLoadingLines(activeMode, message || null, scope);
+  } else {
+    stopLoadingLines();
+    if (panelFooterEl) panelFooterEl.hidden = false;
   }
 
   reportHeight();
@@ -688,11 +842,12 @@ async function reloadCurrentMode() {
 
   // Drop the cached scan so Reload always re-injects into the page.
   if (isAssetMode(activeMode)) {
-    generation = { ...generation, rawAssets: null };
+    generation = { ...generation, rawAssets: null, images: [], icons: [] };
   } else {
     generation = { ...generation, rawExtraction: null };
   }
   syncGenerationMirrors();
+  syncAssetTabVisibility();
 
   reloadBtn.disabled = true;
   try {
@@ -1750,9 +1905,15 @@ function toggleAssetMultiSelect(asset) {
 function setHighlightedFontCard(family) {
   highlightedFontFamily = family || null;
   fontsEl?.querySelectorAll(".font-card").forEach((card) => {
+    const name = card.dataset.fontFamily || "font";
     const active = Boolean(family && card.dataset.fontFamily === family);
-    const checkbox = card.querySelector(".font-select-checkbox");
-    if (checkbox) checkbox.checked = active;
+    card.classList.toggle("is-checked", active);
+    card.setAttribute("aria-pressed", active ? "true" : "false");
+    card.setAttribute(
+      "aria-label",
+      active ? `Clear highlight for ${name}` : `Highlight text using ${name}`
+    );
+    card.title = active ? "Clear highlight" : "Highlight on page";
   });
 }
 
@@ -1771,10 +1932,6 @@ async function selectFontHighlight(family, selected) {
   try {
     const result = await runHighlightScript((fontFamily) => window.__prismHighlightFont(fontFamily), [family]);
     if (!result || result.count === 0) {
-      const card = fontsEl?.querySelector(`[data-font-family="${CSS.escape(family)}"]`);
-      const checkbox = card?.querySelector(".font-select-checkbox");
-      if (checkbox) checkbox.checked = false;
-
       if (previousFamily) {
         await runHighlightScript((fontFamily) => window.__prismHighlightFont(fontFamily), [previousFamily]);
         setHighlightedFontCard(previousFamily);
@@ -1787,10 +1944,6 @@ async function selectFontHighlight(family, selected) {
     }
     setHighlightedFontCard(family);
   } catch (error) {
-    const card = fontsEl?.querySelector(`[data-font-family="${CSS.escape(family)}"]`);
-    const checkbox = card?.querySelector(".font-select-checkbox");
-    if (checkbox) checkbox.checked = false;
-
     if (previousFamily) {
       try {
         await runHighlightScript((fontFamily) => window.__prismHighlightFont(fontFamily), [previousFamily]);
@@ -1823,17 +1976,34 @@ function renderFonts(fonts) {
   const activeHighlight = highlightedFontFamily;
 
   for (const font of fonts) {
+    const active = activeHighlight === font.family;
     const card = document.createElement("article");
     card.className = "font-card";
+    if (active) card.classList.add("is-checked");
     card.dataset.fontFamily = font.family;
+    card.tabIndex = 0;
+    card.setAttribute("role", "button");
+    card.setAttribute("aria-pressed", active ? "true" : "false");
+    card.setAttribute(
+      "aria-label",
+      active ? `Clear highlight for ${font.family}` : `Highlight text using ${font.family}`
+    );
+    card.title = active ? "Clear highlight" : "Highlight on page";
 
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.className = "font-select-checkbox";
-    checkbox.checked = activeHighlight === font.family;
-    checkbox.setAttribute("aria-label", `Highlight text using ${font.family}`);
-    checkbox.addEventListener("change", () => {
-      selectFontHighlight(font.family, checkbox.checked);
+    const toggleHighlight = () => {
+      const select = highlightedFontFamily !== font.family;
+      selectFontHighlight(font.family, select);
+    };
+
+    card.addEventListener("click", (event) => {
+      if (event.target.closest(".font-copy-btn")) return;
+      toggleHighlight();
+    });
+    card.addEventListener("keydown", (event) => {
+      if (event.target.closest(".font-copy-btn")) return;
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      toggleHighlight();
     });
 
     const titleRow = document.createElement("div");
@@ -1845,7 +2015,8 @@ function renderFonts(fonts) {
     copyButton.setAttribute("aria-label", `Copy ${font.family}`);
     copyButton.title = "Copy font family";
     copyButton.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">content_copy</span>';
-    copyButton.addEventListener("click", () => {
+    copyButton.addEventListener("click", (event) => {
+      event.stopPropagation();
       copyFontFamily(font.family, copyButton);
     });
 
@@ -1857,7 +2028,7 @@ function renderFonts(fonts) {
     weights.className = "font-weights";
     weights.textContent = `Weights: ${font.weightsLabel || font.weight || 400}`;
 
-    titleRow.append(checkbox, sample);
+    titleRow.append(sample);
     card.append(copyButton, titleRow, weights);
     fontsEl.appendChild(card);
   }
@@ -2003,7 +2174,7 @@ async function runExtractionOnTab(tab) {
     target: { tabId: tab.id },
     func: async () =>
       window.__prismExtractPalette({
-        maxMillis: 18000,
+        maxMillis: 6000,
         maxElementsPerSection: 1800
       })
   });
@@ -2025,7 +2196,7 @@ async function runAssetExtractionOnTab(tab) {
 
   const [injection] = await chrome.scripting.executeScript({
     target: { tabId: tab.id },
-    func: () => window.__prismExtractAssets({ maxCandidates: 400 })
+    func: () => window.__prismExtractAssets({ maxCandidates: 400, maxMillis: 4000 })
   });
 
   if (!injection) {
@@ -2071,11 +2242,34 @@ function showActiveModeResults() {
   setResultsState();
   renderActiveModeResults();
   setLoading(false);
+  syncAssetTabVisibility();
   reportHeightAfterLayout();
   return true;
 }
 
-function applyRawToGeneration(result, pageKey, requestId) {
+/** After a full scan, open the first tab that actually has results. */
+function revealBestAvailableMode() {
+  syncGenerationMirrors();
+
+  // Prefer Colors, then Fonts, then assets — never land on an empty tab.
+  const order = ["colors", "fonts", "images", "icons"];
+  const next = order.find((mode) => hasResultsForMode(mode));
+  if (!next) {
+    activeMode = "colors";
+    updateModeChrome();
+    setLoading(false);
+    showError(null, { noPalette: true });
+    syncAssetTabVisibility();
+    return false;
+  }
+
+  activeMode = next;
+  updateModeChrome();
+  syncAssetTabVisibility();
+  return showActiveModeResults();
+}
+
+function applyRawToGeneration(result, pageKey, requestId, { silent = false } = {}) {
   const palette = generation.dismissed.colors ? generation.palette : curateColorsFromRaw(result);
   const gradients = generation.dismissed.colors
     ? generation.gradients
@@ -2092,6 +2286,8 @@ function applyRawToGeneration(result, pageKey, requestId) {
   });
   syncGenerationMirrors();
   persistGenerationCache();
+
+  if (silent) return Boolean(palette?.length || fonts?.length);
 
   if (activeMode === "colors") {
     if (!palette?.length && !generation.dismissed.colors) {
@@ -2121,7 +2317,7 @@ function curateIconsFromRaw(result) {
   return icons.length ? icons : null;
 }
 
-function applyRawAssetsToGeneration(result, pageKey, requestId) {
+function applyRawAssetsToGeneration(result, pageKey, requestId, { silent = false } = {}) {
   const images = generation.dismissed.images ? generation.images : curateImagesFromRaw(result);
   const icons = generation.dismissed.icons ? generation.icons : curateIconsFromRaw(result);
 
@@ -2134,20 +2330,122 @@ function applyRawAssetsToGeneration(result, pageKey, requestId) {
   });
   syncGenerationMirrors();
   persistGenerationCache();
+  syncAssetTabVisibility();
 
-  if (activeMode === "images") {
-    if (!images?.length && !generation.dismissed.images) {
-      showError(null, { noImages: true });
-      return false;
-    }
-  } else if (activeMode === "icons") {
-    if (!icons?.length && !generation.dismissed.icons) {
-      showError(null, { noIcons: true });
-      return false;
-    }
+  if (silent) return Boolean(images?.length || icons?.length);
+
+  // Empty Images/Icons: hide the tab instead of an error empty-state.
+  if (
+    (activeMode === "images" && !images?.length) ||
+    (activeMode === "icons" && !icons?.length)
+  ) {
+    leaveEmptyAssetMode();
+    return false;
   }
 
-  return showActiveModeResults();
+  if (activeMode === "images" || activeMode === "icons") {
+    return showActiveModeResults();
+  }
+  return false;
+}
+
+/**
+ * First-open path: extract colors/fonts, then images/icons, under one loader.
+ * Sequential on purpose — parallel injection on heavy pages was starving the
+ * color scan and opening Images first with an empty Colors tab.
+ */
+async function runInitialFullScan(tab) {
+  const pageKey = makePageKey(tab);
+  const tabUrl = tab.url || "";
+  if (!pageKey) return;
+
+  generation = invalidatePage(generation, pageKey);
+  syncGenerationMirrors();
+  setLoading(true, null, { scope: "all" });
+  generation = beginRequest(generation);
+  const requestId = generation.requestId;
+
+  const raceTimeout = (promise, ms, { soft = false } = {}) =>
+    Promise.race([
+      promise,
+      new Promise((resolve, reject) => {
+        setTimeout(() => {
+          if (soft) resolve(null);
+          else reject(new Error(ERROR_MESSAGES.TIMEOUT));
+        }, ms);
+      })
+    ]);
+
+  const scanPromise = (async () => {
+    exportPageMeta = await readPageMetaFromTab(tab);
+
+    let pageResult = null;
+    let pageError = null;
+    let pageTimedOut = false;
+    try {
+      pageResult = await raceTimeout(
+        runExtractionOnTab(tab).catch((error) => {
+          error.injectionFailed = true;
+          throw error;
+        }),
+        FULL_SCAN_PAGE_MS
+      );
+    } catch (error) {
+      pageError = error;
+      pageTimedOut = String(error?.message || "") === ERROR_MESSAGES.TIMEOUT;
+    }
+
+    if (isStaleRequest(generation, requestId)) return null;
+    if (pageResult) {
+      applyRawToGeneration(pageResult, pageKey, requestId, { silent: true });
+    }
+
+    const assetsResult = await raceTimeout(
+      runAssetExtractionOnTab(tab).catch(() => null),
+      FULL_SCAN_ASSETS_MS,
+      { soft: true }
+    );
+
+    if (isStaleRequest(generation, requestId)) return null;
+    if (assetsResult) {
+      applyRawAssetsToGeneration(assetsResult, pageKey, requestId, {
+        silent: true
+      });
+    }
+
+    syncGenerationMirrors();
+    const hasAnything =
+      currentPalette.length > 0 ||
+      currentFonts.length > 0 ||
+      currentImages.length > 0 ||
+      currentIcons.length > 0;
+
+    if (!hasAnything) {
+      showError(pageError || null, {
+        timedOut: pageTimedOut,
+        noPalette: !pageError,
+        injectionFailed: Boolean(pageError?.injectionFailed),
+        unsupportedPage: isUnsupportedPageUrl(tabUrl)
+      });
+      return null;
+    }
+
+    return true;
+  })().finally(() => {
+    if (!isStaleRequest(generation, requestId)) {
+      generation = clearInFlight(generation);
+    }
+  });
+
+  generation = setInFlight(generation, scanPromise);
+
+  try {
+    const ok = await scanPromise;
+    if (!ok || isStaleRequest(generation, requestId)) return;
+    revealBestAvailableMode();
+  } catch {
+    /* showError already called from the scan body */
+  }
 }
 async function scanPage(tab, requestId) {
   const config = modeConfig();
@@ -2357,13 +2655,14 @@ async function ensureResultsForActiveMode({ force = false, reason = "auto" } = {
 }
 
 function bindTabSwitch(button, mode) {
+  if (!button) return;
   button.addEventListener("pointerdown", (event) => {
-    if (event.button !== 0 || mode === activeMode) return;
+    if (event.button !== 0 || mode === activeMode || button.hidden) return;
     switchMode(mode);
   });
 
   button.addEventListener("click", () => {
-    if (mode === activeMode) return;
+    if (mode === activeMode || button.hidden) return;
     switchMode(mode);
   });
 }
@@ -2439,11 +2738,15 @@ copyBtn.addEventListener("click", async () => {
 // remains visible afterward (toggle off by clicking the same tile again).
 
 async function bootstrapPopup() {
+  const restricted = isRestrictedPopupContext();
+  // Paint the full-scan loader immediately so the panel never sits blank.
+  if (!restricted) setLoading(true, null, { scope: "all" });
+
   colorViewMode = await loadColorViewMode();
   applyColorViewToggleUi();
   updateModeChrome();
 
-  if (isRestrictedPopupContext()) {
+  if (restricted) {
     setIntroState();
     showBanner(GUIDANCE_COPY.message, { guidance: true, title: GUIDANCE_COPY.title });
     return;
@@ -2473,14 +2776,21 @@ async function bootstrapPopup() {
   if (cached?.pageKey === pageKey) {
     generation = restoreGenerationCache(cached);
     syncGenerationMirrors();
-    if (canReuseModeResults(generation, { mode: activeMode, pageKey })) {
-      showActiveModeResults();
-      return;
+    // Warm cache with both pipelines already filled — skip the full rescan.
+    if (generation.rawExtraction && generation.rawAssets) {
+      const hasAnything =
+        hasResultsForMode("colors") ||
+        hasResultsForMode("fonts") ||
+        hasResultsForMode("images") ||
+        hasResultsForMode("icons");
+      if (hasAnything) {
+        revealBestAvailableMode();
+        return;
+      }
     }
   }
 
-  setIntroState();
-  await ensureResultsForActiveMode({ reason: "auto" });
+  await runInitialFullScan(tab);
 }
 
 bootstrapPopup();

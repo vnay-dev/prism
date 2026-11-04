@@ -10,7 +10,7 @@ function applyBuildBadge() {
   if (!IS_DEV_BUILD) return;
   chrome.action.setBadgeText({ text: "DEV" });
   chrome.action.setBadgeBackgroundColor({ color: "#d92d20" });
-  chrome.action.setBadgeTextColor?.({ color: "#ffffff" });
+  chrome.action.setBadgeTextColor?.({ color: "#fdfdfd" });
 }
 
 chrome.runtime.onInstalled.addListener(applyBuildBadge);
@@ -213,7 +213,9 @@ chrome.action.onClicked.addListener(async (tab) => {
   try {
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      files: ["src/content/togglePanel.js"]
+      files: ["src/content/togglePanel.js"],
+      // Don't wait for a busy page's document_idle — open the shell right away.
+      injectImmediately: true
     });
   } catch (_error) {
     const fallbackUrl = `${popupUrl}${popupUrl.includes("?") ? "&" : "?"}tabId=${tab.id}`;
