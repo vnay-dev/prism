@@ -29,8 +29,8 @@ export const ROLE_TITLE_GAP = 8;
 export const ROLE_TITLE_SIZE = 13;
 export const GRADIENT_BAR_HEIGHT = 44;
 export const LIGHT_BORDER_COLOR = "#e4e7ee";
-export const DARK_INK = "#1a1d26";
-export const LIGHT_INK = "#ffffff";
+export const DARK_INK = "#1c1c1c";
+export const LIGHT_INK = "#fdfdfd";
 export const GRADIENT_SECTION_LABEL = "Gradients";
 
 function hexChannels(hex) {

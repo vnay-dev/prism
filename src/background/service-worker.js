@@ -10,7 +10,7 @@ function applyBuildBadge() {
   if (!IS_DEV_BUILD) return;
   chrome.action.setBadgeText({ text: "DEV" });
   chrome.action.setBadgeBackgroundColor({ color: "#d92d20" });
-  chrome.action.setBadgeTextColor?.({ color: "#ffffff" });
+  chrome.action.setBadgeTextColor?.({ color: "#fdfdfd" });
 }
 
 chrome.runtime.onInstalled.addListener(applyBuildBadge);

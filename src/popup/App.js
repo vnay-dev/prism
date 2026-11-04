@@ -1905,9 +1905,15 @@ function toggleAssetMultiSelect(asset) {
 function setHighlightedFontCard(family) {
   highlightedFontFamily = family || null;
   fontsEl?.querySelectorAll(".font-card").forEach((card) => {
+    const name = card.dataset.fontFamily || "font";
     const active = Boolean(family && card.dataset.fontFamily === family);
-    const checkbox = card.querySelector(".font-select-checkbox");
-    if (checkbox) checkbox.checked = active;
+    card.classList.toggle("is-checked", active);
+    card.setAttribute("aria-pressed", active ? "true" : "false");
+    card.setAttribute(
+      "aria-label",
+      active ? `Clear highlight for ${name}` : `Highlight text using ${name}`
+    );
+    card.title = active ? "Clear highlight" : "Highlight on page";
   });
 }
 
@@ -1926,10 +1932,6 @@ async function selectFontHighlight(family, selected) {
   try {
     const result = await runHighlightScript((fontFamily) => window.__prismHighlightFont(fontFamily), [family]);
     if (!result || result.count === 0) {
-      const card = fontsEl?.querySelector(`[data-font-family="${CSS.escape(family)}"]`);
-      const checkbox = card?.querySelector(".font-select-checkbox");
-      if (checkbox) checkbox.checked = false;
-
       if (previousFamily) {
         await runHighlightScript((fontFamily) => window.__prismHighlightFont(fontFamily), [previousFamily]);
         setHighlightedFontCard(previousFamily);
@@ -1942,10 +1944,6 @@ async function selectFontHighlight(family, selected) {
     }
     setHighlightedFontCard(family);
   } catch (error) {
-    const card = fontsEl?.querySelector(`[data-font-family="${CSS.escape(family)}"]`);
-    const checkbox = card?.querySelector(".font-select-checkbox");
-    if (checkbox) checkbox.checked = false;
-
     if (previousFamily) {
       try {
         await runHighlightScript((fontFamily) => window.__prismHighlightFont(fontFamily), [previousFamily]);
@@ -1978,17 +1976,34 @@ function renderFonts(fonts) {
   const activeHighlight = highlightedFontFamily;
 
   for (const font of fonts) {
+    const active = activeHighlight === font.family;
     const card = document.createElement("article");
     card.className = "font-card";
+    if (active) card.classList.add("is-checked");
     card.dataset.fontFamily = font.family;
+    card.tabIndex = 0;
+    card.setAttribute("role", "button");
+    card.setAttribute("aria-pressed", active ? "true" : "false");
+    card.setAttribute(
+      "aria-label",
+      active ? `Clear highlight for ${font.family}` : `Highlight text using ${font.family}`
+    );
+    card.title = active ? "Clear highlight" : "Highlight on page";
 
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.className = "font-select-checkbox";
-    checkbox.checked = activeHighlight === font.family;
-    checkbox.setAttribute("aria-label", `Highlight text using ${font.family}`);
-    checkbox.addEventListener("change", () => {
-      selectFontHighlight(font.family, checkbox.checked);
+    const toggleHighlight = () => {
+      const select = highlightedFontFamily !== font.family;
+      selectFontHighlight(font.family, select);
+    };
+
+    card.addEventListener("click", (event) => {
+      if (event.target.closest(".font-copy-btn")) return;
+      toggleHighlight();
+    });
+    card.addEventListener("keydown", (event) => {
+      if (event.target.closest(".font-copy-btn")) return;
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      toggleHighlight();
     });
 
     const titleRow = document.createElement("div");
@@ -2000,7 +2015,8 @@ function renderFonts(fonts) {
     copyButton.setAttribute("aria-label", `Copy ${font.family}`);
     copyButton.title = "Copy font family";
     copyButton.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">content_copy</span>';
-    copyButton.addEventListener("click", () => {
+    copyButton.addEventListener("click", (event) => {
+      event.stopPropagation();
       copyFontFamily(font.family, copyButton);
     });
 
@@ -2012,7 +2028,7 @@ function renderFonts(fonts) {
     weights.className = "font-weights";
     weights.textContent = `Weights: ${font.weightsLabel || font.weight || 400}`;
 
-    titleRow.append(checkbox, sample);
+    titleRow.append(sample);
     card.append(copyButton, titleRow, weights);
     fontsEl.appendChild(card);
   }
