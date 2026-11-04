@@ -1,5 +1,22 @@
 # Release notes
 
+## 0.6.4 — Store listing copy
+
+**Date:** November 4, 2026
+
+### Changed
+
+- **Store summary** — “Extract website color palettes, find fonts, and download images and icons in one click.”
+
+### Package
+
+```bash
+npm run package:store
+# → dist/prism-0.6.4.zip
+```
+
+---
+
 ## 0.6.3 — Reliable scans & font highlight polish
 
 **Date:** November 4, 2026

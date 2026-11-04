@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Prism - Website Color & Font Extractor",
   "description": "Extract website color palettes, find fonts, and download images and icons in one click.",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",
