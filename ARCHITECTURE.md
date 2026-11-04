@@ -48,7 +48,7 @@ extractInPage.js  →  fontSamples[] + fontTokens[]
 curateFonts.js    →  aggregate by family · score weights · filter noise
         │
         ▼
-Popup (Font families tab)  →  cards with family name + weights · per-card clipboard copy
+Popup (Font families tab)  →  selectable cards (highlight on page) · weights · per-card clipboard copy
 ```
 
 ### Asset pipeline
@@ -123,10 +123,12 @@ Color tab (Gradients section)  →  tiles · copy CSS
 ### 1.1 Page traversal
 
 - Maps the document in viewport-sized **virtual sections** (no page scroll; max 25 sections, ~6s budget)
-- At each section, scans up to 1,800 visible DOM nodes
+- At each section, samples up to 1,800 **in-band visible** DOM nodes (the budget does not count
+  hidden / off-band / non-visual tags such as `<head>` chrome or `display:none` consent modals)
 - Each pass is a **section** (`section-0`, `section-1`, …)
 - `document.querySelectorAll("*")` is queried once per scan (not per section) — content-heavy pages (news
   homepages, social feeds) don't pay for a full-tree re-query 25 times over
+- Visually-hidden / clipped / 1×1 screen-reader-only nodes are skipped so they don't invent colors or fonts
 
 ### 1.2 Color properties sampled
 
@@ -215,7 +217,9 @@ Alongside color samples, each text-bearing element may emit a **font sample**:
 
 **CSS token hints:** `collectFontTokens()` reads `--font-family`, `--font-sans`, `--font-body`, etc. from `:root` to boost families declared in design tokens.
 
-Font samples are deduplicated per section by element geometry + family.
+Font samples require measurable visible text area and skip visually-hidden / clipped nodes (so
+body fallbacks used only on screen-reader chrome do not enter the curated set). Deduplicated per
+section by element geometry + family.
 
 ### 1.7 Extraction output
 
@@ -550,7 +554,7 @@ Each family card shows:
 - Family name (rendered in the panel UI font, not the extracted typeface)
 - `Weights: 400, 500, 600` — comma-separated list of meaningful weights
 - Copy icon — writes the family name to the clipboard
-- Select control — injects `highlightFont.js` to highlight every visible run of that family on the page (viewport-first, revealed on scroll); cleared on deselect or panel close
+- Card select — click the card (same hover/select chrome as Images/Icons) to inject `highlightFont.js` and highlight every visible run of that family on the page (viewport-first, revealed on scroll; ignores visually-hidden text); click again or close the panel to clear
 
 PNG export includes **colors only**; typography is clipboard-only per family.
 
