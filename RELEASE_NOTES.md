@@ -1,5 +1,31 @@
 # Release notes
 
+## 0.6.2 — Instant open & bounded scanning
+
+**Date:** November 4, 2026
+
+### Improved
+
+- **Instant open** — the panel appears the moment you click Prism instead of waiting on a heavy page; a single loader with rotating, plain-language status text covers colors, fonts, images, and icons together, then reveals only the tabs that actually have results (preferring Colors first).
+- **Asset tile loading** — Images and Icons tiles show a full skeleton while loading instead of a clickable/hoverable tile with a half-loaded image inside it.
+- **Grid tile sizing** — swatches use a fixed 48x48 tile and spread across the full row width instead of wrapping unevenly.
+- **Faster, bounded scanning** — on content-heavy pages (news homepages, social feeds) the color/font and image/icon scans now finish in a fixed, predictable time instead of running long on pages with a very large number of already-rendered elements.
+
+### Technical
+
+- `extractInPage.js` queries the page's elements once per scan instead of re-querying on every virtual section, so the existing time budget is spent on sampling rather than redundant DOM traversal.
+- `extractAssets.js` gained a wall-clock budget and missing element caps on its `<img>`, `<picture>`, icon-link, `<object>`/`<embed>`, and `<use>` loops, which previously had no bound at all beyond output count.
+- Popup-level timeouts (`FULL_SCAN_PAGE_MS`, `FULL_SCAN_ASSETS_MS`, `EXTRACTION_TIMEOUT_MS`) lowered to match, cutting the worst-case combined wait from roughly 44s to 12-14s.
+
+### Package
+
+```bash
+npm run package:store
+# → dist/prism-0.6.2.zip
+```
+
+---
+
 ## 0.6.1 — Layout polish & asset hover affordance
 
 **Date:** October 28, 2026

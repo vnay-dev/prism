@@ -2,7 +2,7 @@
 
 Chrome extension that extracts a curated **8-color design palette**, **font families**, **images**, and **icons** from any live web page. Colors are sampled from rendered DOM styles (backgrounds, text, borders, icons, gradients), clustered, scored, and assigned semantic roles. Typography is sampled from computed `font-family` and `font-weight` on visible text, then ranked and filtered so you get the families and weights that actually matter on the page.
 
-**Version:** 0.6.1 · [Release notes](./RELEASE_NOTES.md)
+**Version:** 0.6.2 · [Release notes](./RELEASE_NOTES.md)
 
 ## Features
 
@@ -44,12 +44,12 @@ Chrome extension that extracts a curated **8-color design palette**, **font fami
 ## Usage
 
 1. Open a tab with the site you want to sample.
-2. Click the **Prism** extension icon to open the panel — extraction starts automatically on supported pages.
+2. Click the **Prism** extension icon — the panel opens immediately and extraction starts automatically on supported pages, with a short loader while colors, fonts, images, and icons are scanned together. Only the tabs with actual results appear once it finishes, even on long or content-heavy pages.
 3. Choose a tab:
    - **Color palette** — review usage-labeled swatches and gradients, switch **Organized** / **Stack**, optionally **Shuffle** or edit swatches, then **Copy to clipboard** to paste the PNG into Figma or another tool.
    - **Font families** — use the copy icon on any card to copy that family name, or select a card to highlight that font's text on the page.
    - **Images** / **Icons** — preview assets in a lightbox; download one file or multi-select as a ZIP.
-4. Wait for the scan to finish (~10–20 seconds on long pages). Use **Reset** if you want to return to manual Extract.
+4. Use **Reset** if you want to return to manual Extract.
 
 See [RELEASE_NOTES.md](./RELEASE_NOTES.md) for version history and store publish notes.
 
@@ -61,7 +61,7 @@ Build an upload-ready ZIP (runtime files only — no tests, scripts, or `node_mo
 npm run package:store
 ```
 
-Output: `dist/prism-0.6.1.zip`
+Output: `dist/prism-0.6.2.zip`
 
 **Privacy policy:** See [PRIVACY.md](./PRIVACY.md). Host it at a public URL (for example GitHub Pages on this repo) and paste that link into the Chrome Web Store listing.
 

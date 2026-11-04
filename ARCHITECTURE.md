@@ -63,6 +63,11 @@ extractAssets.js  →  image + icon candidates (URLs, inline SVG, dimensions, ar
 Popup (Images / Icons tabs)  →  grid · lightbox · download / multi-select ZIP
 ```
 
+`extractAssets.js` is bounded by a candidate cap (`maxCandidates`, default 400), per-category element-visited caps
+(e.g. `maxImageScan`, `maxUseScan`), and a wall-clock budget (`maxMillis`, default 4s) checked across every
+collection loop — so a page with an unusually large number of already-rendered `<img>`/`<use>`/background-image
+elements can't make the scan run long.
+
 ### Gradient pipeline
 
 ```
@@ -117,9 +122,11 @@ Color tab (Gradients section)  →  tiles · copy CSS
 
 ### 1.1 Page traversal
 
-- Maps the document in viewport-sized **virtual sections** (no page scroll; max 25 sections, ~18s budget)
+- Maps the document in viewport-sized **virtual sections** (no page scroll; max 25 sections, ~6s budget)
 - At each section, scans up to 1,800 visible DOM nodes
 - Each pass is a **section** (`section-0`, `section-1`, …)
+- `document.querySelectorAll("*")` is queried once per scan (not per section) — content-heavy pages (news
+  homepages, social feeds) don't pay for a full-tree re-query 25 times over
 
 ### 1.2 Color properties sampled
 
