@@ -13,9 +13,9 @@ import {
 } from "./inlineSvg.js";
 
 /**
- * Curate downloadable icon assets (external URLs only — no inline SVG export).
- * Prioritizes external SVG files, then declared favicons / touch icons.
- * Collapses duplicates by symbol id, SVG content, or URL.
+ * Curate downloadable icon assets (external SVG URLs and inline SVG data URLs).
+ * Prioritizes external SVG files, then declared favicons / touch icons, then
+ * drawable inline SVG. Collapses duplicates by symbol id, SVG content, or URL.
  */
 export function curateIcons(rawCandidates = [], { baseHref = "https://example.com/" } = {}) {
   const prepared = [];

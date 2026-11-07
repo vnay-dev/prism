@@ -2,7 +2,7 @@
 
 Chrome extension that extracts a curated **8-color design palette**, **font families**, **images**, and **icons** from any live web page. Colors are sampled from rendered DOM styles (backgrounds, text, borders, icons, gradients), clustered, scored, and assigned semantic roles. Typography is sampled from computed `font-family` and `font-weight` on visible text, then ranked and filtered so you get the families and weights that actually matter on the page.
 
-**Version:** 0.6.4 · [Release notes](./RELEASE_NOTES.md)
+**Version:** 0.6.5 · [Release notes](./RELEASE_NOTES.md)
 
 ## Features
 
@@ -61,7 +61,7 @@ Build an upload-ready ZIP (runtime files only — no tests, scripts, or `node_mo
 npm run package:store
 ```
 
-Output: `dist/prism-0.6.4.zip`
+Output: `dist/prism-0.6.5.zip`
 
 **Privacy policy:** See [PRIVACY.md](./PRIVACY.md). Host it at a public URL (for example GitHub Pages on this repo) and paste that link into the Chrome Web Store listing.
 
@@ -81,9 +81,29 @@ Requires [Node.js](https://nodejs.org/) 18+ for tests and benchmark tooling.
 npm test                 # unit + benchmark regression tests
 npm run test:benchmark   # benchmark tests only
 npm run benchmark:lock   # regenerate frozen color baseline (intentional changes only)
+npm run package:store    # store ZIP + service-worker import graph check
+npm run security:sw-imports
+npm run security:permissions
+npm run security:deps
 ```
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for the extraction pipeline and module map. Benchmark details are in [benchmark/README.md](./benchmark/README.md).
+
+### Manual smoke test (Chrome)
+
+Automated tests do **not** drive a real browser. After load-unpacked changes that touch the panel, service worker, or downloads, verify in Chrome:
+
+| Step | What to check | Needs real Chrome |
+|------|---------------|-------------------|
+| 1. Open panel | Click the Prism icon on a normal https site; in-page panel appears | Yes |
+| 2. Auto-resize | Panel height hugs content after load / tab switches | Yes |
+| 3. Drag | Drag the panel header; position sticks and stays on-screen | Yes |
+| 4. Close | Close control (or backdrop) removes the panel | Yes |
+| 5. Reopen + cache | Reopen on the same tab/URL; prior results reuse without a full re-scan while the service worker is alive | Yes |
+| 6. Single download | Icons/Images → download one asset; file appears in Downloads | Yes |
+| 7. ZIP download | Multi-select → ZIP download succeeds (cookie-gated same-origin assets may still work) | Yes |
+
+Restricted pages (`chrome://`, New Tab) should still open the guidance popup window instead of the in-page panel.
 
 ## Project structure
 

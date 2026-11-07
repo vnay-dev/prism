@@ -95,7 +95,7 @@ Color tab (Gradients section)  →  tiles · copy CSS
 | `src/popup/generationController.js` | Auto-extract on open, Reset/dismissed state, in-flight dedupe (colors/fonts/assets) |
 | `src/popup/assetsView.js` | Images/Icons grid rendering, selection, and download feedback |
 | `src/popup/downloadAsset.js` | Single-asset and multi-select ZIP download via the service worker |
-| `src/core/sourceClassification.js` | Source categories, weights, product demo detection, utility classification, scoring |
+| `src/core/sourceClassification.js` | Source categories, weights, product demo detection, utility classification, scoring (test helper `classifySourceFromSignals`; live classifier lives in `extractInPage.js`) |
 | `src/core/curateFonts.js` | Font family curation and weight significance filtering |
 | `src/core/curateGradients.js` | CSS gradient curation (area, distinct stops, cap) |
 | `src/core/curateImages.js` / `curateIcons.js` | Image and icon candidate ranking / filtering |
@@ -151,7 +151,7 @@ Area drives clustering weight and foundation selection. Rules differ by property
 - **Background:** `width × height` of element rect
 - **Text:** sum of `Range.getClientRects()` areas, with font-size fallback
 - **Border:** sum of border-width × edge lengths
-- **SVG fill/stroke:** capped at `min(rawArea, max(2500, viewport × 1.5%))` to limit decorative SVG inflation
+- **SVG fill/stroke:** capped at `min(rawArea, max(2500, viewport × 1.5%))` **per emitted sample**. The cap uses the root SVG’s bounding box. Multiple painted descendants (paths, circles, etc.) may each emit a sample that contributes that same capped root area, so SVG-heavy markup can still accumulate cluster area. Foundation-role selection ignores SVG paint via the foundation surface filter (see §7.2 and §13).
 
 Each sample records `areaSourceType`: `Background`, `Text`, `Border`, `SVG Fill`, `SVG Stroke`.
 
@@ -226,17 +226,21 @@ section by element geometry + family.
 ```js
 {
   samples, fontSamples, fontTokens,
+  gradients,                 // CSS gradient candidates from background-image layers
   sectionCount, sections,
   sampledElements,
   areaContributions
 }
 ```
 
+Colour and font extraction walk the light DOM only (no `shadowRoot` traversal). Asset extraction may walk open shadow trees via `queryAllDeep` in `extractAssets.js` — coverage therefore differs by extraction type (see §13).
+
 ---
 
 ## 2. Source classification
 
-**Module:** `sourceClassification.js` (mirrored in `extractInPage.js` for injection)
+**Live classifier:** embedded `classifySource` in `extractInPage.js` (authoritative for page extraction).  
+**Test helper:** `classifySourceFromSignals` in `sourceClassification.js` approximates the live rules for unit tests but is not a byte-for-byte mirror (injection is a classic script and cannot import the ES module).
 
 Every sample receives a `sourceCategory` from DOM signals: tag, class, id, aria-label, role, context, content zone, hero/nav/footer placement.
 
@@ -294,8 +298,8 @@ Demo samples receive `rawImportance = 3` regardless of element type.
 
 ### 3.4 Effect on downstream stages
 
-- Demo sources count toward **utility classification** (60% occurrence threshold)
-- Demo colors contribute to palette discovery via clustering area
+- Demo sources participate in utility classification through the **occurrence** rule (≥ 60% of cluster samples) — see §5.1. `demo_illustration` is counted there even though it is not in `UTILITY_SOURCES`.
+- Demo colors still contribute to palette discovery via clustering area
 - Demo importance is capped at extraction; no separate demo weight multiplier in curation
 - Heavy demo pages (e.g. Linear ~51% demo samples) can skew chromatic ranking if brand evidence is weak
 
@@ -342,14 +346,19 @@ After clustering, chromatic clusters are deduplicated by **30° hue bucket** (`f
 
 Utility colors (status badges, charts, demo UI accents) are excluded from brand chromatic selection.
 
-### 5.1 Occurrence-based rule
+### 5.1 Two independent utility rules
 
-A cluster is utility if either:
+A cluster is utility if **either** rule matches (unless brand-evidence override in §5.2 applies):
 
-- `utilityRatio >= 0.55` (weighted utility sources / total weighted sources), **or**
-- Demo + utility source **occurrences ≥ 60%** of cluster samples
+| Rule | Formula | What counts |
+|------|---------|-------------|
+| **Weighted ratio** | `utilityRatio >= 0.55` | Sources in `UTILITY_SOURCES` only, weighted by `SOURCE_WEIGHT`. Computed by `computeWeightedUtilityRatio` / `finalizeCluster`. |
+| **Occurrence** | utility-or-demo sample count / cluster samples `>= 0.6` | `UTILITY_SOURCES` **or** `DEMO_SOURCES` (so **`demo_illustration` is included here**) |
 
-Utility sources: `success_state`, `warning_state`, `error_state`, `alert`, `notification`, `status_chip`, `chart`, `syntax_highlight`, plus demo sources.
+`UTILITY_SOURCES` today: `success_state`, `warning_state`, `error_state`, `alert`, `notification`, `status_chip`, `chart`, `syntax_highlight`, plus `demo_navigation`, `demo_sidebar`, `demo_status`.  
+`DEMO_SOURCES` adds `demo_illustration` (demo-only — affects the occurrence rule, **not** the weighted ratio).
+
+These rules are intentionally separate: a cluster that is mostly `demo_illustration` can become utility via occurrence without pushing `utilityRatio` above 0.55.
 
 ### 5.2 Brand evidence override
 
@@ -435,7 +444,7 @@ Applied during curation and role assignment:
 | **Foundation surface filter** | Foundation area from `global_background`, `hero_background`, `repeated_section_bg`, `major_container` with `areaSourceType = Background` only |
 | **Foundation surface hex** | When neutral clusters merge near-black colors, display the dominant *surface* hex, not the merged cluster label |
 | **Browser link exclusion** | `#0000ee` / `#0000ff` stripped from chromatic selection unless explicit brand evidence (hero, CTA, logo sources) |
-| **Pure black / white exclusion** | Literal `#000000` / `#ffffff` filtered from samples before clustering |
+| **Pure black / white filter** | Literal `#000000` / `#ffffff` dropped before clustering **unless** they paint a foundation surface (`contributesFoundationArea`) or text/heading (`shouldKeepSample`). Decorative SVG / border blacks are removed; page canvas and body text blacks/whites are kept. |
 | **Legacy sample inference** | Test fixtures without sourceCategory get inferred fields for backward compatibility |
 
 ### 7.3 Shuffle curation
@@ -660,7 +669,8 @@ asset candidates
 | `src/popup/exportPaletteImage.js` | Palette PNG generation (color tab only), using `paletteLayout.js` geometry |
 | `src/popup/paletteLayout.js` | Shared bento layout for popup render and PNG export |
 | `src/popup/assetsView.js` / `downloadAsset.js` | Asset grid UI and download / ZIP |
-| `src/background/service-worker.js` | Session cache + `chrome.downloads` for asset saves |
+| `src/background/service-worker.js` | In-memory generation cache + validated message router + `chrome.downloads` |
+| `src/background/messageHandler.js` | Shared message validation / dispatch (unit-tested) |
 | `src/content/highlightFont.js` | Injected on demand to highlight visible text matching a selected font family |
 | `src/content/imageLightbox.js` | Injected on demand for full-page asset preview |
 
@@ -670,10 +680,10 @@ The popup injects `extractInPage.js` (and `extractAssets.js` for asset tabs) via
 
 ## 13. Known limitations
 
-Documented by the frozen benchmark (not bugs — baseline expectations):
+Documented by the frozen benchmark and confirmed implementation gaps (not silent bugs — baseline expectations):
 
-| Pattern | Affected sites |
-|---------|----------------|
+| Pattern | Affected sites / notes |
+|---------|------------------------|
 | Partial page crawl (cookie walls) | Spotify |
 | Heavy product demo sample share | Linear |
 | Role inversion (brand secondary vs primary) | Slack |
@@ -682,5 +692,8 @@ Documented by the frozen benchmark (not bugs — baseline expectations):
 | No mid-tone chromatic primary (gray fallback may still assign primary) | Spotify |
 | Font benchmark | Not yet in frozen lockfile — color regression only today |
 | Lazy-loaded below-fold content | May be under-sampled without real scroll |
+| **SVG multi-sample area** | Per-sample SVG area cap can still accumulate when many painted descendants share a root SVG bbox. Can affect cluster area/scoring; foundation roles ignore SVG paint. Frozen fixtures for Apple, Linear, Stripe, and others already contain large SVG Fill/Stroke sample shares — use them to measure impact before changing the algorithm. |
+| **Shadow DOM (colours / fonts)** | `extractInPage.js` does **not** traverse `shadowRoot`. Open shadow trees are therefore under-sampled for colours and fonts. `extractAssets.js` **may** traverse open shadow trees via `queryAllDeep`, so Images/Icons coverage can exceed colour/font coverage on the same page. Full Shadow DOM colour/font extraction is future work. |
+| **Classifier dual paths** | Live `classifySource` in `extractInPage.js` is authoritative; `classifySourceFromSignals` is a test approximation with known heuristic gaps. |
 
-These represent the current accuracy ceiling. Future work should improve scores via the benchmark workflow without silent regressions on the 8 sites that pass today.
+These represent the current accuracy ceiling. Future work should improve scores via the benchmark workflow without silent regressions on the sites that pass today.

@@ -390,6 +390,18 @@ test("download helpers preserve filenames and map failures", () => {
   assert.ok(downloadErrorMessage("unknown-code").length > 0);
 });
 
+test("ZIP/batch page fetch keeps credentials include (privacy disclosure lock)", async () => {
+  // Locks the PRIVACY.md disclosure without performing network I/O: user-initiated
+  // ZIP packaging fetches asset URLs in the page context with the site's cookies.
+  const { readFileSync } = await import("node:fs");
+  const { fileURLToPath } = await import("node:url");
+  const { dirname, join } = await import("node:path");
+  const root = dirname(dirname(fileURLToPath(import.meta.url)));
+  const src = readFileSync(join(root, "src/popup/downloadAsset.js"), "utf8");
+  assert.match(src, /credentials:\s*"include"/);
+  assert.match(src, /cache:\s*"force-cache"/);
+});
+
 test("generation controller tracks images and icons independently", () => {
   let state = createGenerationState();
   assert.equal(isAssetMode("images"), true);

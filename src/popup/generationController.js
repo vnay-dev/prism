@@ -195,7 +195,10 @@ export function invalidatePage(state, pageKey) {
   return createGenerationState({ requestId: (state.requestId || 0) + 1 });
 }
 
-/** Snapshot for chrome.storage.session — omit the live Promise. */
+/**
+ * Snapshot of generation state for the service-worker in-memory cache
+ * (`generationCacheByPage`). Omits the live in-flight Promise.
+ */
 export function serializeGenerationCache(state) {
   return {
     pageKey: state.pageKey,
