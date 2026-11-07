@@ -154,6 +154,11 @@ function isStatusLike(blob, context) {
   return false;
 }
 
+/**
+ * @deprecated Unused by the live clustering path. Prefer cluster aggregation in
+ * `scoreAndCluster.js` and `computeWeightedUtilityRatio` / `isUtilityColor`.
+ * Kept temporarily for reference; do not wire into runtime without a product decision.
+ */
 export function aggregateSourceStats(samples) {
   const counts = {};
   let brandWeighted = 0;
@@ -186,6 +191,26 @@ export function aggregateSourceStats(samples) {
   };
 }
 
+/**
+ * Weighted utility ratio used by clustering (`finalizeCluster`).
+ * Counts only `UTILITY_SOURCES` — not a full union with `DEMO_SOURCES`.
+ * (`demo_illustration` is demo-only and does not enter this ratio.)
+ */
+export function computeWeightedUtilityRatio(sourceCounts) {
+  let utilityWeighted = 0;
+  let totalSourceWeight = 0;
+  for (const [src, n] of Object.entries(sourceCounts || {})) {
+    const weight = n * weightForSource(src);
+    totalSourceWeight += weight;
+    if (isUtilitySource(src)) utilityWeighted += weight;
+  }
+  return totalSourceWeight > 0 ? utilityWeighted / totalSourceWeight : 0;
+}
+
+/**
+ * Utility when weighted ratio ≥ 0.55 **or** utility/demo occurrences ≥ 60%.
+ * The occurrence path includes all `DEMO_SOURCES` (including `demo_illustration`).
+ */
 export function isUtilityColor(sourceCounts, utilityRatio) {
   if (utilityRatio >= 0.55) return true;
   const utilityOccurrences = Object.entries(sourceCounts || {}).reduce(
@@ -236,7 +261,18 @@ export function designSystemScore(cluster, maxima, sectionCount) {
   );
 }
 
-/** Classify from DOM-like signals (used in tests and mirrored in extractInPage.js). */
+/**
+ * Classify from DOM-like signals for unit tests and tooling.
+ *
+ * Authoritative live classification for page extraction is the embedded
+ * `classifySource` inside `src/content/extractInPage.js` (classic script
+ * injected via `chrome.scripting.executeScript`; it cannot import this ES
+ * module). This helper approximates that logic for tests but intentionally
+ * diverges in places that need a real Element (e.g. BODY/HTML canvas,
+ * section-0 area vs class-blob heuristics, `closest('article')`, footer).
+ * Prefer updating the live classifier first; keep this helper in sync when
+ * practical, or extend tests to cover the live path.
+ */
 export function classifySourceFromSignals({
   tagName = "",
   classText = "",

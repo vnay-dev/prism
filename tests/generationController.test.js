@@ -202,7 +202,9 @@ test("page key change invalidates cached generation state", () => {
   assert.equal(next.rawExtraction, null);
 });
 
-test("session cache serialization round-trips without the in-flight promise", () => {
+test("service-worker cache snapshot round-trips without the in-flight promise", () => {
+  // serializeGenerationCache is what App.js persists into the SW in-memory Map
+  // (not chrome.storage.session). Closing the panel does not clear that Map.
   const state = setInFlight(
     createGenerationState({
       pageKey: "1::https://example.com",
@@ -213,10 +215,31 @@ test("session cache serialization round-trips without the in-flight promise", ()
     }),
     Promise.resolve(1)
   );
-  const restored = restoreGenerationCache(serializeGenerationCache(state));
+  const snapshot = serializeGenerationCache(state);
+  assert.equal("inFlight" in snapshot, false);
+  const restored = restoreGenerationCache(snapshot);
   assert.equal(restored.pageKey, "1::https://example.com");
   assert.equal(restored.palette[0].hex, "#abcabc");
   assert.equal(restored.dismissed.fonts, true);
   assert.equal(restored.inFlight, null);
   assert.equal(restored.rawExtraction.samples[0].hex, "#abcabc");
+});
+
+test("cached results remain reusable after serialize/restore (panel reopen path)", () => {
+  const live = createGenerationState({
+    pageKey: "1::https://example.com",
+    palette: [{ hex: "#fff" }],
+    fonts: [{ family: "Inter" }],
+    images: [{ id: "a" }],
+    icons: [{ id: "b" }]
+  });
+  const restored = restoreGenerationCache(serializeGenerationCache(live));
+  assert.equal(
+    canReuseModeResults(restored, { mode: "colors", pageKey: "1::https://example.com" }),
+    true
+  );
+  assert.equal(
+    shouldAutoGenerate(restored, { mode: "colors", pageKey: "1::https://example.com" }),
+    false
+  );
 });

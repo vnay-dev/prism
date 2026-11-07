@@ -87,8 +87,10 @@
     host.remove();
   });
 
+  const extensionOrigin = new URL(chrome.runtime.getURL("/")).origin;
+
   iframe.addEventListener("load", () => {
-    iframe.contentWindow?.postMessage({ type: "prism-request-resize" }, "*");
+    iframe.contentWindow?.postMessage({ type: "prism-request-resize" }, extensionOrigin);
   });
 
   let hasSized = false;
@@ -145,9 +147,23 @@
     applyDragPosition();
   });
 
+  // Keep in sync with PANEL_HOST_MESSAGE_TYPES in src/core/panelMessages.js
+  // (classic inject cannot import that ES module; tests/panelMessages.test.js enforces parity).
+  const HOST_MESSAGE_TYPES = new Set([
+    "prism-close",
+    "prism-drag-start",
+    "prism-drag-move",
+    "prism-drag-end",
+    "prism-resize"
+  ]);
+
   window.addEventListener("message", (event) => {
+    // Only the Prism popup iframe may drive host chrome (close / drag / resize).
+    // Filters match shouldAcceptHostPanelMessage() in panelMessages.js.
     if (event.source !== iframe.contentWindow) return;
+    if (event.origin !== extensionOrigin) return;
     const { type, height, dx, dy } = event.data || {};
+    if (!HOST_MESSAGE_TYPES.has(type)) return;
     if (type === "prism-close") {
       window.__prismClearFontHighlight?.();
       window.__prismClearAssetHighlight?.();
@@ -180,7 +196,7 @@
       // measured correctly once the frame is no longer taller than the UI.
       if (Math.abs(px - prevHeight) > 1) {
         requestAnimationFrame(() => {
-          iframe.contentWindow?.postMessage({ type: "prism-request-resize" }, "*");
+          iframe.contentWindow?.postMessage({ type: "prism-request-resize" }, extensionOrigin);
         });
       }
 

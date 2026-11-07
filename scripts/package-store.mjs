@@ -14,6 +14,10 @@ import {
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  assertServiceWorkerImportsInRoot,
+  assertServiceWorkerImportsInZip
+} from "./check-service-worker-imports.mjs";
 
 const PROD_NAME = "Prism - Website Color & Font Extractor";
 
@@ -91,7 +95,24 @@ function createZip() {
 
 assertStoreReady();
 stageFiles();
+
+try {
+  const graph = assertServiceWorkerImportsInRoot(stagingDir);
+  console.log(
+    `package-store: service-worker import graph OK (${graph.files.length} modules)`
+  );
+} catch (error) {
+  fail(error?.message || String(error));
+}
+
 createZip();
+
+try {
+  assertServiceWorkerImportsInZip(stagingDir, zipPath);
+  console.log("package-store: store ZIP contains all service-worker modules");
+} catch (error) {
+  fail(error?.message || String(error));
+}
 
 console.log(`\nStore package ready:\n  ${zipPath}\n`);
 console.log("Upload this ZIP in the Chrome Web Store developer dashboard.");

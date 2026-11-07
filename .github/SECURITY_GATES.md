@@ -55,11 +55,28 @@ To add a capability intentionally:
 
 Removing an approved capability also requires updating the allowlist in the same change so CI stays consistent.
 
+## Runtime message validation
+
+The service worker accepts only known message types from this extension
+(`sender.id === chrome.runtime.id`), validates required payload fields, and
+restricts `prism-download-asset` URLs to `http:`, `https:`, `data:`, and `blob:`.
+Logic lives in `src/background/messageHandler.js` and is covered by
+`tests/messageHandler.test.js` and `tests/serviceWorkerListener.test.js`.
+These checks complement — and do not replace — the manifest permission allowlist above.
+
+## Service-worker module packaging
+
+`npm run package:store` (and `npm run security:sw-imports`) resolve every static
+relative import from `manifest.background.service_worker` and fail if a target
+is missing from the package tree or the store ZIP. This keeps
+`messageHandler.js` and any future SW modules from being omitted accidentally.
+
 ## Local commands
 
 ```bash
 npm test
 npm run package:store
+npm run security:sw-imports
 node scripts/security/check-extension-permissions.mjs
 node scripts/security/check-dependency-security.mjs
 ```

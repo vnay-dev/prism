@@ -2,8 +2,8 @@ import { rgbToLab, deltaE, rgbToHsl, isNeutralHsl, isPureBlackOrWhite } from "./
 import {
   brandConfidence,
   classifyClusterUtility,
+  computeWeightedUtilityRatio,
   designSystemScore,
-  isUtilitySource,
   weightForSource
 } from "./sourceClassification.js";
 import {
@@ -204,15 +204,7 @@ function newCluster(sample, lab, isNeutral) {
 }
 
 function finalizeCluster(cluster, maxima, sectionCount) {
-  const utilityWeighted = Object.entries(cluster.sourceCounts).reduce(
-    (sum, [src, n]) => sum + (isUtilitySource(src) ? n * weightForSource(src) : 0),
-    0
-  );
-  const totalSourceWeight = Object.entries(cluster.sourceCounts).reduce(
-    (sum, [src, n]) => sum + n * weightForSource(src),
-    0
-  );
-  cluster.utilityRatio = totalSourceWeight > 0 ? utilityWeighted / totalSourceWeight : 0;
+  cluster.utilityRatio = computeWeightedUtilityRatio(cluster.sourceCounts);
   cluster.brandConfidence = brandConfidence(cluster, sectionCount);
   cluster.isUtility = classifyClusterUtility(cluster, sectionCount);
   cluster.designSystemScore = designSystemScore(cluster, maxima, sectionCount);

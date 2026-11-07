@@ -10,6 +10,7 @@
     "benchmark:lock": "node benchmark/generate-lockfile.mjs",
     "package:store": "node scripts/package-store.mjs",
     "security:permissions": "node scripts/security/check-extension-permissions.mjs",
-    "security:deps": "node scripts/security/check-dependency-security.mjs"
+    "security:deps": "node scripts/security/check-dependency-security.mjs",
+    "security:sw-imports": "node scripts/check-service-worker-imports.mjs"
   }
 }

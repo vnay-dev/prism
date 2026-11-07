@@ -40,6 +40,11 @@ export function shouldKeepSample(sample) {
   return false;
 }
 
+/**
+ * @deprecated Unused by the live curation path. SVG paint is capped at extraction
+ * and excluded from foundation area via `contributesFoundationArea`; this helper
+ * is not applied as a cluster filter. Do not wire in without a product decision.
+ */
 export function isSvgAreaSample(sample) {
   const type = sample.areaSourceType || "";
   return type === "SVG Fill" || type === "SVG Stroke";

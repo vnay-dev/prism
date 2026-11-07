@@ -1,7 +1,7 @@
 # Privacy Policy — Prism
 
-**Last updated:** October 25, 2026  
-**Version:** 0.6.0
+**Last updated:** November 7, 2026  
+**Version:** 0.6.4
 
 Prism (“the extension”) is a Chrome extension that helps designers extract color palettes, font families, images, and icons from web pages. This policy describes what the extension accesses and how that information is handled.
 
@@ -23,7 +23,7 @@ When you use Prism on a website tab, the extension may access:
 - **Page metadata** used for export labels (document title, hostname, and optional `og:site_name` / `application-name` meta tags).
 - **Tab information** for the active tab you invoked the extension on (such as URL and title), only to run extraction and label exports.
 
-Prism does not read passwords, form fields, cookies, browsing history beyond the tab you are working with, or data from other tabs in the background.
+Prism does not read passwords, form fields, or browsing history beyond the tab you are working with, or data from other tabs in the background. Prism does **not** read or extract the browser cookie store directly. When you start a multi-asset ZIP or batch download, the extension may fetch those asset URLs **in the page context** with `credentials: "include"` so same-origin or cookie-gated assets the page could already load can be packaged — that uses the site’s existing cookies for those requests only, under your download action (see [Network connections](#network-connections)).
 
 ## What the extension does not do
 
@@ -36,6 +36,8 @@ Prism does not read passwords, form fields, cookies, browsing history beyond the
 **Extraction** does not require network access and does not upload page content.
 
 The extension **UI** loads typography from Google Fonts (`fonts.googleapis.com` and `fonts.gstatic.com`) when you open the panel. Those requests are made by Chrome to Google’s servers and may include standard connection metadata (such as IP address) as described in [Google’s Privacy Policy](https://policies.google.com/privacy). No page content is sent as part of font loading.
+
+**User-initiated downloads:** single-asset saves use Chrome’s `downloads` API with the asset URL you selected (`http:`, `https:`, `data:`, or `blob:`). Multi-select ZIP / batch packaging may additionally `fetch` those URLs inside the active tab (page context) with the site’s cookies included where the browser would normally send them for that page. Prism does not upload those bytes to Prism servers; they are assembled locally for your download.
 
 ## Permissions (why they exist)
 
@@ -50,7 +52,18 @@ The extension **UI** loads typography from Google Fonts (`fonts.googleapis.com` 
 
 ## Data retention
 
-Extracted palettes, fonts, gradients, and asset lists exist only in extension memory (and your clipboard or Downloads folder when you copy or download) until you close the panel or save elsewhere. Prism does not store results on remote servers.
+Extracted palettes, fonts, gradients, and asset lists are kept **only on your device** (never on Prism remote servers). Clipboard and Downloads copies you create remain under your control.
+
+**In-session reuse:** after an extraction, the extension service worker may hold a generation cache for that page key (`tabId` + URL) in an **in-memory `Map`**. Closing the in-page panel does **not** by itself clear that cache, so reopening Prism on the same tab/URL can reuse results without immediately re-scanning while that service worker stays alive. Chrome may terminate the service worker when idle; there is **no fixed retention timer** enforced by Prism.
+
+**Invalidation / clearing (verified behaviour):**
+
+- Navigating to a different URL (or tab) uses a different page key; prior keys are not automatically deleted from the map but are no longer selected for that session UI.
+- **Reset** in the panel clears that mode’s results in the UI and persists the updated cache snapshot for the current page key (it does not wipe unrelated keys).
+- The worker’s `prism-generation-cache-clear` message can delete one page key when invoked; the panel close path does not currently send it.
+- Full process / worker restart drops the in-memory map.
+
+Prism does not write generation results to `chrome.storage` or disk beyond what you explicitly download or copy.
 
 ## Children
 

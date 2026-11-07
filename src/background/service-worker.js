@@ -1,3 +1,6 @@
+import { createDownloadUrlFromBytes } from "../core/downloadBytesUrl.js";
+import { createRuntimeMessageListener, validateDownloadUrl } from "./messageHandler.js";
+
 const RESTRICTED_PREFIXES = ["chrome://", "chrome-extension://", "edge://", "about:", "devtools://"];
 
 const IS_DEV_BUILD = /\bdev\b/i.test(chrome.runtime.getManifest().name);
@@ -52,21 +55,9 @@ function downloadAssetViaApi(url, filename) {
       return;
     }
 
-    if (!url || typeof url !== "string") {
-      resolve({ ok: false, error: "invalid-url" });
-      return;
-    }
-
-    let parsed;
-    try {
-      parsed = new URL(url);
-    } catch {
-      resolve({ ok: false, error: "invalid-url" });
-      return;
-    }
-
-    if (!["http:", "https:", "data:", "blob:"].includes(parsed.protocol)) {
-      resolve({ ok: false, error: "invalid-url" });
+    const urlCheck = validateDownloadUrl(url);
+    if (!urlCheck.ok) {
+      resolve({ ok: false, error: urlCheck.error });
       return;
     }
 
@@ -107,85 +98,15 @@ function downloadAssetViaApi(url, filename) {
   });
 }
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  const type = message?.type;
-  if (type === "prism-generation-cache-get") {
-    sendResponse({ cache: generationCacheByPage.get(message.pageKey) || null });
-    return false;
-  }
-  if (type === "prism-generation-cache-set") {
-    if (message.pageKey && message.cache) {
-      generationCacheByPage.set(message.pageKey, message.cache);
-    }
-    sendResponse({ ok: true });
-    return false;
-  }
-  if (type === "prism-generation-cache-clear") {
-    if (message.pageKey) generationCacheByPage.delete(message.pageKey);
-    sendResponse({ ok: true });
-    return false;
-  }
-  if (type === "prism-color-view-get") {
-    sendResponse({ mode: colorViewModeByExtension.value || "roles" });
-    return false;
-  }
-  if (type === "prism-color-view-set") {
-    if (message.mode) colorViewModeByExtension.value = message.mode;
-    sendResponse({ ok: true });
-    return false;
-  }
-  if (type === "prism-download-asset") {
-    downloadAssetViaApi(message.url, message.filename).then(sendResponse);
-    return true;
-  }
-  if (type === "prism-download-bytes") {
-    const bytes = message.bytes;
-    if (!bytes) {
-      sendResponse({ ok: false, error: "invalid-url" });
-      return false;
-    }
-    const mime =
-      typeof message.mime === "string" && message.mime.includes("/")
-        ? message.mime
-        : "application/octet-stream";
-    let objectUrl = null;
-    try {
-      const blob = new Blob([bytes], { type: mime });
-      objectUrl = URL.createObjectURL(blob);
-    } catch {
-      sendResponse({ ok: false, error: "download-failed" });
-      return false;
-    }
-    downloadAssetViaApi(objectUrl, message.filename)
-      .then((result) => {
-        if (objectUrl) {
-          try {
-            URL.revokeObjectURL(objectUrl);
-          } catch {
-            /* ignore */
-          }
-        }
-        sendResponse(result);
-      })
-      .catch(() => {
-        if (objectUrl) {
-          try {
-            URL.revokeObjectURL(objectUrl);
-          } catch {
-            /* ignore */
-          }
-        }
-        sendResponse({ ok: false, error: "download-failed" });
-      });
-    return true;
-  }
-  // Popup listens for lightbox close to clear tile selection; acknowledge here.
-  if (type === "prism-image-lightbox-closed") {
-    sendResponse({ ok: true });
-    return false;
-  }
-  return false;
-});
+const messageDeps = {
+  generationCache: generationCacheByPage,
+  colorViewMode: colorViewModeByExtension,
+  downloadAsset: downloadAssetViaApi,
+  createObjectUrlFromBytes: createDownloadUrlFromBytes,
+  runtimeId: chrome.runtime.id
+};
+
+chrome.runtime.onMessage.addListener(createRuntimeMessageListener(messageDeps));
 
 chrome.action.onClicked.addListener(async (tab) => {
   if (!tab?.id) return;
