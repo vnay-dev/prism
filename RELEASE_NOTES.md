@@ -1,5 +1,32 @@
 # Release notes
 
+## 0.6.5 — Reliable icon ZIPs & safer panel messaging
+
+**Date:** November 7, 2026
+
+### Fixed
+
+- **Icon ZIP downloads** — multi-select icon packs save correctly again instead of failing in the background download step.
+- **Inline icons** — icons drawn on the page (not only linked SVG files) can be included when you download.
+
+### Improved
+
+- **Download button wording** — Icons still say ZIP when packing; Images no longer promise a ZIP when those files usually can’t be packed that way.
+
+### Technical
+
+- Service-worker downloads and panel open/drag/resize/close messages are validated more tightly (trusted sender / origin allowlists).
+- Store packaging verifies the service-worker import graph inside the ZIP without relying on Linux `tar` reading ZIP files.
+
+### Package
+
+```bash
+npm run package:store
+# → dist/prism-0.6.5.zip
+```
+
+---
+
 ## 0.6.4 — Store listing copy
 
 **Date:** November 4, 2026

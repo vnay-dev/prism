@@ -4,6 +4,7 @@
  * Multi-select packs files into a ZIP when bytes can be read in-page.
  */
 
+import { uint8ToBase64 } from "../core/downloadBytesUrl.js";
 import { buildZipStore } from "../core/zipStore.js";
 
 export function buildDownloadFilename(asset) {
@@ -73,14 +74,21 @@ export async function downloadAsset(asset) {
 }
 
 async function downloadZipBytes(bytes, filename) {
-  const buffer =
+  const u8 =
     bytes instanceof Uint8Array
-      ? bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
-      : bytes;
+      ? bytes
+      : bytes instanceof ArrayBuffer
+        ? new Uint8Array(bytes)
+        : null;
+  if (!u8) {
+    return { ok: false, error: "download-failed" };
+  }
 
+  // Send base64 — MV3 SW messaging can turn ArrayBuffer into a useless Object,
+  // and URL.createObjectURL is often missing in the service worker.
   const response = await sendDownloadMessage({
     type: "prism-download-bytes",
-    bytes: buffer,
+    base64: uint8ToBase64(u8),
     filename,
     mime: "application/zip"
   });

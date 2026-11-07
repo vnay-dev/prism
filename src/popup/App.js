@@ -33,6 +33,7 @@ import {
   isAssetMode
 } from "./generationController.js";
 import { usageRoleLabels } from "../core/usageRoles.js";
+import { shouldAcceptChildPanelMessage } from "../core/panelMessages.js";
 import { getTargetTab } from "./tabs.js";
 import {
   ERROR_MESSAGES,
@@ -479,6 +480,8 @@ if (isEmbedded) {
     reportHeight();
   });
   window.addEventListener("message", (event) => {
+    // Host page is cross-origin; trust the embedding parent window only.
+    if (!shouldAcceptChildPanelMessage(event, window.parent)) return;
     if (event.data?.type === "prism-request-resize") {
       lastReportedHeight = 0;
       reportHeight();
@@ -628,9 +631,17 @@ function setReloadButtonChrome({ action = "reload", count = 0 } = {}) {
   reloadBtn.dataset.action = downloading ? "download-selected" : "reload";
   if (iconEl) iconEl.textContent = downloading ? "download" : "refresh";
   if (reloadBtnLabel) {
-    reloadBtnLabel.textContent = downloading ? `Download zip (${count})` : "Reload";
+    // Icons are usually packable (inline/same-origin SVG). Images often can't be
+    // read for a ZIP (CDN CORS), so don't promise "zip" there.
+    const downloadLabel =
+      activeMode === "icons" ? `Download zip (${count})` : `Download (${count})`;
+    reloadBtnLabel.textContent = downloading ? downloadLabel : "Reload";
   }
-  const label = downloading ? `Download ${count} selected as zip` : "Reload";
+  const label = downloading
+    ? activeMode === "icons"
+      ? `Download ${count} selected as zip`
+      : `Download ${count} selected`
+    : "Reload";
   reloadBtn.title = label;
   reloadBtn.setAttribute("aria-label", label);
 }
