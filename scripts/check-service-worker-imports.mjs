@@ -7,7 +7,6 @@
  *   node scripts/check-service-worker-imports.mjs --root dist/store
  *   node scripts/check-service-worker-imports.mjs --zip dist/prism-X.Y.Z.zip
  */
-import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, normalize, relative, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -102,8 +101,12 @@ export function assertServiceWorkerImportsInRoot(packageRoot, options = {}) {
   return { entryRel, files };
 }
 
+const ZIP_EOCD_SIG = 0x06054b50;
+const ZIP_CEN_SIG = 0x02014b50;
+
 /**
- * List paths inside a zip (forward slashes). Uses `tar -tf` (available on Win10+).
+ * List paths inside a zip via the central directory (no tar/unzip).
+ * GNU tar on Linux CI cannot read ZIP; Windows bsdtar can — parse in Node instead.
  * @param {string} zipPath
  * @returns {string[]}
  */
@@ -111,16 +114,47 @@ export function listZipEntries(zipPath) {
   if (!existsSync(zipPath)) {
     throw new Error(`check-service-worker-imports: zip not found: ${zipPath}`);
   }
-  const result = spawnSync("tar", ["-tf", zipPath], { encoding: "utf8" });
-  if (result.status !== 0) {
+
+  const buf = readFileSync(zipPath);
+  if (buf.length < 22) {
+    throw new Error(`check-service-worker-imports: zip too small: ${zipPath}`);
+  }
+
+  // EOCD is at the end; comment can make it up to 64KiB + 22 bytes earlier.
+  const maxScan = Math.min(buf.length, 0xffff + 22);
+  let eocd = -1;
+  for (let i = buf.length - 22; i >= buf.length - maxScan; i -= 1) {
+    if (buf.readUInt32LE(i) === ZIP_EOCD_SIG) {
+      eocd = i;
+      break;
+    }
+  }
+  if (eocd < 0) {
     throw new Error(
-      `check-service-worker-imports: tar -tf failed for ${zipPath}: ${result.stderr || result.error}`
+      `check-service-worker-imports: zip end-of-central-directory not found: ${zipPath}`
     );
   }
-  return result.stdout
-    .split(/\r?\n/)
-    .map((line) => line.trim().replace(/\\/g, "/").replace(/^\.\//, ""))
-    .filter(Boolean);
+
+  const entryCount = buf.readUInt16LE(eocd + 10);
+  let offset = buf.readUInt32LE(eocd + 16);
+  const names = [];
+
+  for (let n = 0; n < entryCount; n += 1) {
+    if (offset + 46 > buf.length || buf.readUInt32LE(offset) !== ZIP_CEN_SIG) {
+      throw new Error(
+        `check-service-worker-imports: corrupt zip central directory at ${offset}: ${zipPath}`
+      );
+    }
+    const nameLen = buf.readUInt16LE(offset + 28);
+    const extraLen = buf.readUInt16LE(offset + 30);
+    const commentLen = buf.readUInt16LE(offset + 32);
+    const nameStart = offset + 46;
+    const name = buf.subarray(nameStart, nameStart + nameLen).toString("utf8");
+    names.push(name.replace(/\\/g, "/").replace(/^\.\//, ""));
+    offset = nameStart + nameLen + extraLen + commentLen;
+  }
+
+  return names.filter(Boolean);
 }
 
 /**
