@@ -1,7 +1,7 @@
 # Privacy Policy — Prism
 
 **Last updated:** November 7, 2026  
-**Version:** 0.6.4
+**Version:** 0.6.5
 
 Prism (“the extension”) is a Chrome extension that helps designers extract color palettes, font families, images, and icons from web pages. This policy describes what the extension accesses and how that information is handled.
 
