@@ -19,8 +19,8 @@ export const BENTO_GAP = 6;
 export const STACK_GAP = 4;
 export const STACK_BAR_HEIGHT = 44;
 export const TILE_RADIUS = 6;
-export const TILE_SIZE = 48;
-/** How many 48px tiles fit across the content width (with BENTO_GAP). */
+export const TILE_SIZE = 60; // 48px × 1.25
+/** How many tiles fit across the content width (with BENTO_GAP). */
 export const TILE_COLUMNS = Math.floor(
   (CONTENT_WIDTH + BENTO_GAP) / (TILE_SIZE + BENTO_GAP)
 );
@@ -79,7 +79,7 @@ export function isDarkSwatch(hex) {
   return luminance < 0.28;
 }
 
-/** Pack tiles into rows of up to TILE_COLUMNS (fits 48px tiles across the panel). */
+/** Pack tiles into rows of up to TILE_COLUMNS (fits TILE_SIZE tiles across the panel). */
 export function rowPattern(count) {
   if (count <= 0) return [];
   const rows = [];

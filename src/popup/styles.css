@@ -593,9 +593,47 @@ button:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 14px;
+  margin-bottom: 26px; /* was 14px; +12px under title / view toggle */
   flex-shrink: 0;
   width: 100%;
+}
+
+/* Matches export PNG header: 24px logo, 8px gap, 20px/600 title. */
+.site-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 auto;
+  margin-right: 4px;
+}
+
+.site-brand[hidden] {
+  display: none;
+}
+
+.site-brand-logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 12px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #eef1f6;
+}
+
+.site-brand-logo[hidden] {
+  display: none;
+}
+
+.site-brand-title {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #1c1c1c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .results-toolbar .status {
@@ -619,7 +657,7 @@ button:focus-visible {
   flex-shrink: 0;
   isolation: isolate;
   margin-left: auto;
-  margin-right: 12px;
+  margin-right: 2px;
 }
 
 .view-toggle-indicator {
@@ -816,10 +854,10 @@ button:focus-visible {
 }
 
 .swatch {
-  flex: 0 0 48px;
+  flex: 0 0 60px;
   aspect-ratio: 1;
-  width: 48px;
-  height: 48px;
+  width: 60px;
+  height: 60px;
   border-radius: 6px;
   overflow: visible;
   border: 0;
