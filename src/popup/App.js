@@ -53,13 +53,15 @@ import {
 } from "./errors.js";
 import {
   renderAssetGrid,
+  flashAssetCopyFeedback,
   flashAssetDownloadFeedback,
   syncAssetCardSelectionState
 } from "./assetsView.js";
 import {
   downloadAsset,
   downloadAssetsAsZip,
-  downloadErrorMessage
+  downloadErrorMessage,
+  resolveSvgMarkup
 } from "./downloadAsset.js";
 
 const appEl = document.querySelector(".app");
@@ -2088,6 +2090,21 @@ async function handleAssetDownload(asset, button) {
   return result;
 }
 
+async function handleIconCopySvg(asset, card) {
+  try {
+    const tab = await getTargetTab();
+    const markup = await resolveSvgMarkup(asset, tab?.id);
+    if (!markup) {
+      flashAssetCopyFeedback(card, false);
+      return;
+    }
+    await navigator.clipboard.writeText(markup);
+    flashAssetCopyFeedback(card, true);
+  } catch {
+    flashAssetCopyFeedback(card, false);
+  }
+}
+
 async function handleImagePreview(asset) {
   if (!asset?.url) return;
   try {
@@ -2130,6 +2147,7 @@ function renderIcons(icons) {
   pruneSelectedAssetIds(icons);
   renderAssetGrid(iconsEl, icons, {
     onDownload: handleAssetDownload,
+    onCopySvg: handleIconCopySvg,
     onToggleSelect: toggleAssetMultiSelect,
     selectedAssetIds
   });

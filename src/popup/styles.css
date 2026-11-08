@@ -1769,7 +1769,8 @@ button:focus-visible {
 
 .asset-card.is-loading .asset-preview,
 .asset-card.is-loading .asset-info,
-.asset-card.is-loading .asset-actions {
+.asset-card.is-loading .asset-actions,
+.asset-card.is-loading .asset-copy-tooltip {
   visibility: hidden;
 }
 
@@ -1952,41 +1953,6 @@ div.asset-preview {
   color: var(--prism-ink);
 }
 
-.asset-actions {
-  position: absolute;
-  top: calc(var(--asset-pad) + 4px);
-  right: calc(var(--asset-pad) + 4px);
-  z-index: 3;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.asset-inspect-btn {
-  width: 26px;
-  height: 26px;
-  margin: 0;
-  padding: 0;
-  border: 1px solid #dfe3ea;
-  border-radius: 6px;
-  background: var(--prism-surface);
-  color: #5c6478;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
-}
-
-.asset-inspect-btn:hover {
-  color: var(--prism-ink);
-  background: #eef1f7;
-}
-
-.asset-inspect-btn .material-symbols-outlined {
-  font-size: 16px;
-}
-
 .asset-download-btn {
   position: static;
   flex: 0 0 auto;
@@ -1994,11 +1960,10 @@ div.asset-preview {
   height: 32px;
   margin: 0;
   padding: 0;
-  border: 0;
+  border: 1px solid #dfe3ea;
   border-radius: 6px;
   background: var(--prism-surface);
   color: #5c6478;
-  border: 1px solid #dfe3ea;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -2021,3 +1986,77 @@ div.asset-preview {
 .asset-download-btn .material-symbols-outlined {
   font-size: 18px;
 }
+
+/* Palette-style pinned tip after copying SVG code (over the preview). */
+.asset-copy-tooltip {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--asset-pad) + 12px);
+  transform: translateX(-50%) translateY(4px) scale(0.96);
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgba(18, 20, 28, 0.92);
+  color: #f5f7fb;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  z-index: 6;
+  transition:
+    opacity 240ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0ms linear 240ms;
+}
+
+.asset-copy-tooltip.is-pinned {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0) scale(1);
+  transition:
+    opacity 260ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0ms linear 0ms;
+}
+
+.asset-actions {
+  position: absolute;
+  top: calc(var(--asset-pad) + 4px);
+  right: calc(var(--asset-pad) + 4px);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.asset-copy-btn,
+.asset-inspect-btn {
+  width: 26px;
+  height: 26px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid #dfe3ea;
+  border-radius: 6px;
+  background: var(--prism-surface);
+  color: #5c6478;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.asset-copy-btn:hover,
+.asset-inspect-btn:hover {
+  color: var(--prism-ink);
+  background: #eef1f7;
+}
+
+.asset-copy-btn .material-symbols-outlined,
+.asset-inspect-btn .material-symbols-outlined {
+  font-size: 16px;
+}
+

@@ -84,7 +84,9 @@ export function dataUrlToSvgMarkup(url) {
     const meta = url.slice(5, comma);
     const payload = url.slice(comma + 1);
     if (/;base64/i.test(meta)) {
-      return null;
+      const binary = atob(payload);
+      const bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
+      return new TextDecoder().decode(bytes);
     }
     return decodeURIComponent(payload);
   } catch {
