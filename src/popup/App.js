@@ -6,7 +6,11 @@ import { curateIcons } from "../core/curateIcons.js";
 import { curateGradients } from "../core/curateGradients.js";
 import { shadeColor, hexToRgb, rgbToHsl, rgbToHex, isPureBlackOrWhite } from "../core/colorLab.js";
 import { openColorPicker, closeColorPicker } from "./colorPicker.js";
-import { copyPaletteImage, readPageMetaFromTab } from "./exportPaletteImage.js";
+import {
+  copyPaletteImage,
+  formatExportTitle,
+  readPageMetaFromTab
+} from "./exportPaletteImage.js";
 import { buildRoleSections, isLightSwatch, isDarkSwatch } from "./paletteLayout.js";
 import {
   COLOR_VIEW_MODES,
@@ -49,13 +53,15 @@ import {
 } from "./errors.js";
 import {
   renderAssetGrid,
+  flashAssetCopyFeedback,
   flashAssetDownloadFeedback,
   syncAssetCardSelectionState
 } from "./assetsView.js";
 import {
   downloadAsset,
   downloadAssetsAsZip,
-  downloadErrorMessage
+  downloadErrorMessage,
+  resolveSvgMarkup
 } from "./downloadAsset.js";
 
 const appEl = document.querySelector(".app");
@@ -96,6 +102,9 @@ const tabImagesBtn = document.getElementById("tabImages");
 const tabIconsBtn = document.getElementById("tabIcons");
 const tabIndicatorEl = document.getElementById("tabIndicator");
 const colorViewToggleEl = document.getElementById("colorViewToggle");
+const siteBrandEl = document.getElementById("siteBrand");
+const siteBrandLogoEl = document.getElementById("siteBrandLogo");
+const siteBrandTitleEl = document.getElementById("siteBrandTitle");
 const panelHeaderEl = document.querySelector(".panel-header");
 const dragHandleEl = document.getElementById("dragHandle");
 const colorPickerStageEl = document.getElementById("colorPickerStage");
@@ -1457,23 +1466,46 @@ function resetSwatchTooltipShift(tip) {
   tip.style.setProperty("--swatch-tooltip-shift", "0px");
 }
 
-/** Nudge centered tooltips so long CSS labels stay inside the swatches scrollport. */
+/**
+ * Nudge centered tooltips so labels stay inside the swatches scrollport.
+ * Uses tile center + tip width (not getBoundingClientRect of a transitioning
+ * transform) so "Copied!" still clamps correctly after a hex hover shift.
+ */
 function clampSwatchTooltip(tile) {
   const tip = tile?.querySelector(".swatch-tooltip");
   if (!tip || !swatchesEl || tile.classList.contains("swatch-stack")) return false;
-  resetSwatchTooltipShift(tip);
-  // Measure the centered position, then shift just enough to clear the edges.
+  const tipWidth = tip.offsetWidth;
+  if (!tipWidth) return false;
   const port = swatchesEl.getBoundingClientRect();
-  const tipRect = tip.getBoundingClientRect();
-  if (!tipRect.width) return false;
+  const tileRect = tile.getBoundingClientRect();
+  const centerX = tileRect.left + tileRect.width / 2;
+  const naturalLeft = centerX - tipWidth / 2;
+  const naturalRight = centerX + tipWidth / 2;
   let shift = 0;
-  if (tipRect.left < port.left + TOOLTIP_EDGE_PAD) {
-    shift = port.left + TOOLTIP_EDGE_PAD - tipRect.left;
-  } else if (tipRect.right > port.right - TOOLTIP_EDGE_PAD) {
-    shift = port.right - TOOLTIP_EDGE_PAD - tipRect.right;
+  if (naturalLeft < port.left + TOOLTIP_EDGE_PAD) {
+    shift = port.left + TOOLTIP_EDGE_PAD - naturalLeft;
+  } else if (naturalRight > port.right - TOOLTIP_EDGE_PAD) {
+    shift = port.right - TOOLTIP_EDGE_PAD - naturalRight;
   }
   tip.style.setProperty("--swatch-tooltip-shift", `${shift}px`);
   return true;
+}
+
+/** Paint favicon + site title in the color results toolbar (matches export PNG). */
+function updateSiteBrand() {
+  if (!siteBrandEl || !siteBrandTitleEl) return;
+  const title = formatExportTitle(exportPageMeta);
+  siteBrandTitleEl.textContent = title;
+  if (siteBrandLogoEl) {
+    if (exportPageMeta.iconDataUrl) {
+      siteBrandLogoEl.hidden = false;
+      siteBrandLogoEl.src = exportPageMeta.iconDataUrl;
+    } else {
+      siteBrandLogoEl.hidden = true;
+      siteBrandLogoEl.removeAttribute("src");
+    }
+  }
+  siteBrandEl.hidden = !title;
 }
 
 function restoreTileTooltipLabel(tip) {
@@ -1491,17 +1523,20 @@ function restoreTileTooltipLabel(tip) {
 function flashTileCopyFeedback(tile, success) {
   const tip = tile?.querySelector(".swatch-tooltip");
   if (!tip) return;
+  // Lock the hex/CSS clamp first. Reclamping after the shorter "Copied!" label
+  // would reduce left-edge shift and make the tip jump sideways.
+  clampSwatchTooltip(tile);
+  const lockedShift = tip.style.getPropertyValue("--swatch-tooltip-shift") || "0px";
   tip.textContent = success ? "Copied!" : "Copy failed";
   tip.classList.add("is-pinned");
+  tip.style.setProperty("--swatch-tooltip-shift", lockedShift);
   clearTimeout(tile._copyFeedbackTimer);
   tile._copyFeedbackTimer = window.setTimeout(() => {
     restoreTileTooltipLabel(tip);
     tip.classList.remove("is-pinned");
-    // Recenter after the shorter "Copied!" label is restored to the long CSS.
     requestAnimationFrame(() => clampSwatchTooltip(tile));
     tile._copyFeedbackTimer = null;
   }, 1200);
-  requestAnimationFrame(() => clampSwatchTooltip(tile));
 }
 
 async function copySwatchHex(swatch, tile) {
@@ -2055,6 +2090,21 @@ async function handleAssetDownload(asset, button) {
   return result;
 }
 
+async function handleIconCopySvg(asset, card) {
+  try {
+    const tab = await getTargetTab();
+    const markup = await resolveSvgMarkup(asset, tab?.id);
+    if (!markup) {
+      flashAssetCopyFeedback(card, false);
+      return;
+    }
+    await navigator.clipboard.writeText(markup);
+    flashAssetCopyFeedback(card, true);
+  } catch {
+    flashAssetCopyFeedback(card, false);
+  }
+}
+
 async function handleImagePreview(asset) {
   if (!asset?.url) return;
   try {
@@ -2097,6 +2147,7 @@ function renderIcons(icons) {
   pruneSelectedAssetIds(icons);
   renderAssetGrid(iconsEl, icons, {
     onDownload: handleAssetDownload,
+    onCopySvg: handleIconCopySvg,
     onToggleSelect: toggleAssetMultiSelect,
     selectedAssetIds
   });
@@ -2389,6 +2440,7 @@ async function runInitialFullScan(tab) {
 
   const scanPromise = (async () => {
     exportPageMeta = await readPageMetaFromTab(tab);
+    updateSiteBrand();
 
     let pageResult = null;
     let pageError = null;
@@ -2462,6 +2514,7 @@ async function scanPage(tab, requestId) {
   const config = modeConfig();
   const tabUrl = tab.url || "";
   exportPageMeta = await readPageMetaFromTab(tab);
+  updateSiteBrand();
 
   let timedOut = false;
   const scriptPromise = runExtractionOnTab(tab).catch((error) => {
@@ -2795,6 +2848,8 @@ async function bootstrapPopup() {
         hasResultsForMode("images") ||
         hasResultsForMode("icons");
       if (hasAnything) {
+        exportPageMeta = await readPageMetaFromTab(tab);
+        updateSiteBrand();
         revealBestAvailableMode();
         return;
       }

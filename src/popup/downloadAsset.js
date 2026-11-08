@@ -5,6 +5,8 @@
  */
 
 import { uint8ToBase64 } from "../core/downloadBytesUrl.js";
+import { dataUrlToSvgMarkup, ensureSvgXmlns } from "../core/inlineSvg.js";
+import { isLikelySvgUrl } from "../core/assetUtils.js";
 import { buildZipStore } from "../core/zipStore.js";
 
 export function buildDownloadFilename(asset) {
@@ -273,4 +275,35 @@ export function downloadErrorMessage(code) {
     default:
       return "Download failed. Try opening the asset URL in a new tab.";
   }
+}
+
+/** True when an icon tile can offer “copy SVG code”. */
+export function assetSupportsSvgCopy(asset) {
+  if (!asset?.url) return false;
+  if (asset.format === "svg") return true;
+  return isLikelySvgUrl(asset.url);
+}
+
+/**
+ * Resolve SVG source for clipboard copy: decode data URLs first, otherwise
+ * fetch bytes (same path as ZIP packing) and decode as UTF-8 text.
+ */
+export async function resolveSvgMarkup(asset, tabId) {
+  if (!assetSupportsSvgCopy(asset)) return null;
+
+  const fromData = dataUrlToSvgMarkup(asset.url);
+  if (fromData) return ensureSvgXmlns(fromData.trim()) || null;
+
+  const bytesById = await fetchAssetBytes([asset], tabId);
+  const bytes = bytesById.get(asset.id);
+  if (!bytes?.byteLength) return null;
+
+  let text = "";
+  try {
+    text = new TextDecoder("utf-8", { fatal: false }).decode(bytes).trim();
+  } catch {
+    return null;
+  }
+  if (!/^<\?xml[\s\S]*?<svg\b/i.test(text) && !/^<svg\b/i.test(text)) return null;
+  return ensureSvgXmlns(text) || null;
 }

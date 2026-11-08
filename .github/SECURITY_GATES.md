@@ -40,7 +40,7 @@ Current Manifest V3 permissions are intentional and minimal:
 |------------|--------------------|
 | `activeTab` | Access only the tab where the user invoked Prism |
 | `scripting` | Inject a short-lived sampler on that tab |
-| `clipboardWrite` | Copy palette PNG / font names on user action |
+| `clipboardWrite` | Copy palette PNG / font names / SVG icon markup on user action |
 | `downloads` | Save original image/icon URLs the user explicitly downloads (no host permissions) |
 | `web_accessible_resources` → `<all_urls>` | Load the in-page panel iframe on sites the user visits (not ambient host access) |
 

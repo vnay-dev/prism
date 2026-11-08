@@ -7,12 +7,14 @@ import {
   formatFileSize,
   formatLabel
 } from "../core/assetUtils.js";
+import { assetSupportsSvgCopy } from "./downloadAsset.js";
 
 export function renderAssetGrid(
   container,
   assets,
   {
     onDownload,
+    onCopySvg,
     onPreview,
     onToggleSelect,
     selectedAssetIds = null
@@ -35,6 +37,7 @@ export function renderAssetGrid(
     container.appendChild(
       createAssetCard(asset, {
         onDownload,
+        onCopySvg,
         onPreview,
         onToggleSelect,
         checked: selected.has(asset.id)
@@ -89,6 +92,7 @@ export function createAssetCard(
   asset,
   {
     onDownload,
+    onCopySvg,
     onPreview,
     onToggleSelect,
     checked = false
@@ -189,12 +193,28 @@ export function createAssetCard(
   });
 
   info.append(meta, downloadBtn);
-  card.append(cardSkeleton, preview, info);
 
+  const copyTip = document.createElement("div");
+  copyTip.className = "asset-copy-tooltip";
+  copyTip.setAttribute("role", "tooltip");
+  copyTip.textContent = "Copied!";
+
+  card.append(cardSkeleton, preview, info, copyTip);
+
+  const cornerActions = [];
+  if (typeof onCopySvg === "function" && assetSupportsSvgCopy(asset)) {
+    cornerActions.push(
+      createIconButton({
+        className: "asset-copy-btn",
+        icon: "content_copy",
+        title: "Copy SVG code",
+        ariaLabel: `Copy SVG code for ${asset.filename || "icon"}`,
+        onClick: () => onCopySvg(asset, card)
+      })
+    );
+  }
   if (onPreview) {
-    const actions = document.createElement("div");
-    actions.className = "asset-actions";
-    actions.appendChild(
+    cornerActions.push(
       createIconButton({
         className: "asset-inspect-btn",
         icon: "visibility",
@@ -203,6 +223,11 @@ export function createAssetCard(
         onClick: () => onPreview(asset)
       })
     );
+  }
+  if (cornerActions.length) {
+    const actions = document.createElement("div");
+    actions.className = "asset-actions";
+    actions.append(...cornerActions);
     card.appendChild(actions);
   }
 
@@ -222,4 +247,18 @@ export function flashAssetDownloadFeedback(button, success) {
     button.classList.remove("is-success", "is-error");
     button._downloadFeedbackTimer = null;
   }, 2000);
+}
+
+/** Pin a "Copied!" / "Copy failed" tip on the icon tile (palette-style). */
+export function flashAssetCopyFeedback(card, success) {
+  const tip = card?.querySelector?.(".asset-copy-tooltip");
+  if (!tip) return;
+  tip.textContent = success ? "Copied!" : "Copy failed";
+  tip.classList.add("is-pinned");
+  clearTimeout(card._copyFeedbackTimer);
+  card._copyFeedbackTimer = window.setTimeout(() => {
+    tip.classList.remove("is-pinned");
+    tip.textContent = "Copied!";
+    card._copyFeedbackTimer = null;
+  }, 1200);
 }

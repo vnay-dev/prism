@@ -2,7 +2,7 @@
 
 Chrome extension that extracts a curated **8-color design palette**, **font families**, **images**, and **icons** from any live web page. Colors are sampled from rendered DOM styles (backgrounds, text, borders, icons, gradients), clustered, scored, and assigned semantic roles. Typography is sampled from computed `font-family` and `font-weight` on visible text, then ranked and filtered so you get the families and weights that actually matter on the page.
 
-**Version:** 0.6.5 · [Release notes](./RELEASE_NOTES.md)
+**Version:** 0.7.0 · [Release notes](./RELEASE_NOTES.md)
 
 ## Features
 
@@ -12,6 +12,7 @@ Chrome extension that extracts a curated **8-color design palette**, **font fami
 - **Usage labels** — Background, Text, and Accent based on how colors are painted on the page
 - **Gradients** — curated CSS gradients from the page, with one-click CSS copy
 - Bento-style 8-swatch preview with hex tooltips and per-swatch edit (in-place picker with HEX / RGB / HSL)
+- **Site brand** — page logo and name shown beside the Organized / Stack toggle
 - **Organized** and **Stack** layout toggle — stack orders colors as a hue progression
 - **Shuffle** alternate palettes from the same page using real sampled site colors
 - Palettes keep a **primary** hero swatch whenever the page has usable color
@@ -28,6 +29,7 @@ Chrome extension that extracts a curated **8-color design palette**, **font fami
 ### Images & icons
 - **Images** and **Icons** tabs curate prominent page assets (including inline SVG icons)
 - Lightbox preview; download a single asset or multi-select as a ZIP
+- **Copy SVG code** on Icons — one-click clipboard copy of SVG markup from the tile
 
 ### Panel
 - Four tabs: **Color palette**, **Font families**, **Images**, and **Icons** — separate extract and reset flows per tab
@@ -46,9 +48,9 @@ Chrome extension that extracts a curated **8-color design palette**, **font fami
 1. Open a tab with the site you want to sample.
 2. Click the **Prism** extension icon — the panel opens immediately and extraction starts automatically on supported pages, with a short loader while colors, fonts, images, and icons are scanned together. Only the tabs with actual results appear once it finishes, even on long or content-heavy pages.
 3. Choose a tab:
-   - **Color palette** — review usage-labeled swatches and gradients, switch **Organized** / **Stack**, optionally **Shuffle** or edit swatches, then **Copy to clipboard** to paste the PNG into Figma or another tool.
+   - **Color palette** — review usage-labeled swatches and gradients (with the site brand above), switch **Organized** / **Stack**, optionally **Shuffle** or edit swatches, then **Copy to clipboard** to paste the PNG into Figma or another tool.
    - **Font families** — use the copy icon on any card to copy that family name, or select a card to highlight that font's text on the page.
-   - **Images** / **Icons** — preview assets in a lightbox; download one file or multi-select as a ZIP.
+   - **Images** / **Icons** — preview assets in a lightbox; download one file or multi-select as a ZIP. On Icons, use the top-right copy control to paste SVG code.
 4. Use **Reset** if you want to return to manual Extract.
 
 See [RELEASE_NOTES.md](./RELEASE_NOTES.md) for version history and store publish notes.
@@ -61,7 +63,7 @@ Build an upload-ready ZIP (runtime files only — no tests, scripts, or `node_mo
 npm run package:store
 ```
 
-Output: `dist/prism-0.6.5.zip`
+Output: `dist/prism-0.7.0.zip`
 
 **Privacy policy:** See [PRIVACY.md](./PRIVACY.md). Host it at a public URL (for example GitHub Pages on this repo) and paste that link into the Chrome Web Store listing.
 
@@ -69,7 +71,7 @@ Output: `dist/prism-0.6.5.zip`
 
 - `activeTab` — Access only the tab where the user clicked the Prism icon, to sample styles when they click Extract.
 - `scripting` — Inject a short-lived, self-contained script on that tab to read rendered styles and asset URLs.
-- `clipboardWrite` — Copy the palette PNG or individual font family names when the user clicks copy.
+- `clipboardWrite` — Copy the palette PNG, individual font family names, or SVG icon markup when the user clicks copy.
 - `downloads` — Save an image/icon or a ZIP of the user’s multi-select to Downloads when they click Download.
 - `web_accessible_resources` — Load the extension panel UI inside an iframe on the page the user is viewing; does not grant background access to all sites.
 
@@ -126,7 +128,7 @@ scripts/               Store packaging, version sync, git hooks
 |------------|-----|
 | `activeTab` | Access the tab you invoked Prism on, only while you use it |
 | `scripting` | Inject the extraction script into that tab |
-| `clipboardWrite` | Copy the palette PNG or font family names |
+| `clipboardWrite` | Copy the palette PNG, font family names, or SVG icon markup |
 | `downloads` | Save images/icons (or a ZIP) when you click Download |
 
 **Network:** Extraction does not use the network. The panel UI loads [Google Fonts](https://fonts.google.com/) (Google Sans and Material Symbols) from `fonts.googleapis.com` / `fonts.gstatic.com` when you open Prism; see [PRIVACY.md](./PRIVACY.md).
