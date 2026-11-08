@@ -1,7 +1,7 @@
 # Privacy Policy — Prism
 
-**Last updated:** November 7, 2026  
-**Version:** 0.6.5
+**Last updated:** November 8, 2026  
+**Version:** 0.7.0
 
 Prism (“the extension”) is a Chrome extension that helps designers extract color palettes, font families, images, and icons from web pages. This policy describes what the extension accesses and how that information is handled.
 
@@ -45,7 +45,7 @@ The extension **UI** loads typography from Google Fonts (`fonts.googleapis.com` 
 |------------|---------|
 | `activeTab` | Access the tab you clicked the extension icon on, only while you use Prism |
 | `scripting` | Inject a short-lived script to sample colors, gradients, typography, and asset URLs on that tab |
-| `clipboardWrite` | Copy the generated palette PNG or a font family name when you click copy |
+| `clipboardWrite` | Copy the generated palette PNG, a font family name, or SVG icon markup when you click copy |
 | `downloads` | Save an image/icon (or a zip of your multi-select) to your Downloads folder when you click Download |
 
 `web_accessible_resources` allows the in-page panel (iframe) to load the extension UI on sites you visit. It does not grant ongoing access to all sites without your action.

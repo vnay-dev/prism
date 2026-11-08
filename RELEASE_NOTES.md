@@ -1,5 +1,28 @@
 # Release notes
 
+## 0.7.0 — Site brand on palette & copy SVG icons
+
+**Date:** November 8, 2026
+
+### New
+
+- **Site brand on Colors** — the page’s logo and name appear next to the Organized / Stack toggle so the palette is clearly tied to the site you’re sampling.
+- **Copy SVG code** — Icons tiles show a copy control in the top-right corner; click to put the SVG markup on your clipboard and paste it into Figma, code, or design tools, with the same “Copied!” tip as color swatches.
+
+### Improved
+
+- **Larger color tiles** — Organized grid swatches are a bit bigger, with more space under the brand row and view toggle.
+- **Left-edge copy tips** — “Copied!” on left-column color tiles stays fully visible and no longer jumps sideways after you click.
+
+### Package
+
+```bash
+npm run package:store
+# → dist/prism-0.7.0.zip
+```
+
+---
+
 ## 0.6.5 — Reliable icon ZIPs & safer panel messaging
 
 **Date:** November 7, 2026
