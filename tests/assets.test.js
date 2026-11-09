@@ -59,6 +59,29 @@ test("direct image and SVG URL detection", () => {
   assert.equal(guessFormatFromUrl("data:image/png;base64,abc"), "png");
 });
 
+test("guessFormatFromUrl reads Apple CDN fmt query params", () => {
+  const appleJpeg =
+    "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/store-card?wid=800&fmt=jpeg&qlt=90";
+  const applePngAlpha =
+    "https://store.storeimages.cdn-apple.com/1/as-images.apple.com/is/product?wid=400&fmt=png-alpha";
+
+  assert.equal(guessFormatFromUrl(appleJpeg), "jpeg");
+  assert.equal(guessFormatFromUrl(applePngAlpha), "png");
+  assert.equal(isSupportedDirectAssetUrl(appleJpeg), true);
+  assert.equal(isSupportedDirectAssetUrl(applePngAlpha), true);
+  assert.equal(isLikelySvgUrl(appleJpeg), false);
+
+  const curated = curateImages(
+    [
+      { url: appleJpeg, width: 800, height: 1000, source: "img" },
+      { url: applePngAlpha, width: 400, height: 400, source: "img" }
+    ],
+    { baseHref: "https://www.apple.com/in/store" }
+  );
+  assert.equal(curated.length, 2);
+  assert.equal(curated[0].format || guessFormatFromUrl(curated[0].normalizedUrl), "jpeg");
+});
+
 test("filenameFromUrl preserves original basename and extension", () => {
   assert.equal(
     filenameFromUrl("https://cdn.example.com/assets/brand-mark.png?w=800"),
