@@ -109,11 +109,19 @@
   function fontMatchesTarget(computedFamily, targetKey) {
     const stack = parseFontStack(computedFamily);
     if (!stack.length) return false;
-    // Match only the rendered font, not fallbacks further down the stack, and
-    // not a leading brand font the browser can't actually display. A
-    // declaration like `Inter, "Inter Fallback Arial", Arial` renders as Inter,
-    // so it must not also match a separate "Arial" selection — that would
-    // highlight the same text for two different families.
+
+    // Walk the stack the same way extraction resolves a family: the first
+    // available non-generic wins. Also treat an unavailable selected face as a
+    // match when nothing earlier in the stack is available — extraction falls
+    // back to that declared primary (e.g. Apple's "Helvetica Neue" on Windows)
+    // even though the browser paints a later fallback.
+    for (const family of stack) {
+      if (GENERIC_FAMILIES.has(family.toLowerCase())) continue;
+      const key = normalizeFontKey(family);
+      if (isFontAvailable(family)) return key === targetKey;
+      if (key === targetKey) return true;
+    }
+
     return normalizeFontKey(resolveRenderedFont(stack)) === targetKey;
   }
 
@@ -409,6 +417,9 @@
       return { family: "", count: 0, highlighted: 0 };
     }
 
+    // Drop stale availability guesses so we re-check against currently loaded
+    // webfonts before matching (same faces extraction waited on).
+    fontAvailabilityCache.clear();
     return startHighlightSession(family, targetKey);
   };
 
