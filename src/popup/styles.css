@@ -1641,12 +1641,12 @@ button:focus-visible {
 }
 
 .font-copy-btn:hover {
-  background: #eef1f7;
+  background: #fefefe;
   color: var(--prism-ink);
 }
 
 .font-copy-btn:active {
-  background: #e2e6ef;
+  background: #fefefe;
   transform: scale(0.96);
 }
 

@@ -88,6 +88,22 @@ export function formatFromMime(mime) {
   return MIME_TO_FORMAT[key] || null;
 }
 
+/**
+ * Normalize CDN format query values such as Apple's `fmt=png-alpha` / `fmt=jpeg`.
+ */
+export function formatFromCdnParam(value) {
+  if (value == null) return null;
+  const raw = String(value).trim();
+  if (!raw) return null;
+  const fromExt = formatFromExtension(raw);
+  if (fromExt) return fromExt;
+  const fromMime = formatFromMime(raw) || formatFromMime(`image/${raw.toLowerCase()}`);
+  if (fromMime) return fromMime;
+  // Apple Media Services uses compound tokens like "png-alpha".
+  const base = raw.toLowerCase().replace(/[^a-z0-9].*$/, "");
+  return formatFromExtension(base);
+}
+
 export function guessFormatFromUrl(url) {
   if (!url) return null;
   if (url.startsWith("data:")) {
@@ -98,10 +114,9 @@ export function guessFormatFromUrl(url) {
     const parsed = new URL(url);
     const fromPath = formatFromExtension(extensionFromPath(parsed.pathname));
     if (fromPath) return fromPath;
-    // Some CDNs put the format in a query param.
-    for (const key of ["format", "fm", "ext", "type"]) {
-      const value = parsed.searchParams.get(key);
-      const fmt = formatFromExtension(value) || formatFromMime(value);
+    // Some CDNs put the format in a query param (Apple uses `fmt`).
+    for (const key of ["format", "fm", "fmt", "ext", "type"]) {
+      const fmt = formatFromCdnParam(parsed.searchParams.get(key));
       if (fmt) return fmt;
     }
   } catch {

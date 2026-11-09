@@ -2,12 +2,14 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { curateFonts } from "../src/core/curateFonts.js";
 import {
+  fontStackMatchesTarget,
   formatFontWeight,
   formatWeightsList,
   isEmojiFont,
   normalizeFontKey,
   parseFontStack,
   resolvePrimaryFont,
+  resolveRenderedFont,
   snapFontWeight
 } from "../src/core/fontUtils.js";
 
@@ -15,6 +17,27 @@ test("parseFontStack extracts quoted and unquoted families", () => {
   const stack = parseFontStack('"Inter", system-ui, -apple-system, sans-serif');
   assert.deepEqual(stack, ["Inter", "system-ui", "-apple-system", "sans-serif"]);
   assert.equal(resolvePrimaryFont(stack), "Inter");
+});
+
+test("fontStackMatchesTarget prefers first available face and avoids mid-stack false matches", () => {
+  const available = new Set(["arial", "inter"]);
+  const isAvailable = (family) => available.has(normalizeFontKey(family));
+
+  const interStack = parseFontStack('Inter, Arial, sans-serif');
+  assert.equal(fontStackMatchesTarget(interStack, "inter", isAvailable), true);
+  assert.equal(fontStackMatchesTarget(interStack, "arial", isAvailable), false);
+
+  // Unavailable primary with no later installed face → extraction primary-fallback.
+  const hnOnly = parseFontStack('"Helvetica Neue", Helvetica, sans-serif');
+  assert.equal(resolveRenderedFont(hnOnly, isAvailable), "Helvetica Neue");
+  assert.equal(fontStackMatchesTarget(hnOnly, "helvetica neue", isAvailable), true);
+
+  // Mid-stack unavailable face must not match when a later face paints.
+  const appleStack = parseFontStack('"SF Pro Text", "Helvetica Neue", Arial, sans-serif');
+  assert.equal(resolveRenderedFont(appleStack, isAvailable), "Arial");
+  assert.equal(fontStackMatchesTarget(appleStack, "helvetica neue", isAvailable), false);
+  assert.equal(fontStackMatchesTarget(appleStack, "arial", isAvailable), true);
+  assert.equal(fontStackMatchesTarget(appleStack, "sf pro text", isAvailable), false);
 });
 
 test("snapFontWeight normalizes observed weights to standard CSS weights", () => {

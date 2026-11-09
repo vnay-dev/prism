@@ -106,14 +106,34 @@
     return (family || "").trim().toLowerCase();
   }
 
+  // Keep in sync with fontStackMatchesTarget in src/core/fontUtils.js.
   function fontMatchesTarget(computedFamily, targetKey) {
     const stack = parseFontStack(computedFamily);
     if (!stack.length) return false;
-    // Match only the rendered font, not fallbacks further down the stack, and
-    // not a leading brand font the browser can't actually display. A
-    // declaration like `Inter, "Inter Fallback Arial", Arial` renders as Inter,
-    // so it must not also match a separate "Arial" selection — that would
-    // highlight the same text for two different families.
+
+    // First available non-generic wins. An unavailable selected face matches
+    // only when no later non-generic face is available (extraction's primary
+    // fallback, e.g. Helvetica Neue with nothing installed after it). Do not
+    // match mid-stack unavailable names when a later face paints.
+    for (let i = 0; i < stack.length; i += 1) {
+      const family = stack[i];
+      if (GENERIC_FAMILIES.has(family.toLowerCase())) continue;
+      const key = normalizeFontKey(family);
+      if (isFontAvailable(family)) return key === targetKey;
+      if (key === targetKey) {
+        let laterAvailable = false;
+        for (let j = i + 1; j < stack.length; j += 1) {
+          const later = stack[j];
+          if (GENERIC_FAMILIES.has(later.toLowerCase())) continue;
+          if (isFontAvailable(later)) {
+            laterAvailable = true;
+            break;
+          }
+        }
+        if (!laterAvailable) return true;
+      }
+    }
+
     return normalizeFontKey(resolveRenderedFont(stack)) === targetKey;
   }
 
@@ -409,6 +429,9 @@
       return { family: "", count: 0, highlighted: 0 };
     }
 
+    // Drop stale availability guesses so we re-check against currently loaded
+    // webfonts before matching (same faces extraction waited on).
+    fontAvailabilityCache.clear();
     return startHighlightSession(family, targetKey);
   };
 
