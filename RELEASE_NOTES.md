@@ -1,5 +1,24 @@
 # Release notes
 
+## 0.7.1 — Apple Store images & font highlight fixes
+
+**Date:** November 9, 2026
+
+### Fixed
+
+- **Apple Store / CDN images** — product images that use format query params (no file extension in the URL) show up on the Images tab again instead of being dropped.
+- **Font card highlight** — clicking a declared face like Helvetica Neue highlights matching text on the page instead of showing “No visible text found.”
+- **Font copy button** — hover and press use a near-white background instead of grey.
+
+### Package
+
+```bash
+npm run package:store
+# → dist/prism-0.7.1.zip
+```
+
+---
+
 ## 0.7.0 — Site brand on palette & copy SVG icons
 
 **Date:** November 8, 2026
