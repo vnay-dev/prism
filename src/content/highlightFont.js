@@ -106,20 +106,32 @@
     return (family || "").trim().toLowerCase();
   }
 
+  // Keep in sync with fontStackMatchesTarget in src/core/fontUtils.js.
   function fontMatchesTarget(computedFamily, targetKey) {
     const stack = parseFontStack(computedFamily);
     if (!stack.length) return false;
 
-    // Walk the stack the same way extraction resolves a family: the first
-    // available non-generic wins. Also treat an unavailable selected face as a
-    // match when nothing earlier in the stack is available — extraction falls
-    // back to that declared primary (e.g. Apple's "Helvetica Neue" on Windows)
-    // even though the browser paints a later fallback.
-    for (const family of stack) {
+    // First available non-generic wins. An unavailable selected face matches
+    // only when no later non-generic face is available (extraction's primary
+    // fallback, e.g. Helvetica Neue with nothing installed after it). Do not
+    // match mid-stack unavailable names when a later face paints.
+    for (let i = 0; i < stack.length; i += 1) {
+      const family = stack[i];
       if (GENERIC_FAMILIES.has(family.toLowerCase())) continue;
       const key = normalizeFontKey(family);
       if (isFontAvailable(family)) return key === targetKey;
-      if (key === targetKey) return true;
+      if (key === targetKey) {
+        let laterAvailable = false;
+        for (let j = i + 1; j < stack.length; j += 1) {
+          const later = stack[j];
+          if (GENERIC_FAMILIES.has(later.toLowerCase())) continue;
+          if (isFontAvailable(later)) {
+            laterAvailable = true;
+            break;
+          }
+        }
+        if (!laterAvailable) return true;
+      }
     }
 
     return normalizeFontKey(resolveRenderedFont(stack)) === targetKey;

@@ -4,12 +4,13 @@
  */
 window.__prismExtractPalette = async function extractPaletteInPage(options = {}) {
   const maxMillis = options.maxMillis || 6000;
-  const startedAt = performance.now();
   const colorCache = new Map();
 
   // Wait briefly for webfonts so canvas availability matches what the page is
   // actually painting (avoids reporting a later fallback like "Helvetica Neue"
   // while "SF Pro Text" is still loading, then failing to highlight it).
+  // Do this before starting the scan clock so the wait does not consume
+  // maxMillis budget reserved for DOM sampling.
   try {
     if (document.fonts?.ready) {
       await Promise.race([
@@ -20,6 +21,8 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
   } catch (_err) {
     /* fonts API unavailable — continue with canvas detection alone */
   }
+
+  const startedAt = performance.now();
 
   function parseHex(raw) {
     const value = raw.trim().toLowerCase();

@@ -61,6 +61,58 @@ export function resolvePrimaryFont(families) {
   return families[0];
 }
 
+/**
+ * Resolve which face extraction/highlight should treat as "the" family for a
+ * stack, given an availability predicate (canvas / fonts.check / test double).
+ */
+export function resolveRenderedFont(families, isFontAvailable) {
+  if (!Array.isArray(families) || !families.length) return "";
+  const available = typeof isFontAvailable === "function" ? isFontAvailable : () => true;
+  for (const family of families) {
+    if (isGenericFamily(family)) continue;
+    if (available(family)) return family;
+  }
+  return resolvePrimaryFont(families);
+}
+
+/**
+ * Whether a computed font stack should highlight for `targetKey`.
+ * Keep in sync with `fontMatchesTarget` in `src/content/highlightFont.js`
+ * (that file is injected standalone and cannot import this module).
+ *
+ * Matching rules:
+ * - First available non-generic face wins (same as resolveRenderedFont).
+ * - An unavailable selected face matches only when no later non-generic face
+ *   is available — extraction's primary-fallback case (e.g. Helvetica Neue
+ *   with no installed fallbacks). Mid-stack unavailable names must not match
+ *   when a later face paints.
+ */
+export function fontStackMatchesTarget(stack, targetKey, isFontAvailable) {
+  if (!Array.isArray(stack) || !stack.length || !targetKey) return false;
+  const available = typeof isFontAvailable === "function" ? isFontAvailable : () => true;
+
+  for (let i = 0; i < stack.length; i += 1) {
+    const family = stack[i];
+    if (isGenericFamily(family)) continue;
+    const key = normalizeFontKey(family);
+    if (available(family)) return key === targetKey;
+    if (key === targetKey) {
+      let laterAvailable = false;
+      for (let j = i + 1; j < stack.length; j += 1) {
+        const later = stack[j];
+        if (isGenericFamily(later)) continue;
+        if (available(later)) {
+          laterAvailable = true;
+          break;
+        }
+      }
+      if (!laterAvailable) return true;
+    }
+  }
+
+  return normalizeFontKey(resolveRenderedFont(stack, available)) === targetKey;
+}
+
 export function normalizeFontKey(family) {
   return (family || "").trim().toLowerCase();
 }
