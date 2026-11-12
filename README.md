@@ -132,7 +132,7 @@ scripts/               Store packaging, version sync, git hooks
 | `clipboardWrite` | Copy the palette PNG, font family names, or SVG icon markup |
 | `downloads` | Save images/icons (or a ZIP) when you click Download |
 
-**Network:** Extraction does not use the network. The panel UI loads [Google Fonts](https://fonts.google.com/) (Google Sans and Material Symbols) from `fonts.googleapis.com` / `fonts.gstatic.com` when you open Prism, and may load page-declared webfont files (or Google Fonts fallbacks) so Fonts-tab cards preview in the real typeface; see [PRIVACY.md](./PRIVACY.md).
+**Network:** Extraction does not use the network. The panel UI loads [Google Fonts](https://fonts.google.com/) (Google Sans and Material Symbols) from `fonts.googleapis.com` / `fonts.gstatic.com` when you open Prism, and may fetch page-declared webfont bytes in the page context (then register them locally) or fall back to Google Fonts so Fonts-tab cards preview in the real typeface; see [PRIVACY.md](./PRIVACY.md).
 
 No analytics. No remote palette or typography storage.
 

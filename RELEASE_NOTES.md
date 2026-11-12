@@ -18,8 +18,8 @@
 
 ### Technical
 
-- Extraction records page `@font-face` URLs; the popup loads those faces (with Google Fonts as fallback) so previews match the live page.
-- Extension page CSP allows `https:` / `data:` / `blob:` fonts so exact page faces can paint in the panel.
+- Extraction records page `@font-face` URLs; the popup registers those faces via in-page fetch + `FontFace(ArrayBuffer)` (Google Fonts as fallback) so previews match the live page without broadening extension `font-src` to arbitrary HTTPS hosts or adding `style-src 'unsafe-inline'`.
+- Preview font bytes are capped (~2 MB) so oversized `data:` harvests and page fetches cannot balloon the panel.
 
 ### Package
 

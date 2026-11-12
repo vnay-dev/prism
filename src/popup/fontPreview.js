@@ -2,16 +2,18 @@
  * Load webfonts into the extension popup so font-card samples paint the
  * detected face.
  *
- * 1) Prefer the page's exact @font-face URLs (CORS-enabled https fonts work
- *    from the extension iframe once font-src allows https:).
- * 2) Optionally fetch bytes in-page and register via FontFace(ArrayBuffer).
- * 3) Fall back to Google Fonts for common families.
+ * 1) Register page @font-face bytes via FontFace(ArrayBuffer) — fetched in
+ *    the page context (or decoded from a small data: URL). No CSS injection,
+ *    so extension CSP does not need 'unsafe-inline' or broad https: font-src.
+ * 2) Fall back to Google Fonts for common families.
  */
 
 import { isSystemFont, normalizeFontKey } from "../core/fontUtils.js";
 
+/** Max font file size for preview (ArrayBuffer / data: harvest). */
+export const MAX_FONT_PREVIEW_BYTES = 2 * 1024 * 1024;
+
 const requestedGoogleFamilies = new Set();
-const injectedPageFaceIds = new Set();
 const loadingKeys = new Map();
 
 function stylesheetId(family) {
@@ -98,6 +100,26 @@ function coversBasicLatin(unicodeRange) {
 }
 
 /**
+ * Approximate decoded byte length of a data: URL (base64 or raw).
+ * Used to skip oversized inlined fonts during harvest / preview.
+ */
+export function estimateDataUrlBytes(dataUrl) {
+  const raw = String(dataUrl || "");
+  const match = raw.match(/^data:[^;,]+(;charset=[^;,]+)?(;base64)?,(.*)$/i);
+  if (!match) return Infinity;
+  const payload = match[3] || "";
+  if (match[2]) {
+    const padding = payload.endsWith("==") ? 2 : payload.endsWith("=") ? 1 : 0;
+    return Math.max(0, Math.floor((payload.length * 3) / 4) - padding);
+  }
+  try {
+    return decodeURIComponent(payload).length;
+  } catch {
+    return payload.length;
+  }
+}
+
+/**
  * Pick the best page @font-face descriptor for a preview sample.
  */
 export function pickBestPageFontFace(pageFaces, family, targetWeight = 400) {
@@ -130,42 +152,25 @@ export function pickBestPageFontFace(pageFaces, family, targetWeight = 400) {
   return best;
 }
 
-function injectPageFaceRule(family, face) {
-  const id = `${stylesheetId(family)}-page-${String(face.weight || "400").replace(/\s+/g, "-")}`;
-  if (injectedPageFaceIds.has(id) || document.getElementById(id)) {
-    injectedPageFaceIds.add(id);
-    return;
-  }
-  const style = document.createElement("style");
-  style.id = id;
-  const weight = face.weight || "400";
-  const fontStyle = face.style || "normal";
-  // Exact page file — works when the host sends Access-Control-Allow-Origin
-  // (toonify does) and extension CSP allows https fonts.
-  style.textContent = `
-@font-face {
-  font-family: ${JSON.stringify(family)};
-  font-style: ${fontStyle};
-  font-weight: ${weight};
-  font-display: swap;
-  src: url(${JSON.stringify(face.url)}) format("woff2");
-}
-`;
-  document.head.appendChild(style);
-  injectedPageFaceIds.add(id);
-}
-
 function dataUrlToArrayBuffer(dataUrl) {
+  if (estimateDataUrlBytes(dataUrl) > MAX_FONT_PREVIEW_BYTES) return null;
   const match = String(dataUrl).match(/^data:[^;,]+(;charset=[^;,]+)?;base64,(.+)$/i);
   if (!match) return null;
   try {
     const binary = atob(match[2]);
+    if (binary.length > MAX_FONT_PREVIEW_BYTES) return null;
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
     return bytes.buffer;
   } catch {
     return null;
   }
+}
+
+function resolveFaceWeight(pageFace, weight) {
+  const { min, max } = parseFaceWeight(pageFace.weight);
+  if (weight >= min && weight <= max) return weight;
+  return Math.abs(weight - min) <= Math.abs(weight - max) ? min : max;
 }
 
 async function registerFontFace(family, source, weight, style = "normal") {
@@ -195,43 +200,23 @@ async function loadFromPageFace(family, weight, pageFace, fetchFontBytes) {
   if (!pageFace?.url) return false;
 
   try {
+    const faceWeight = resolveFaceWeight(pageFace, weight);
+    let source = null;
+
     if (/^data:/i.test(pageFace.url)) {
-      const buffer = dataUrlToArrayBuffer(pageFace.url);
-      if (!buffer) return false;
-      const { min, max } = parseFaceWeight(pageFace.weight);
-      const faceWeight =
-        weight >= min && weight <= max
-          ? weight
-          : Math.abs(weight - min) <= Math.abs(weight - max)
-            ? min
-            : max;
-      await registerFontFace(family, buffer, faceWeight, pageFace.style || "normal");
-      return isFontPreviewLoaded(family, weight) || isFontPreviewLoaded(family, faceWeight);
+      source = dataUrlToArrayBuffer(pageFace.url);
+    } else if (typeof fetchFontBytes === "function") {
+      source = await fetchFontBytes(pageFace.url);
     }
 
-    // Fast path: CSS @font-face pointing at the page's https URL.
-    injectPageFaceRule(family, pageFace);
-    if (await waitForFont(family, weight, family)) return true;
+    if (!source) return false;
+    if (source.byteLength > MAX_FONT_PREVIEW_BYTES) return false;
 
-    // Fallback: fetch bytes in the page and register as ArrayBuffer.
-    if (typeof fetchFontBytes === "function") {
-      const source = await fetchFontBytes(pageFace.url);
-      if (!source) return false;
-      const { min, max } = parseFaceWeight(pageFace.weight);
-      const faceWeight =
-        weight >= min && weight <= max
-          ? weight
-          : Math.abs(weight - min) <= Math.abs(weight - max)
-            ? min
-            : max;
-      await registerFontFace(family, source, faceWeight, pageFace.style || "normal");
-      return isFontPreviewLoaded(family, weight) || isFontPreviewLoaded(family, faceWeight);
-    }
+    await registerFontFace(family, source, faceWeight, pageFace.style || "normal");
+    return isFontPreviewLoaded(family, weight) || isFontPreviewLoaded(family, faceWeight);
   } catch {
     return false;
   }
-
-  return false;
 }
 
 async function loadFromGoogleFonts(family, weight) {

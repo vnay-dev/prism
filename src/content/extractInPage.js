@@ -674,6 +674,26 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
 
   // Harvest @font-face URLs for families we detected so the popup can load the
   // exact same files (self-hosted woff2 etc.) via in-page fetch + FontFace.
+  // Keep MAX_FONT_FACE_DATA_BYTES in sync with MAX_FONT_PREVIEW_BYTES in
+  // src/popup/fontPreview.js (classic inject cannot import that module).
+  const MAX_FONT_FACE_DATA_BYTES = 2 * 1024 * 1024;
+
+  function estimateDataUrlBytes(dataUrl) {
+    const raw = String(dataUrl || "");
+    const match = raw.match(/^data:[^;,]+(;charset=[^;,]+)?(;base64)?,(.*)$/i);
+    if (!match) return Infinity;
+    const payload = match[3] || "";
+    if (match[2]) {
+      const padding = payload.endsWith("==") ? 2 : payload.endsWith("=") ? 1 : 0;
+      return Math.max(0, Math.floor((payload.length * 3) / 4) - padding);
+    }
+    try {
+      return decodeURIComponent(payload).length;
+    } catch (_err) {
+      return payload.length;
+    }
+  }
+
   function collectFontFaces(neededFamilies) {
     const needed = new Set(
       [...(neededFamilies || [])]
@@ -720,12 +740,16 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
         for (const rawUrl of urls) {
           if (!rawUrl || rawUrl.startsWith("blob:")) continue;
           let url = rawUrl;
-          if (!/^data:/i.test(rawUrl)) {
+          if (/^data:/i.test(rawUrl)) {
+            // Skip huge inlined fonts so extraction payloads stay bounded.
+            if (estimateDataUrlBytes(rawUrl) > MAX_FONT_FACE_DATA_BYTES) continue;
+          } else {
             try {
               url = new URL(rawUrl, baseHref).href;
             } catch (_err) {
               continue;
             }
+            if (!/^https?:/i.test(url)) continue;
           }
           const key = `${family.toLowerCase()}|${weightRaw}|${fontStyle}|${url}|${unicodeRange}`;
           if (seen.has(key)) continue;

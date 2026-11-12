@@ -104,7 +104,7 @@ Color tab (Gradients section)  →  tiles · copy CSS
 | `src/core/inlineSvg.js` | Inline SVG normalization for icon download/preview |
 | `src/core/zipStore.js` | Client-side ZIP packing for multi-select downloads |
 | `src/core/fontUtils.js` | Font weight snapping, emoji/placeholder filtering, stack resolve/match |
-| `src/popup/fontPreview.js` | Load page `@font-face` (or Google Fonts fallback) so font cards paint the real typeface |
+| `src/popup/fontPreview.js` | Register page `@font-face` bytes via FontFace(ArrayBuffer) (or Google Fonts fallback) so font cards paint the real typeface |
 | `src/core/scoreAndCluster.js` | LAB clustering, palette curation, quality adjustment |
 | `src/core/assignRoles.js` | Semantic role assignment on curated colors |
 | `src/core/usageRoles.js` | Usage labels (Background / Text / Accent) from sample roles and pageShare |
@@ -218,7 +218,7 @@ Alongside color samples, each text-bearing element may emit a **font sample**:
 
 **CSS token hints:** `collectFontTokens()` reads `--font-family`, `--font-sans`, `--font-body`, etc. from `:root` to boost families declared in design tokens.
 
-**`@font-face` harvest:** `collectFontFaces()` records family / weight / `src` URLs for detected families so the popup can load the same files for card previews.
+**`@font-face` harvest:** `collectFontFaces()` records family / weight / `src` URLs for detected families so the popup can fetch those files in-page and register them with `FontFace(ArrayBuffer)` for card previews. Oversized `data:` URLs are skipped; only `http:`/`https:` network URLs are kept.
 
 **Metric placeholders:** faces ending in `Placeholder` or `Fallback` (Framer / next-style size-adjust stand-ins) are skipped when resolving and curating the design face.
 

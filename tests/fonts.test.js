@@ -14,7 +14,11 @@ import {
   resolveRenderedFont,
   snapFontWeight
 } from "../src/core/fontUtils.js";
-import { pickBestPageFontFace } from "../src/popup/fontPreview.js";
+import {
+  estimateDataUrlBytes,
+  MAX_FONT_PREVIEW_BYTES,
+  pickBestPageFontFace
+} from "../src/popup/fontPreview.js";
 
 test("previewFontWeight prefers Medium then the lightest weight", () => {
   assert.equal(previewFontWeight([400, 500, 700]), 500);
@@ -22,6 +26,14 @@ test("previewFontWeight prefers Medium then the lightest weight", () => {
   assert.equal(previewFontWeight([600, 700]), 600);
   assert.equal(previewFontWeight([]), 400);
   assert.equal(previewFontWeight(null, 700), 700);
+});
+
+test("estimateDataUrlBytes sizes base64 payloads and flags oversize vs preview cap", () => {
+  const tiny = "data:font/woff2;base64,AAAA";
+  assert.ok(estimateDataUrlBytes(tiny) < MAX_FONT_PREVIEW_BYTES);
+  // ~3MB of 'A' base64 → well over the 2MB preview cap.
+  const huge = `data:font/woff2;base64,${"A".repeat(4 * 1024 * 1024)}`;
+  assert.ok(estimateDataUrlBytes(huge) > MAX_FONT_PREVIEW_BYTES);
 });
 
 test("pickBestPageFontFace prefers latin woff2 at the closest weight", () => {

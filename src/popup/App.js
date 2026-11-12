@@ -39,7 +39,7 @@ import {
 import { usageRoleLabels } from "../core/usageRoles.js";
 import { shouldAcceptChildPanelMessage } from "../core/panelMessages.js";
 import { previewFontWeight } from "../core/fontUtils.js";
-import { ensureFontPreviewLoaded } from "./fontPreview.js";
+import { ensureFontPreviewLoaded, MAX_FONT_PREVIEW_BYTES } from "./fontPreview.js";
 import { getTargetTab } from "./tabs.js";
 import {
   ERROR_MESSAGES,
@@ -1935,17 +1935,23 @@ async function runHighlightScript(callback, args = []) {
 async function fetchPageFontBytes(url) {
   if (!url) return null;
   try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
+
     const tab = await getTargetTab();
     if (!tab?.id || isUnsupportedPageUrl(tab.url || "")) return null;
 
     const [injection] = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       world: "MAIN",
-      func: async (fontUrl) => {
+      func: async (fontUrl, maxBytes) => {
         try {
           const response = await fetch(fontUrl, { credentials: "omit", cache: "force-cache" });
           if (!response.ok) return null;
+          const declared = Number(response.headers.get("content-length"));
+          if (Number.isFinite(declared) && declared > maxBytes) return null;
           const buffer = await response.arrayBuffer();
+          if (buffer.byteLength > maxBytes) return null;
           const bytes = new Uint8Array(buffer);
           const chunk = 0x8000;
           let binary = "";
@@ -1957,12 +1963,16 @@ async function fetchPageFontBytes(url) {
           return null;
         }
       },
-      args: [url]
+      args: [url, MAX_FONT_PREVIEW_BYTES]
     });
 
     const base64 = injection?.result;
     if (!base64 || typeof base64 !== "string") return null;
+    // Reject oversized payloads before allocating the decoded buffer.
+    const approxBytes = Math.floor((base64.length * 3) / 4);
+    if (approxBytes > MAX_FONT_PREVIEW_BYTES) return null;
     const binary = atob(base64);
+    if (binary.length > MAX_FONT_PREVIEW_BYTES) return null;
     const out = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i += 1) out[i] = binary.charCodeAt(i);
     return out.buffer;
