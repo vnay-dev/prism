@@ -1,7 +1,7 @@
 # Privacy Policy — Prism
 
-**Last updated:** November 8, 2026  
-**Version:** 0.7.0
+**Last updated:** November 12, 2026  
+**Version:** 0.7.2
 
 Prism (“the extension”) is a Chrome extension that helps designers extract color palettes, font families, images, and icons from web pages. This policy describes what the extension accesses and how that information is handled.
 
@@ -35,7 +35,9 @@ Prism does not read passwords, form fields, or browsing history beyond the tab y
 
 **Extraction** does not require network access and does not upload page content.
 
-The extension **UI** loads typography from Google Fonts (`fonts.googleapis.com` and `fonts.gstatic.com`) when you open the panel. Those requests are made by Chrome to Google’s servers and may include standard connection metadata (such as IP address) as described in [Google’s Privacy Policy](https://policies.google.com/privacy). No page content is sent as part of font loading.
+The extension **UI** loads its own chrome typography from Google Fonts (`fonts.googleapis.com` and `fonts.gstatic.com`) when you open the panel. Those requests are made by Chrome to Google’s servers and may include standard connection metadata (such as IP address) as described in [Google’s Privacy Policy](https://policies.google.com/privacy).
+
+**Font card previews:** to show a detected family in its real typeface, the panel may fetch webfont files the page already declared (same-origin or CORS-enabled `http:`/`https:` URLs, or small `data:` fonts) **inside the page context** with `credentials: "omit"`, then register the bytes locally via the FontFace API — or fall back to Google Fonts for that family name. No page HTML or extracted palette data is uploaded to Prism servers as part of preview loading.
 
 **User-initiated downloads:** single-asset saves use Chrome’s `downloads` API with the asset URL you selected (`http:`, `https:`, `data:`, or `blob:`). Multi-select ZIP / batch packaging may additionally `fetch` those URLs inside the active tab (page context) with the site’s cookies included where the browser would normally send them for that page. Prism does not upload those bytes to Prism servers; they are assembled locally for your download.
 

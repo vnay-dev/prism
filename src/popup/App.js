@@ -38,6 +38,8 @@ import {
 } from "./generationController.js";
 import { usageRoleLabels } from "../core/usageRoles.js";
 import { shouldAcceptChildPanelMessage } from "../core/panelMessages.js";
+import { previewFontWeight } from "../core/fontUtils.js";
+import { ensureFontPreviewLoaded, MAX_FONT_PREVIEW_BYTES } from "./fontPreview.js";
 import { getTargetTab } from "./tabs.js";
 import {
   ERROR_MESSAGES,
@@ -360,26 +362,56 @@ function prefersReducedMotion() {
 }
 
 let lastReportedHeight = 0;
+const PANEL_MAX_HEIGHT = 720;
 
 function reportHeight() {
   const app = document.querySelector(".app");
   if (!app) return;
 
-  const height = measureAppHeight(app);
+  // Measure natural content height without a prior viewport cap applied.
+  app.classList.remove("is-height-capped");
+  app.style.removeProperty("height");
+  app.style.removeProperty("max-height");
+
+  const contentHeight = measureAppHeight(app);
   const html = document.documentElement;
   const body = document.body;
 
-  html.style.setProperty("height", `${height}px`, "important");
-  body.style.setProperty("height", `${height}px`, "important");
-  app.style.removeProperty("height");
-
-  if (Math.abs(height - lastReportedHeight) < 1) return;
-  lastReportedHeight = height;
-
   if (isEmbedded) {
-    window.parent.postMessage({ type: "prism-resize", height }, "*");
+    // Ask the host to size the iframe (host also clamps to the page viewport).
+    if (Math.abs(contentHeight - lastReportedHeight) >= 1) {
+      lastReportedHeight = contentHeight;
+      window.parent.postMessage({ type: "prism-resize", height: contentHeight }, "*");
+    }
+
+    // Fit into the iframe. When the host capped us shorter than content,
+    // scroll the body so footer CTAs stay visible on small laptops.
+    const frameH = Math.max(1, Math.floor(window.innerHeight));
+    const capped = contentHeight > frameH + 1;
+    const height = capped ? frameH : contentHeight;
+    html.style.setProperty("height", `${height}px`, "important");
+    body.style.setProperty("height", `${height}px`, "important");
+    if (capped) {
+      app.style.setProperty("height", `${height}px`, "important");
+      app.classList.add("is-height-capped");
+      html.style.setProperty("overflow", "hidden", "important");
+      body.style.setProperty("overflow", "hidden", "important");
+    } else {
+      app.style.removeProperty("height");
+      app.classList.remove("is-height-capped");
+      html.style.removeProperty("overflow");
+      body.style.removeProperty("overflow");
+    }
     return;
   }
+
+  html.style.setProperty("height", `${contentHeight}px`, "important");
+  body.style.setProperty("height", `${contentHeight}px`, "important");
+  app.style.removeProperty("height");
+  app.classList.remove("is-height-capped");
+
+  if (Math.abs(contentHeight - lastReportedHeight) < 1) return;
+  lastReportedHeight = contentHeight;
   resizeStandaloneWindow();
 }
 
@@ -405,9 +437,16 @@ function resizeStandaloneWindow() {
 
       chrome.windows.getCurrent((win) => {
         if (win?.id) {
+          const screenCap = Math.max(
+            180,
+            (window.screen?.availHeight || PANEL_MAX_HEIGHT) - 100
+          );
           chrome.windows.update(win.id, {
             width: Math.min(Math.max(windowWidth, 320), 480),
-            height: Math.min(Math.max(windowHeight, 180), 720)
+            height: Math.min(
+              Math.max(windowHeight, 180),
+              Math.min(PANEL_MAX_HEIGHT, screenCap)
+            )
           });
         }
       });
@@ -1892,6 +1931,56 @@ async function runHighlightScript(callback, args = []) {
   return injection?.result ?? null;
 }
 
+/** Fetch a same-origin (or CORS-ok) font file in the page, return ArrayBuffer for FontFace. */
+async function fetchPageFontBytes(url) {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return null;
+
+    const tab = await getTargetTab();
+    if (!tab?.id || isUnsupportedPageUrl(tab.url || "")) return null;
+
+    const [injection] = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      world: "MAIN",
+      func: async (fontUrl, maxBytes) => {
+        try {
+          const response = await fetch(fontUrl, { credentials: "omit", cache: "force-cache" });
+          if (!response.ok) return null;
+          const declared = Number(response.headers.get("content-length"));
+          if (Number.isFinite(declared) && declared > maxBytes) return null;
+          const buffer = await response.arrayBuffer();
+          if (buffer.byteLength > maxBytes) return null;
+          const bytes = new Uint8Array(buffer);
+          const chunk = 0x8000;
+          let binary = "";
+          for (let i = 0; i < bytes.length; i += chunk) {
+            binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+          }
+          return btoa(binary);
+        } catch {
+          return null;
+        }
+      },
+      args: [url, MAX_FONT_PREVIEW_BYTES]
+    });
+
+    const base64 = injection?.result;
+    if (!base64 || typeof base64 !== "string") return null;
+    // Reject oversized payloads before allocating the decoded buffer.
+    const approxBytes = Math.floor((base64.length * 3) / 4);
+    if (approxBytes > MAX_FONT_PREVIEW_BYTES) return null;
+    const binary = atob(base64);
+    if (binary.length > MAX_FONT_PREVIEW_BYTES) return null;
+    const out = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) out[i] = binary.charCodeAt(i);
+    return out.buffer;
+  } catch {
+    return null;
+  }
+}
+
 async function openImageLightboxOnPage(url) {
   const tab = await getTargetTab();
   if (!tab?.id || isUnsupportedPageUrl(tab.url || "") || !url) return false;
@@ -2069,6 +2158,20 @@ function renderFonts(fonts) {
     const sample = document.createElement("p");
     sample.className = "font-sample";
     sample.textContent = font.family;
+    // Preview in the detected face, not the extension UI font (Google Sans).
+    // Prefer Medium (500) when the page uses it; otherwise the lightest weight.
+    const familyCss = String(font.family).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    const sampleWeight = previewFontWeight(font.weights, font.weight);
+    sample.style.fontFamily = `"${familyCss}", sans-serif`;
+    sample.style.fontWeight = String(sampleWeight);
+    // Load the page's exact @font-face bytes into the popup (FontFace +
+    // ArrayBuffer). Falls back to Google Fonts when the page has no usable URL.
+    ensureFontPreviewLoaded(font.family, sampleWeight, {
+      pageFaces: lastRawExtraction?.fontFaces || [],
+      fetchFontBytes: fetchPageFontBytes
+    }).catch(() => {
+      /* preview fallback is best-effort */
+    });
 
     const weights = document.createElement("p");
     weights.className = "font-weights";

@@ -34,8 +34,18 @@
       .filter(Boolean);
   }
 
+  function isMetricPlaceholderFont(family) {
+    const key = (family || "").trim().toLowerCase();
+    return key.endsWith(" placeholder") || key.endsWith(" fallback");
+  }
+
   function resolvePrimaryFont(families) {
     if (!families.length) return "";
+    for (const family of families) {
+      if (GENERIC_FAMILIES.has(family.toLowerCase())) continue;
+      if (isMetricPlaceholderFont(family)) continue;
+      return family;
+    }
     for (const family of families) {
       if (!GENERIC_FAMILIES.has(family.toLowerCase())) return family;
     }
@@ -89,7 +99,8 @@
         break;
       }
     }
-    fontAvailabilityCache.set(key, available);
+    // Only cache positives: a font still loading now may be available later.
+    if (available) fontAvailabilityCache.set(key, true);
     return available;
   }
 
@@ -97,6 +108,7 @@
     if (!families.length) return "";
     for (const family of families) {
       if (GENERIC_FAMILIES.has(family.toLowerCase())) continue;
+      if (isMetricPlaceholderFont(family)) continue;
       if (isFontAvailable(family)) return family;
     }
     return resolvePrimaryFont(families);
@@ -111,13 +123,13 @@
     const stack = parseFontStack(computedFamily);
     if (!stack.length) return false;
 
-    // First available non-generic wins. An unavailable selected face matches
-    // only when no later non-generic face is available (extraction's primary
-    // fallback, e.g. Helvetica Neue with nothing installed after it). Do not
-    // match mid-stack unavailable names when a later face paints.
+    // First available design face wins. Metric placeholders never count.
+    // An unavailable selected face matches only when no later design face
+    // is available (extraction's primary-fallback case).
     for (let i = 0; i < stack.length; i += 1) {
       const family = stack[i];
       if (GENERIC_FAMILIES.has(family.toLowerCase())) continue;
+      if (isMetricPlaceholderFont(family)) continue;
       const key = normalizeFontKey(family);
       if (isFontAvailable(family)) return key === targetKey;
       if (key === targetKey) {
@@ -125,6 +137,7 @@
         for (let j = i + 1; j < stack.length; j += 1) {
           const later = stack[j];
           if (GENERIC_FAMILIES.has(later.toLowerCase())) continue;
+          if (isMetricPlaceholderFont(later)) continue;
           if (isFontAvailable(later)) {
             laterAvailable = true;
             break;

@@ -99,8 +99,18 @@
   // On the first drag we switch to explicit `left`/`top` coordinates so the
   // user can move it anywhere and keep their extraction results visible.
   const EDGE_GAP = 8;
+  const PANEL_INSET = 12; // matches --prism-panel-inset
+  const PANEL_MAX_HEIGHT = 720;
   let dragLeft = null;
   let dragTop = null;
+
+  /** Keep the panel inside the laptop viewport so footer CTAs stay reachable. */
+  function maxPanelHeight() {
+    return Math.min(
+      PANEL_MAX_HEIGHT,
+      Math.max(180, window.innerHeight - PANEL_INSET * 2)
+    );
+  }
 
   function clampToViewport(left, top) {
     const width = shell.offsetWidth || 380;
@@ -184,9 +194,8 @@
       return;
     }
     if (type === "prism-resize" && typeof height === "number") {
-      // Hug content: always adopt the popup's measured height (shrinks when
-      // dynamic tab/view content gets shorter).
-      const px = Math.min(Math.max(Math.ceil(height), 1), 720);
+      // Hug content, but never exceed the visible viewport on small laptops.
+      const px = Math.min(Math.max(Math.ceil(height), 1), maxPanelHeight());
       const nextHeight = `${px}px`;
       const prevHeight = parseInt(iframe.style.height, 10) || 0;
       hasSized = true;
@@ -204,5 +213,14 @@
       // grow off the bottom of the screen.
       requestAnimationFrame(applyDragPosition);
     }
+  });
+
+  window.addEventListener("resize", () => {
+    if (!hasSized) return;
+    const current = parseInt(iframe.style.height, 10) || 0;
+    const max = maxPanelHeight();
+    if (current > max) iframe.style.height = `${max}px`;
+    iframe.contentWindow?.postMessage({ type: "prism-request-resize" }, extensionOrigin);
+    requestAnimationFrame(applyDragPosition);
   });
 })();

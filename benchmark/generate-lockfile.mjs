@@ -21,7 +21,7 @@ const lockfile = {
   version: BENCHMARK_VERSION,
   frozenAt: new Date().toISOString(),
   description:
-    "Frozen palette extraction baseline. Regenerate only when intentionally accepting benchmark changes.",
+    "Frozen palette + font extraction baseline. Regenerate only when intentionally accepting benchmark changes.",
   extractionsSource: "benchmark/extractions/",
   sites,
   averages: {

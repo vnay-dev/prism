@@ -6,12 +6,60 @@ import {
   formatFontWeight,
   formatWeightsList,
   isEmojiFont,
+  isMetricPlaceholderFont,
   normalizeFontKey,
   parseFontStack,
+  previewFontWeight,
   resolvePrimaryFont,
   resolveRenderedFont,
   snapFontWeight
 } from "../src/core/fontUtils.js";
+import {
+  estimateDataUrlBytes,
+  MAX_FONT_PREVIEW_BYTES,
+  pickBestPageFontFace
+} from "../src/popup/fontPreview.js";
+
+test("previewFontWeight prefers Medium then the lightest weight", () => {
+  assert.equal(previewFontWeight([400, 500, 700]), 500);
+  assert.equal(previewFontWeight([300, 400, 700]), 300);
+  assert.equal(previewFontWeight([600, 700]), 600);
+  assert.equal(previewFontWeight([]), 400);
+  assert.equal(previewFontWeight(null, 700), 700);
+});
+
+test("estimateDataUrlBytes sizes base64 payloads and flags oversize vs preview cap", () => {
+  const tiny = "data:font/woff2;base64,AAAA";
+  assert.ok(estimateDataUrlBytes(tiny) < MAX_FONT_PREVIEW_BYTES);
+  // ~3MB of 'A' base64 → well over the 2MB preview cap.
+  const huge = `data:font/woff2;base64,${"A".repeat(4 * 1024 * 1024)}`;
+  assert.ok(estimateDataUrlBytes(huge) > MAX_FONT_PREVIEW_BYTES);
+});
+
+test("pickBestPageFontFace prefers latin woff2 at the closest weight", () => {
+  const faces = [
+    {
+      family: "Fredoka",
+      weight: "600",
+      url: "https://example.com/he.woff2",
+      unicodeRange: "U+0590-05FF"
+    },
+    {
+      family: "Fredoka",
+      weight: "600",
+      url: "https://example.com/latin.woff2",
+      unicodeRange: "U+0-FF, U+131"
+    },
+    {
+      family: "Fredoka",
+      weight: "700",
+      url: "https://example.com/latin-bold.woff2",
+      unicodeRange: "U+0-FF"
+    }
+  ];
+  const picked = pickBestPageFontFace(faces, "Fredoka", 600);
+  assert.equal(picked?.url, "https://example.com/latin.woff2");
+});
 
 test("parseFontStack extracts quoted and unquoted families", () => {
   const stack = parseFontStack('"Inter", system-ui, -apple-system, sans-serif');
@@ -38,6 +86,28 @@ test("fontStackMatchesTarget prefers first available face and avoids mid-stack f
   assert.equal(fontStackMatchesTarget(appleStack, "helvetica neue", isAvailable), false);
   assert.equal(fontStackMatchesTarget(appleStack, "arial", isAvailable), true);
   assert.equal(fontStackMatchesTarget(appleStack, "sf pro text", isAvailable), false);
+});
+
+test("Framer metric placeholders are skipped for resolve and highlight", () => {
+  assert.equal(isMetricPlaceholderFont("Inter Placeholder"), true);
+  assert.equal(isMetricPlaceholderFont("Fredoka Fallback"), true);
+  assert.equal(isMetricPlaceholderFont("Inter"), false);
+
+  // Placeholder is "available" but must not beat the design face.
+  const onlyPlaceholder = (family) =>
+    normalizeFontKey(family) === "inter placeholder";
+  const stack = parseFontStack('Inter, "Inter Placeholder", sans-serif');
+  assert.equal(resolveRenderedFont(stack, onlyPlaceholder), "Inter");
+  assert.equal(resolvePrimaryFont(stack), "Inter");
+  assert.equal(fontStackMatchesTarget(stack, "inter", onlyPlaceholder), true);
+  assert.equal(fontStackMatchesTarget(stack, "inter placeholder", onlyPlaceholder), false);
+
+  // Once Inter loads, still match Inter and never the placeholder card.
+  const both = (family) =>
+    ["inter", "inter placeholder"].includes(normalizeFontKey(family));
+  assert.equal(resolveRenderedFont(stack, both), "Inter");
+  assert.equal(fontStackMatchesTarget(stack, "inter", both), true);
+  assert.equal(fontStackMatchesTarget(stack, "inter placeholder", both), false);
 });
 
 test("snapFontWeight normalizes observed weights to standard CSS weights", () => {

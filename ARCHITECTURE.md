@@ -42,13 +42,13 @@ The panel has four tabs (**Color palette** / **Font families** / **Images** / **
 ### Font pipeline
 
 ```
-extractInPage.js  →  fontSamples[] + fontTokens[]
+extractInPage.js  →  fontSamples[] + fontTokens[] + fontFaces[]
         │
         ▼
-curateFonts.js    →  aggregate by family · score weights · filter noise
+curateFonts.js    →  aggregate by family · score weights · filter noise / placeholders
         │
         ▼
-Popup (Font families tab)  →  selectable cards (highlight on page) · weights · per-card clipboard copy
+Popup (Font families tab)  →  live typeface preview (fontPreview.js) · highlight · weights · copy
 ```
 
 ### Asset pipeline
@@ -103,13 +103,14 @@ Color tab (Gradients section)  →  tiles · copy CSS
 | `src/core/assetUtils.js` | Shared asset URL/filename helpers |
 | `src/core/inlineSvg.js` | Inline SVG normalization for icon download/preview |
 | `src/core/zipStore.js` | Client-side ZIP packing for multi-select downloads |
-| `src/core/fontUtils.js` | Font weight snapping and emoji-font filtering |
+| `src/core/fontUtils.js` | Font weight snapping, emoji/placeholder filtering, stack resolve/match |
+| `src/popup/fontPreview.js` | Register page `@font-face` bytes via FontFace(ArrayBuffer) (or Google Fonts fallback) so font cards paint the real typeface |
 | `src/core/scoreAndCluster.js` | LAB clustering, palette curation, quality adjustment |
 | `src/core/assignRoles.js` | Semantic role assignment on curated colors |
 | `src/core/usageRoles.js` | Usage labels (Background / Text / Accent) from sample roles and pageShare |
 | `src/core/paletteSafeguards.js` | Foundation surface filter, browser link exclusion, legacy sample inference |
 | `src/core/colorLab.js` | RGB ↔ HSL ↔ LAB, Delta-E |
-| `benchmark/benchmark-lib.mjs` | Frozen 9-site regression baseline |
+| `benchmark/benchmark-lib.mjs` | Frozen 11-site color+font regression baseline |
 | `benchmark/lockfile.json` | Canonical palettes and scores |
 | `benchmark/extractions/*.json` | Cached page extractions (input fixtures) |
 | `benchmark/generate-lockfile.mjs` | Regenerates lockfile from extractions + algorithm |
@@ -217,15 +218,19 @@ Alongside color samples, each text-bearing element may emit a **font sample**:
 
 **CSS token hints:** `collectFontTokens()` reads `--font-family`, `--font-sans`, `--font-body`, etc. from `:root` to boost families declared in design tokens.
 
+**`@font-face` harvest:** `collectFontFaces()` records family / weight / `src` URLs for detected families so the popup can fetch those files in-page and register them with `FontFace(ArrayBuffer)` for card previews. Oversized `data:` URLs are skipped; only `http:`/`https:` network URLs are kept.
+
+**Metric placeholders:** faces ending in `Placeholder` or `Fallback` (Framer / next-style size-adjust stand-ins) are skipped when resolving and curating the design face.
+
 Font samples require measurable visible text area and skip visually-hidden / clipped nodes (so
 body fallbacks used only on screen-reader chrome do not enter the curated set). Deduplicated per
-section by element geometry + family.
+section by element geometry + family. Extraction briefly waits on `document.fonts.load` for stacks used on the page so lazy webfonts are available on the first pass.
 
 ### 1.7 Extraction output
 
 ```js
 {
-  samples, fontSamples, fontTokens,
+  samples, fontSamples, fontTokens, fontFaces,
   gradients,                 // CSS gradient candidates from background-image layers
   sectionCount, sections,
   sampledElements,
@@ -544,7 +549,7 @@ Runs in the extension popup when the user extracts on the **Font families** tab.
 
 - **Snap** computed weights to standard CSS values (100–900)
 - Drop insignificant outlier weights (e.g. 401, 437) unless they have enough supporting text area
-- Filter **emoji fonts** (`Apple Color Emoji`, `Segoe UI Emoji`, …) and deprioritize generic **system fallbacks**
+- Filter **emoji fonts** (`Apple Color Emoji`, `Segoe UI Emoji`, …), **metric placeholders** (`Inter Placeholder`, `Fredoka Fallback`, …), and deprioritize generic **system fallbacks**
 
 ### 9.3 Family selection
 
@@ -560,7 +565,7 @@ CSS custom-property **token hints** can fill gaps when samples under-represent a
 
 Each family card shows:
 
-- Family name (rendered in the panel UI font, not the extracted typeface)
+- Family name (rendered in the extracted typeface when the face can be loaded into the panel)
 - `Weights: 400, 500, 600` — comma-separated list of meaningful weights
 - Copy icon — writes the family name to the clipboard
 - Card select — click the card (same hover/select chrome as Images/Icons) to inject `highlightFont.js` and highlight every visible run of that family on the page (viewport-first, revealed on scroll; ignores visually-hidden text); click again or close the panel to clear
@@ -571,7 +576,7 @@ PNG export includes **colors only**; typography is clipboard-only per family.
 
 ## 10. Benchmark system
 
-The extraction algorithm is **frozen** behind a 9-site regression benchmark.
+The extraction algorithm is **frozen** behind an 11-site regression benchmark (palette + curated fonts).
 
 ### 10.1 Reference sites
 
