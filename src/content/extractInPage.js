@@ -11,7 +11,49 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
   // while "SF Pro Text" is still loading, then failing to highlight it).
   // Do this before starting the scan clock so the wait does not consume
   // maxMillis budget reserved for DOM sampling.
+  //
+  // `document.fonts.ready` alone is not enough: webfonts are lazy, so right
+  // after page load a face like "SF Pro Text" may not have started loading
+  // yet and `ready` resolves immediately. Canvas detection then sees it as
+  // missing and we'd report the fallback ("Helvetica Neue"). Explicitly
+  // request every family used by the page's text so detection is accurate on
+  // the very first run.
   try {
+    if (document.fonts?.load) {
+      const stacks = new Set();
+      const nodes = document.querySelectorAll(
+        "body, body *:not(script):not(style):not(noscript):not(svg):not(path)"
+      );
+      const limit = Math.min(nodes.length, 1500);
+      for (let i = 0; i < limit; i += 1) {
+        const el = nodes[i];
+        if (!el.childNodes) continue;
+        let hasText = el === document.body;
+        for (const child of el.childNodes) {
+          if (child.nodeType === 3 && child.nodeValue.trim()) {
+            hasText = true;
+            break;
+          }
+        }
+        if (!hasText) continue;
+        const cs = getComputedStyle(el);
+        stacks.add(`${cs.fontWeight}|${cs.fontStyle}|${cs.fontFamily}`);
+        if (stacks.size >= 60) break;
+      }
+      const loads = [];
+      for (const entry of stacks) {
+        const [weight, style, family] = entry.split("|");
+        loads.push(
+          document.fonts.load(`${style} ${weight} 16px ${family}`, "Aa").catch(() => [])
+        );
+      }
+      if (loads.length) {
+        await Promise.race([
+          Promise.all(loads),
+          new Promise((resolve) => setTimeout(resolve, 2500))
+        ]);
+      }
+    }
     if (document.fonts?.ready) {
       await Promise.race([
         document.fonts.ready,
@@ -512,8 +554,18 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
       .filter(Boolean);
   }
 
+  function isMetricPlaceholderFont(family) {
+    const key = (family || "").trim().toLowerCase();
+    return key.endsWith(" placeholder") || key.endsWith(" fallback");
+  }
+
   function resolvePrimaryFont(families) {
     if (!families.length) return "";
+    for (const family of families) {
+      if (GENERIC_FAMILIES.has(family.toLowerCase())) continue;
+      if (isMetricPlaceholderFont(family)) continue;
+      return family;
+    }
     for (const family of families) {
       if (!GENERIC_FAMILIES.has(family.toLowerCase())) return family;
     }
@@ -575,11 +627,13 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
   // name declared in the CSS stack. Pages frequently list a brand font that the
   // visitor doesn't have installed (e.g. "Mona Sans", "Segoe UI", sans-serif);
   // the browser silently falls back to the next available family, so reporting
-  // the first declared name would be wrong.
+  // the first declared name would be wrong. Skip Framer/next metric placeholders
+  // ("Inter Placeholder") — they are stand-ins, not the design face.
   function resolveRenderedFont(families) {
     if (!families.length) return "";
     for (const family of families) {
       if (GENERIC_FAMILIES.has(family.toLowerCase())) continue;
+      if (isMetricPlaceholderFont(family)) continue;
       if (isFontAvailable(family)) return family;
     }
     // Nothing in the stack is installed/loaded — fall back to the page's
@@ -616,6 +670,77 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
       viewportVisible: ratio >= 0.2,
       visibilityRatio: Math.min(1, ratio)
     };
+  }
+
+  // Harvest @font-face URLs for families we detected so the popup can load the
+  // exact same files (self-hosted woff2 etc.) via in-page fetch + FontFace.
+  function collectFontFaces(neededFamilies) {
+    const needed = new Set(
+      [...(neededFamilies || [])]
+        .map((f) => String(f || "").trim().toLowerCase())
+        .filter(Boolean)
+    );
+    const faces = [];
+    const seen = new Set();
+    const fontFaceType =
+      typeof CSSRule !== "undefined" && CSSRule.FONT_FACE_RULE != null
+        ? CSSRule.FONT_FACE_RULE
+        : 5;
+
+    for (const sheet of document.styleSheets) {
+      let rules;
+      try {
+        rules = sheet.cssRules;
+      } catch (_err) {
+        continue;
+      }
+      if (!rules) continue;
+      const baseHref = sheet.href || location.href;
+
+      for (const rule of rules) {
+        if (!rule || rule.type !== fontFaceType) continue;
+        const style = rule.style;
+        if (!style) continue;
+        const family = String(style.getPropertyValue("font-family") || "")
+          .trim()
+          .replace(/^['"]|['"]$/g, "");
+        if (!family) continue;
+        if (needed.size && !needed.has(family.toLowerCase())) continue;
+
+        const weightRaw = style.getPropertyValue("font-weight") || "400";
+        const fontStyle = style.getPropertyValue("font-style") || "normal";
+        const unicodeRange = style.getPropertyValue("unicode-range") || "";
+        const src = style.getPropertyValue("src") || "";
+        const urls = [];
+        const urlRe = /url\(\s*(['"]?)([^'")]+)\1\s*\)/gi;
+        let match;
+        while ((match = urlRe.exec(src))) {
+          urls.push(match[2].trim());
+        }
+        for (const rawUrl of urls) {
+          if (!rawUrl || rawUrl.startsWith("blob:")) continue;
+          let url = rawUrl;
+          if (!/^data:/i.test(rawUrl)) {
+            try {
+              url = new URL(rawUrl, baseHref).href;
+            } catch (_err) {
+              continue;
+            }
+          }
+          const key = `${family.toLowerCase()}|${weightRaw}|${fontStyle}|${url}|${unicodeRange}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          faces.push({
+            family,
+            weight: weightRaw,
+            style: fontStyle,
+            url,
+            unicodeRange
+          });
+        }
+      }
+    }
+    return faces;
   }
 
   function collectFontTokens() {
@@ -980,6 +1105,11 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
     if (sectionIndex > 25) break;
   }
 
+  const detectedFamilies = new Set();
+  for (const sample of fontSamples) {
+    if (sample?.family) detectedFamilies.add(sample.family);
+  }
+
   return {
     sampledElements: samples.length,
     sectionCount: sections.length,
@@ -987,6 +1117,7 @@ window.__prismExtractPalette = async function extractPaletteInPage(options = {})
     samples,
     fontSamples,
     fontTokens,
+    fontFaces: collectFontFaces(detectedFamilies),
     gradients: gradientSamples,
     areaContributions: [...areaContributions.values()]
       .map((c) => ({ hex: c.hex, sourceType: c.sourceType, area: Math.round(c.area), count: c.count }))

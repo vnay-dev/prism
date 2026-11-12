@@ -109,7 +109,7 @@ Color tab (Gradients section)  →  tiles · copy CSS
 | `src/core/usageRoles.js` | Usage labels (Background / Text / Accent) from sample roles and pageShare |
 | `src/core/paletteSafeguards.js` | Foundation surface filter, browser link exclusion, legacy sample inference |
 | `src/core/colorLab.js` | RGB ↔ HSL ↔ LAB, Delta-E |
-| `benchmark/benchmark-lib.mjs` | Frozen 9-site regression baseline |
+| `benchmark/benchmark-lib.mjs` | Frozen 11-site color+font regression baseline |
 | `benchmark/lockfile.json` | Canonical palettes and scores |
 | `benchmark/extractions/*.json` | Cached page extractions (input fixtures) |
 | `benchmark/generate-lockfile.mjs` | Regenerates lockfile from extractions + algorithm |
@@ -571,7 +571,7 @@ PNG export includes **colors only**; typography is clipboard-only per family.
 
 ## 10. Benchmark system
 
-The extraction algorithm is **frozen** behind a 9-site regression benchmark.
+The extraction algorithm is **frozen** behind an 11-site regression benchmark (palette + curated fonts).
 
 ### 10.1 Reference sites
 

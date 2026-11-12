@@ -1,7 +1,7 @@
 {
-  "version": 1,
-  "frozenAt": "2026-10-21T14:11:12.812Z",
-  "description": "Frozen palette extraction baseline. Regenerate only when intentionally accepting benchmark changes.",
+  "version": 2,
+  "frozenAt": "2026-11-12T16:38:21.884Z",
+  "description": "Frozen palette + font extraction baseline. Regenerate only when intentionally accepting benchmark changes.",
   "extractionsSource": "benchmark/extractions/",
   "sites": [
     {
@@ -46,6 +46,8 @@
         }
       ],
       "paletteMode": "brand",
+      "fonts": [],
+      "hasFonts": false,
       "scores": {
         "brandAccuracy": 10,
         "designerUsefulness": 9
@@ -96,6 +98,8 @@
         }
       ],
       "paletteMode": "brand",
+      "fonts": [],
+      "hasFonts": false,
       "scores": {
         "brandAccuracy": 10,
         "designerUsefulness": 9
@@ -143,6 +147,8 @@
         }
       ],
       "paletteMode": "foundation",
+      "fonts": [],
+      "hasFonts": false,
       "scores": {
         "brandAccuracy": 5,
         "designerUsefulness": 8
@@ -193,6 +199,8 @@
         }
       ],
       "paletteMode": "brand",
+      "fonts": [],
+      "hasFonts": false,
       "scores": {
         "brandAccuracy": 10,
         "designerUsefulness": 9
@@ -243,6 +251,8 @@
         }
       ],
       "paletteMode": "brand",
+      "fonts": [],
+      "hasFonts": false,
       "scores": {
         "brandAccuracy": 8,
         "designerUsefulness": 9
@@ -293,6 +303,8 @@
         }
       ],
       "paletteMode": "brand",
+      "fonts": [],
+      "hasFonts": false,
       "scores": {
         "brandAccuracy": 10,
         "designerUsefulness": 9
@@ -301,29 +313,28 @@
     {
       "slug": "apple",
       "name": "Apple",
-      "url": "https://www.apple.com/",
-      "foundation": "#ffffff",
-      "primary": "#0071e3",
+      "url": "https://www.apple.com/in/store",
+      "foundation": null,
+      "primary": "#ff791b",
       "secondaries": [
-        "#2997ff",
-        "#a4618d"
+        "#0066cc"
       ],
       "palette": [
         {
-          "role": "foundation",
-          "hex": "#ffffff"
-        },
-        {
           "role": "primary",
-          "hex": "#0071e3"
+          "hex": "#ff791b"
         },
         {
           "role": "secondary",
-          "hex": "#2997ff"
+          "hex": "#0066cc"
         },
         {
-          "role": "secondary",
-          "hex": "#a4618d"
+          "role": "neutral",
+          "hex": "#f5f5f7"
+        },
+        {
+          "role": "neutral",
+          "hex": "#333336"
         },
         {
           "role": "neutral",
@@ -331,21 +342,30 @@
         },
         {
           "role": "neutral",
-          "hex": "#000000"
-        },
-        {
-          "role": "neutral",
-          "hex": "#d2d2d7"
-        },
-        {
-          "role": "neutral",
           "hex": "#6e6e73"
         }
       ],
       "paletteMode": "brand",
+      "fonts": [
+        {
+          "role": "primary",
+          "family": "SF Pro Text",
+          "weights": [
+            600
+          ]
+        },
+        {
+          "role": "secondary",
+          "family": "SF Pro Display",
+          "weights": [
+            600
+          ]
+        }
+      ],
+      "hasFonts": true,
       "scores": {
-        "brandAccuracy": 10,
-        "designerUsefulness": 9
+        "brandAccuracy": 5,
+        "designerUsefulness": 8
       }
     },
     {
@@ -390,6 +410,8 @@
         }
       ],
       "paletteMode": "brand",
+      "fonts": [],
+      "hasFonts": false,
       "scores": {
         "brandAccuracy": 10,
         "designerUsefulness": 9
@@ -441,15 +463,154 @@
         }
       ],
       "paletteMode": "brand",
+      "fonts": [],
+      "hasFonts": false,
       "scores": {
         "brandAccuracy": 7,
         "designerUsefulness": 9
       }
+    },
+    {
+      "slug": "toonify",
+      "name": "Toonify",
+      "url": "https://toonify.io/",
+      "foundation": null,
+      "primary": "#2563ff",
+      "secondaries": [
+        "#0e1a3a",
+        "#44506b"
+      ],
+      "palette": [
+        {
+          "role": "primary",
+          "hex": "#2563ff"
+        },
+        {
+          "role": "secondary",
+          "hex": "#0e1a3a"
+        },
+        {
+          "role": "secondary",
+          "hex": "#44506b"
+        },
+        {
+          "role": "neutral",
+          "hex": "#f5f8ff"
+        },
+        {
+          "role": "neutral",
+          "hex": "#e7f8d6"
+        },
+        {
+          "role": "neutral",
+          "hex": "#6b7690"
+        },
+        {
+          "role": "neutral",
+          "hex": "#fff3dc"
+        },
+        {
+          "role": "neutral",
+          "hex": "#fff7d6"
+        }
+      ],
+      "paletteMode": "brand",
+      "fonts": [
+        {
+          "role": "primary",
+          "family": "Nunito",
+          "weights": [
+            700
+          ]
+        },
+        {
+          "role": "secondary",
+          "family": "Fredoka",
+          "weights": [
+            600
+          ]
+        }
+      ],
+      "hasFonts": true,
+      "scores": {
+        "brandAccuracy": 8,
+        "designerUsefulness": 8
+      }
+    },
+    {
+      "slug": "adya-framer",
+      "name": "Adya Framer Portfolio",
+      "url": "https://adyasrivastava.framer.website/",
+      "foundation": null,
+      "primary": "#270e80",
+      "secondaries": [],
+      "palette": [
+        {
+          "role": "primary",
+          "hex": "#270e80"
+        },
+        {
+          "role": "neutral",
+          "hex": "#000000"
+        },
+        {
+          "role": "neutral",
+          "hex": "#050112"
+        },
+        {
+          "role": "neutral",
+          "hex": "#ffffff"
+        },
+        {
+          "role": "neutral",
+          "hex": "#141414"
+        },
+        {
+          "role": "neutral",
+          "hex": "#0f0820"
+        }
+      ],
+      "paletteMode": "brand",
+      "fonts": [
+        {
+          "role": "primary",
+          "family": "Instrument Serif",
+          "weights": [
+            400
+          ]
+        },
+        {
+          "role": "secondary",
+          "family": "DM Sans",
+          "weights": [
+            400
+          ]
+        },
+        {
+          "role": "supporting",
+          "family": "DM Mono",
+          "weights": [
+            500
+          ]
+        },
+        {
+          "role": "supporting",
+          "family": "Inter",
+          "weights": [
+            500
+          ]
+        }
+      ],
+      "hasFonts": true,
+      "scores": {
+        "brandAccuracy": 8,
+        "designerUsefulness": 8
+      }
     }
   ],
   "averages": {
-    "brandAccuracy": 8.9,
-    "designerUsefulness": 8.9
+    "brandAccuracy": 8.3,
+    "designerUsefulness": 8.6
   },
   "siteSlugs": [
     "linear",
@@ -460,6 +621,8 @@
     "framer",
     "apple",
     "netflix",
-    "slack"
+    "slack",
+    "toonify",
+    "adya-framer"
   ]
 }

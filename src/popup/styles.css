@@ -58,6 +58,33 @@ body {
   box-sizing: border-box;
 }
 
+/* Viewport-capped panel (small laptops): keep footer CTAs visible.
+   Do NOT add a second outer scrollbar — only the existing thin inner
+   scroller (.swatches / .fonts / .assets-grid) should scroll. */
+.app.is-height-capped {
+  overflow: hidden;
+}
+
+.app.is-height-capped .panel-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app.is-height-capped .tab-panel.state-results:not([hidden]) {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+}
+
+.app.is-height-capped .swatches,
+.app.is-height-capped .fonts,
+.app.is-height-capped .assets-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+}
+
 .app.state-results {
   /* Footer owns the bottom inset so CTA padding stays even. */
   padding-bottom: 0;
@@ -1600,9 +1627,9 @@ button:focus-visible {
 }
 
 .font-card.is-checked {
-  border-color: rgba(186, 64, 147, 0.7);
+  border-color: #dfe3ea;
   background: #faf2f7;
-  box-shadow: 0 0 0 2px rgba(186, 64, 147, 0.18);
+  box-shadow: 0 0 0 1px rgba(186, 64, 147, 0.18);
 }
 
 .font-card:focus,
@@ -1755,7 +1782,7 @@ button:focus-visible {
 }
 
 .asset-card:hover:not(.is-checked):not(.is-loading) {
-  box-shadow: 0 0 0 2px rgba(186, 64, 147, 0.28);
+  box-shadow: 0 0 0 1px rgba(186, 64, 147, 0.28);
 }
 
 /* Full-tile skeleton until the image is ready — no hover, select, or download. */
@@ -1797,9 +1824,9 @@ button:focus-visible {
 
 /* Pink tile chrome is selection-only; find-in-page uses the active find icon. */
 .asset-card.is-checked {
-  border-color: rgba(186, 64, 147, 0.7);
+  border-color: #dfe3ea;
   background: #faf2f7;
-  box-shadow: 0 0 0 2px rgba(186, 64, 147, 0.18);
+  box-shadow: 0 0 0 1px rgba(186, 64, 147, 0.18);
 }
 
 .asset-card.is-broken .asset-preview {

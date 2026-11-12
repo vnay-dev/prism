@@ -53,66 +53,6 @@ export function parseFontStack(fontFamily) {
     .filter(Boolean);
 }
 
-export function resolvePrimaryFont(families) {
-  if (!families.length) return "";
-  for (const family of families) {
-    if (!GENERIC_FAMILIES.has(family.toLowerCase())) return family;
-  }
-  return families[0];
-}
-
-/**
- * Resolve which face extraction/highlight should treat as "the" family for a
- * stack, given an availability predicate (canvas / fonts.check / test double).
- */
-export function resolveRenderedFont(families, isFontAvailable) {
-  if (!Array.isArray(families) || !families.length) return "";
-  const available = typeof isFontAvailable === "function" ? isFontAvailable : () => true;
-  for (const family of families) {
-    if (isGenericFamily(family)) continue;
-    if (available(family)) return family;
-  }
-  return resolvePrimaryFont(families);
-}
-
-/**
- * Whether a computed font stack should highlight for `targetKey`.
- * Keep in sync with `fontMatchesTarget` in `src/content/highlightFont.js`
- * (that file is injected standalone and cannot import this module).
- *
- * Matching rules:
- * - First available non-generic face wins (same as resolveRenderedFont).
- * - An unavailable selected face matches only when no later non-generic face
- *   is available — extraction's primary-fallback case (e.g. Helvetica Neue
- *   with no installed fallbacks). Mid-stack unavailable names must not match
- *   when a later face paints.
- */
-export function fontStackMatchesTarget(stack, targetKey, isFontAvailable) {
-  if (!Array.isArray(stack) || !stack.length || !targetKey) return false;
-  const available = typeof isFontAvailable === "function" ? isFontAvailable : () => true;
-
-  for (let i = 0; i < stack.length; i += 1) {
-    const family = stack[i];
-    if (isGenericFamily(family)) continue;
-    const key = normalizeFontKey(family);
-    if (available(family)) return key === targetKey;
-    if (key === targetKey) {
-      let laterAvailable = false;
-      for (let j = i + 1; j < stack.length; j += 1) {
-        const later = stack[j];
-        if (isGenericFamily(later)) continue;
-        if (available(later)) {
-          laterAvailable = true;
-          break;
-        }
-      }
-      if (!laterAvailable) return true;
-    }
-  }
-
-  return normalizeFontKey(resolveRenderedFont(stack, available)) === targetKey;
-}
-
 export function normalizeFontKey(family) {
   return (family || "").trim().toLowerCase();
 }
@@ -128,6 +68,79 @@ export function isGenericFamily(family) {
 export function isEmojiFont(family) {
   const key = normalizeFontKey(family);
   return /emoji/.test(key) || key === "apple color emoji" || key === "segoe ui emoji";
+}
+
+/**
+ * Metric stand-ins (Framer "Inter Placeholder", next/font "Fredoka Fallback")
+ * are not the design face — skip them when resolving / highlighting.
+ */
+export function isMetricPlaceholderFont(family) {
+  const key = normalizeFontKey(family);
+  return key.endsWith(" placeholder") || key.endsWith(" fallback");
+}
+
+export function resolvePrimaryFont(families) {
+  if (!families.length) return "";
+  for (const family of families) {
+    if (isGenericFamily(family) || isMetricPlaceholderFont(family)) continue;
+    return family;
+  }
+  for (const family of families) {
+    if (!isGenericFamily(family)) return family;
+  }
+  return families[0];
+}
+
+/**
+ * Resolve which face extraction/highlight should treat as "the" family for a
+ * stack, given an availability predicate (canvas / fonts.check / test double).
+ */
+export function resolveRenderedFont(families, isFontAvailable) {
+  if (!Array.isArray(families) || !families.length) return "";
+  const available = typeof isFontAvailable === "function" ? isFontAvailable : () => true;
+  for (const family of families) {
+    if (isGenericFamily(family) || isMetricPlaceholderFont(family)) continue;
+    if (available(family)) return family;
+  }
+  return resolvePrimaryFont(families);
+}
+
+/**
+ * Whether a computed font stack should highlight for `targetKey`.
+ * Keep in sync with `fontMatchesTarget` in `src/content/highlightFont.js`
+ * (that file is injected standalone and cannot import this module).
+ *
+ * Matching rules:
+ * - First available non-generic, non-placeholder face wins (same as resolveRenderedFont).
+ * - An unavailable selected face matches only when no later design face
+ *   is available — extraction's primary-fallback case (e.g. Helvetica Neue
+ *   with no installed fallbacks). Mid-stack unavailable names must not match
+ *   when a later face paints. Metric placeholders never count as the painter.
+ */
+export function fontStackMatchesTarget(stack, targetKey, isFontAvailable) {
+  if (!Array.isArray(stack) || !stack.length || !targetKey) return false;
+  const available = typeof isFontAvailable === "function" ? isFontAvailable : () => true;
+
+  for (let i = 0; i < stack.length; i += 1) {
+    const family = stack[i];
+    if (isGenericFamily(family) || isMetricPlaceholderFont(family)) continue;
+    const key = normalizeFontKey(family);
+    if (available(family)) return key === targetKey;
+    if (key === targetKey) {
+      let laterAvailable = false;
+      for (let j = i + 1; j < stack.length; j += 1) {
+        const later = stack[j];
+        if (isGenericFamily(later) || isMetricPlaceholderFont(later)) continue;
+        if (available(later)) {
+          laterAvailable = true;
+          break;
+        }
+      }
+      if (!laterAvailable) return true;
+    }
+  }
+
+  return normalizeFontKey(resolveRenderedFont(stack, available)) === targetKey;
 }
 
 export function normalizeFontWeight(weight) {
@@ -164,6 +177,16 @@ export function formatWeightsList(weights) {
 export function dominantFontWeight(weights) {
   if (!Array.isArray(weights) || !weights.length) return 400;
   return weights[Math.floor(weights.length / 2)];
+}
+
+/** Preview face weight: Medium (500) when present, else the lightest detected weight. */
+export function previewFontWeight(weights, fallback = 400) {
+  const list = Array.isArray(weights)
+    ? weights.map((w) => normalizeFontWeight(w)).filter((w) => Number.isFinite(w))
+    : [];
+  if (!list.length) return normalizeFontWeight(fallback);
+  if (list.includes(500)) return 500;
+  return Math.min(...list);
 }
 
 export function formatFontWeight(weight) {

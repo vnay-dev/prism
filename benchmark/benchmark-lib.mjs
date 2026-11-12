@@ -1,11 +1,13 @@
 /**
- * Frozen benchmark utilities — palette extraction regression baseline.
+ * Frozen benchmark utilities — palette + font extraction regression baseline.
  */
 import { readFileSync, existsSync } from "fs";
 import { curatePalette } from "../src/core/scoreAndCluster.js";
 import { assignRoles } from "../src/core/assignRoles.js";
+import { curateFonts } from "../src/core/curateFonts.js";
+import { isMetricPlaceholderFont, normalizeFontKey } from "../src/core/fontUtils.js";
 
-export const BENCHMARK_VERSION = 1;
+export const BENCHMARK_VERSION = 2;
 
 export const BENCHMARK_SITES = [
   { slug: "linear", name: "Linear", url: "https://linear.app/" },
@@ -14,9 +16,16 @@ export const BENCHMARK_SITES = [
   { slug: "vercel", name: "Vercel", url: "https://vercel.com/" },
   { slug: "notion", name: "Notion", url: "https://www.notion.so/" },
   { slug: "framer", name: "Framer", url: "https://www.framer.com/" },
-  { slug: "apple", name: "Apple", url: "https://www.apple.com/" },
+  { slug: "apple", name: "Apple", url: "https://www.apple.com/in/store" },
   { slug: "netflix", name: "Netflix", url: "https://www.netflix.com/" },
-  { slug: "slack", name: "Slack", url: "https://slack.com/" }
+  { slug: "slack", name: "Slack", url: "https://slack.com/" },
+  // New QA sites (not in the original 9-url list).
+  { slug: "toonify", name: "Toonify", url: "https://toonify.io/" },
+  {
+    slug: "adya-framer",
+    name: "Adya Framer Portfolio",
+    url: "https://adyasrivastava.framer.website/"
+  }
 ];
 
 /** Reference brand colors for benchmark scoring (0–10). */
@@ -27,9 +36,11 @@ export const KNOWN_BRAND = {
   vercel: { primary: "#00dc82", foundation: "#fafafa" },
   notion: { primary: "#0075de", foundation: "#f6f5f4" },
   framer: { primary: "#0099ff", foundation: "#000000" },
-  apple: { primary: "#0071e3", foundation: "#ffffff" },
+  apple: { primary: "#0066cc", foundation: "#f5f5f7" },
   netflix: { primary: "#e50914", foundation: "#000000" },
-  slack: { primary: "#611f69", foundation: "#f9edff" }
+  slack: { primary: "#611f69", foundation: "#f9edff" },
+  toonify: { primary: "#2563ff", foundation: "#ffffff" },
+  "adya-framer": { primary: "#270e80", foundation: "#050112" }
 };
 
 const BROWSER_LINK = new Set(["#0000ee", "#0000ff"]);
@@ -85,8 +96,24 @@ export function scorePalette(slug, palette) {
   };
 }
 
+export function extractSiteFonts(rawExtraction) {
+  if (!rawExtraction?.fontSamples?.length) {
+    return { fonts: [], hasFonts: false };
+  }
+  const curated = curateFonts(rawExtraction);
+  return {
+    hasFonts: Boolean(curated.hasFonts),
+    fonts: (curated.fonts || []).map((font) => ({
+      role: font.role,
+      family: font.family,
+      weights: font.weights || []
+    }))
+  };
+}
+
 export function buildSiteBenchmark(slug, name, url, rawExtraction) {
   const palette = extractSitePalette(rawExtraction);
+  const fontResult = extractSiteFonts(rawExtraction);
   const scores = scorePalette(slug, palette);
   return {
     slug,
@@ -97,6 +124,8 @@ export function buildSiteBenchmark(slug, name, url, rawExtraction) {
     secondaries: palette.secondaries,
     palette: palette.palette,
     paletteMode: palette.paletteMode,
+    fonts: fontResult.fonts,
+    hasFonts: fontResult.hasFonts,
     scores
   };
 }
@@ -125,8 +154,13 @@ function paletteSignature(site) {
   });
 }
 
+function fontsSignature(site) {
+  return JSON.stringify(site.fonts || []);
+}
+
 export function compareSiteToBaseline(current, baseline) {
   const paletteChanged = paletteSignature(current) !== paletteSignature(baseline);
+  const fontsChanged = fontsSignature(current) !== fontsSignature(baseline);
   const brandDelta = current.scores.brandAccuracy - baseline.scores.brandAccuracy;
   const usefulDelta = current.scores.designerUsefulness - baseline.scores.designerUsefulness;
 
@@ -135,7 +169,7 @@ export function compareSiteToBaseline(current, baseline) {
     status = brandDelta < 0 || usefulDelta < 0 ? "mixed" : "improved";
   } else if (brandDelta < 0 || usefulDelta < 0) {
     status = "regressed";
-  } else if (paletteChanged) {
+  } else if (paletteChanged || fontsChanged) {
     status = "unchanged";
   }
 
@@ -144,6 +178,7 @@ export function compareSiteToBaseline(current, baseline) {
     name: current.name,
     status,
     paletteChanged,
+    fontsChanged,
     brandDelta,
     usefulDelta,
     current,
@@ -157,6 +192,9 @@ export function compareSiteToBaseline(current, baseline) {
         : null,
       secondaries: JSON.stringify(baseline.secondaries) !== JSON.stringify(current.secondaries)
         ? { from: baseline.secondaries, to: current.secondaries }
+        : null,
+      fonts: fontsChanged
+        ? { from: baseline.fonts || [], to: current.fonts || [] }
         : null
     }
   };
@@ -206,12 +244,19 @@ export function formatBenchmarkReport(result) {
     `Avg usefulness ${result.averages.designerUsefulness}/10 (lockfile ${result.averages.lockfileDesignerUsefulness}/10)`
   );
 
-  for (const c of result.comparisons.filter((x) => x.status !== "unchanged" || x.paletteChanged)) {
+  for (const c of result.comparisons.filter(
+    (x) => x.status !== "unchanged" || x.paletteChanged || x.fontsChanged
+  )) {
     lines.push(`\n${c.name} [${c.status}]`);
     if (c.changes.foundation) lines.push(`  foundation: ${c.changes.foundation.from} → ${c.changes.foundation.to}`);
     if (c.changes.primary) lines.push(`  primary: ${c.changes.primary.from} → ${c.changes.primary.to}`);
     if (c.changes.secondaries) {
       lines.push(`  secondaries: ${c.changes.secondaries.from.join(", ") || "—"} → ${c.changes.secondaries.to.join(", ") || "—"}`);
+    }
+    if (c.changes.fonts) {
+      const fmt = (fonts) =>
+        (fonts || []).map((f) => `${f.role}:${f.family}`).join(", ") || "—";
+      lines.push(`  fonts: ${fmt(c.changes.fonts.from)} → ${fmt(c.changes.fonts.to)}`);
     }
     lines.push(
       `  scores: brand ${c.baseline.scores.brandAccuracy} → ${c.current.scores.brandAccuracy}, usefulness ${c.baseline.scores.designerUsefulness} → ${c.current.scores.designerUsefulness}`
@@ -219,4 +264,21 @@ export function formatBenchmarkReport(result) {
   }
 
   return lines.join("\n");
+}
+
+/** Guardrail: curated fonts must never surface Framer/next metric placeholders. */
+export function assertNoPlaceholderFonts(sites) {
+  const offenders = [];
+  for (const site of sites) {
+    for (const font of site.fonts || []) {
+      if (isMetricPlaceholderFont(font.family)) {
+        offenders.push(`${site.slug}:${font.family}`);
+      }
+    }
+  }
+  return offenders;
+}
+
+export function fontFamilies(site) {
+  return (site.fonts || []).map((f) => normalizeFontKey(f.family));
 }

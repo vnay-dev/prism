@@ -1,19 +1,27 @@
-# Palette Extraction Benchmark
+# Palette + Font Extraction Benchmark
 
-Frozen baseline for the 9-site reference **color palette** benchmark. Typography curation is covered by `tests/fonts.test.js` but is not yet part of this lockfile. Future color algorithm changes must pass `tests/benchmark.test.js` before merge.
+Frozen baseline for the reference **color palette** and **font curation** benchmark. Algorithm changes must pass `tests/benchmark.test.js` before merge.
 
-## Sites
+## Sites (11)
 
-Linear, Stripe, Spotify, Vercel, Notion, Framer, Apple, Netflix, Slack
+**Core:** Linear, Stripe, Spotify, Vercel, Notion, Framer (`framer.com`), Apple (`apple.com/in/store`), Netflix, Slack
+
+**Added for QA regression:**
+| Site | URL | Guards |
+|------|-----|--------|
+| Apple (updated URL/fixture) | https://www.apple.com/in/store | Prefers SF Pro Text over Helvetica Neue fallback |
+| Toonify | https://toonify.io/ | Curates Fredoka (not Fredoka Fallback) |
+| Adya Framer Portfolio | https://adyasrivastava.framer.website/ | Curates Inter (never Inter Placeholder); separate from `framer.com` |
 
 ## Files
 
 | File | Purpose |
 |------|---------|
-| `lockfile.json` | Frozen palettes, roles, and benchmark scores |
+| `lockfile.json` | Frozen palettes, fonts, roles, and benchmark scores |
 | `benchmark-lib.mjs` | Shared extraction, scoring, and comparison logic |
 | `extractions/*.json` | Cached page extractions (input fixtures) |
 | `generate-lockfile.mjs` | Regenerates `lockfile.json` from extractions + algorithm |
+| `build-site-fixture.mjs` | Builds compact fixtures from scraped color/font signals |
 
 ## Commands
 
@@ -44,4 +52,16 @@ Only regenerate the lockfile when benchmark changes are intentional:
 npm run benchmark:lock
 ```
 
-Commit `benchmark/lockfile.json` with the algorithm change.
+Commit `benchmark/lockfile.json` (and any new `extractions/*.json`) with the algorithm change.
+
+### Adding a QA site fixture
+
+1. Scrape `topColors` / `topFonts` from the live page (DevTools or capture script).
+2. Build a compact extraction:
+
+```bash
+node benchmark/build-site-fixture.mjs <slug> signals.json benchmark/extractions/<slug>.json
+```
+
+3. Register the site in `BENCHMARK_SITES` + `KNOWN_BRAND` in `benchmark-lib.mjs`.
+4. Run `npm run benchmark:lock` and `npm test`.
