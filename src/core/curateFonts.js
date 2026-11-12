@@ -4,6 +4,7 @@ import {
   formatWeightsList,
   isEmojiFont,
   isGenericFamily,
+  isMetricPlaceholderFont,
   isSystemFont,
   normalizeFontKey,
   normalizeFontWeight,
@@ -262,7 +263,10 @@ export function curateFonts(extraction) {
     }))
     .filter(
       (sample) =>
-        sample.family && !isEmojiFont(sample.family) && !isGenericFamily(sample.family)
+        sample.family &&
+        !isEmojiFont(sample.family) &&
+        !isGenericFamily(sample.family) &&
+        !isMetricPlaceholderFont(sample.family)
     );
 
   if (!fontSamples.length && !tokenHints.length) {

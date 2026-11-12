@@ -1,5 +1,35 @@
 # Release notes
 
+## 0.7.2 — True font previews & small-laptop panel fit
+
+**Date:** November 12, 2026
+
+### Fixed
+
+- **Font card previews** — family names render in the site’s actual typeface (including self-hosted webfonts such as Fredoka), not the panel UI font.
+- **Framer / next-style placeholders** — metric stand-ins like “Inter Placeholder” are no longer listed or highlighted; Prism keeps the real design face (e.g. Inter).
+- **Early webfont race** — fonts that load a moment after page open (for example on Apple Store) are waited on before sampling, so the first Fonts pass matches what the page is painting.
+- **Small-laptop layout** — the panel height caps to the viewport so Shuffle / Copy stay visible; only the existing thin inner scroller moves, with no extra outer scrollbar.
+
+### Improved
+
+- **Font sample weight** — preview text prefers Medium (500) when the page uses it, otherwise the lightest detected weight.
+- **Font regression benchmark** — lockfile now covers curated fonts on Apple Store, Toonify, and the Adya Framer portfolio alongside the existing palette sites.
+
+### Technical
+
+- Extraction records page `@font-face` URLs; the popup registers those faces via in-page fetch + `FontFace(ArrayBuffer)` (Google Fonts as fallback) so previews match the live page without broadening extension `font-src` to arbitrary HTTPS hosts or adding `style-src 'unsafe-inline'`.
+- Preview font bytes are capped (~2 MB) so oversized `data:` harvests and page fetches cannot balloon the panel.
+
+### Package
+
+```bash
+npm run package:store
+# → dist/prism-0.7.2.zip
+```
+
+---
+
 ## 0.7.1 — Apple Store images & font highlight fixes
 
 **Date:** November 9, 2026

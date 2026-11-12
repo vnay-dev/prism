@@ -2,7 +2,7 @@
 
 Chrome extension that extracts a curated **8-color design palette**, **font families**, **images**, and **icons** from any live web page. Colors are sampled from rendered DOM styles (backgrounds, text, borders, icons, gradients), clustered, scored, and assigned semantic roles. Typography is sampled from computed `font-family` and `font-weight` on visible text, then ranked and filtered so you get the families and weights that actually matter on the page.
 
-**Version:** 0.7.1 · [Release notes](./RELEASE_NOTES.md)
+**Version:** 0.7.2 · [Release notes](./RELEASE_NOTES.md)
 
 ## Features
 
@@ -21,6 +21,7 @@ Chrome extension that extracts a curated **8-color design palette**, **font fami
 ### Font families
 - Same virtual section scan collects typography from visible text elements
 - Ranks font families by area, importance, heading usage, and content zone
+- Renders each font card in the site’s actual typeface (skips metric placeholders like “Inter Placeholder”)
 - Snaps weights to standard CSS values (400, 500, 600, …) and filters insignificant outliers
 - Filters emoji and generic system fallbacks where possible
 - Per-family copy button (family name to clipboard)
@@ -49,7 +50,7 @@ Chrome extension that extracts a curated **8-color design palette**, **font fami
 2. Click the **Prism** extension icon — the panel opens immediately and extraction starts automatically on supported pages, with a short loader while colors, fonts, images, and icons are scanned together. Only the tabs with actual results appear once it finishes, even on long or content-heavy pages.
 3. Choose a tab:
    - **Color palette** — review usage-labeled swatches and gradients (with the site brand above), switch **Organized** / **Stack**, optionally **Shuffle** or edit swatches, then **Copy to clipboard** to paste the PNG into Figma or another tool.
-   - **Font families** — use the copy icon on any card to copy that family name, or select a card to highlight that font's text on the page.
+   - **Font families** — each card previews the family in its own typeface; use the copy icon to copy the name, or select a card to highlight that font’s text on the page.
    - **Images** / **Icons** — preview assets in a lightbox; download one file or multi-select as a ZIP. On Icons, use the top-right copy control to paste SVG code.
 4. Use **Reset** if you want to return to manual Extract.
 
@@ -63,7 +64,7 @@ Build an upload-ready ZIP (runtime files only — no tests, scripts, or `node_mo
 npm run package:store
 ```
 
-Output: `dist/prism-0.7.1.zip`
+Output: `dist/prism-0.7.2.zip`
 
 **Privacy policy:** See [PRIVACY.md](./PRIVACY.md). Host it at a public URL (for example GitHub Pages on this repo) and paste that link into the Chrome Web Store listing.
 
@@ -118,7 +119,7 @@ src/
   core/                Clustering, scoring, roles, font/asset/gradient curation
   popup/               Tabbed panel UI
 tests/                 Node test runner suites
-benchmark/             Frozen 9-site color baseline (lockfile, extractions, regen)
+benchmark/             Frozen 11-site color+font baseline (lockfile, extractions, regen)
 scripts/               Store packaging, version sync, git hooks
 ```
 
@@ -131,7 +132,7 @@ scripts/               Store packaging, version sync, git hooks
 | `clipboardWrite` | Copy the palette PNG, font family names, or SVG icon markup |
 | `downloads` | Save images/icons (or a ZIP) when you click Download |
 
-**Network:** Extraction does not use the network. The panel UI loads [Google Fonts](https://fonts.google.com/) (Google Sans and Material Symbols) from `fonts.googleapis.com` / `fonts.gstatic.com` when you open Prism; see [PRIVACY.md](./PRIVACY.md).
+**Network:** Extraction does not use the network. The panel UI loads [Google Fonts](https://fonts.google.com/) (Google Sans and Material Symbols) from `fonts.googleapis.com` / `fonts.gstatic.com` when you open Prism, and may fetch page-declared webfont bytes in the page context (then register them locally) or fall back to Google Fonts so Fonts-tab cards preview in the real typeface; see [PRIVACY.md](./PRIVACY.md).
 
 No analytics. No remote palette or typography storage.
 
