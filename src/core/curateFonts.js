@@ -45,6 +45,137 @@ const UI_SOURCES = new Set(["navigation", "primary_button", "hero_cta"]);
 const MAX_FONTS = 6;
 const MIN_AREA_SHARE = 0.01;
 const MIN_SCORE_SHARE = 0.02;
+const MAX_USAGE_ROLES = 5;
+const HEADING_ROLE_ORDER = ["h1", "h2", "h3", "h4", "h5", "h6"];
+
+/** Map a font sample to a designer-facing usage role id, or null. */
+export function sampleUsageRole(sample) {
+  if (!sample) return null;
+  const level = Number(sample.headingLevel);
+  if (Number.isFinite(level) && level >= 1 && level <= 6) return `h${level}`;
+  if (sample.context === "heading") return "heading";
+  if (sample.context === "button" || sample.sourceCategory === "primary_button") {
+    return "button";
+  }
+  if (sample.context === "link" || sample.sourceCategory === "navigation") {
+    return "link";
+  }
+  if (sample.context === "text") return "body";
+  return null;
+}
+
+function headingLevelFromRole(roleId) {
+  const match = String(roleId || "").match(/^h([1-6])$/i);
+  return match ? Number(match[1]) : null;
+}
+
+function formatUsageRoleLabel(roleId) {
+  if (roleId === "body") return "Body";
+  if (roleId === "button") return "Button";
+  if (roleId === "link") return "Link";
+  if (roleId === "heading") return "Heading";
+  const level = headingLevelFromRole(roleId);
+  if (level) return `H${level}`;
+  return String(roleId || "");
+}
+
+/**
+ * Collapse consecutive heading roles into ranges (H1–H3) while keeping
+ * Body / Button / Link as standalone chips.
+ */
+export function formatUsageRoleLabels(roleIds) {
+  const ids = (roleIds || []).filter(Boolean);
+  if (!ids.length) return [];
+
+  const labels = [];
+  let rangeStart = null;
+  let rangeEnd = null;
+
+  const flushRange = () => {
+    if (rangeStart == null) return;
+    labels.push(
+      rangeStart === rangeEnd ? `H${rangeStart}` : `H${rangeStart}–H${rangeEnd}`
+    );
+    rangeStart = null;
+    rangeEnd = null;
+  };
+
+  for (const id of ids) {
+    const level = headingLevelFromRole(id);
+    if (level) {
+      if (rangeStart == null) {
+        rangeStart = level;
+        rangeEnd = level;
+      } else if (level === rangeEnd + 1) {
+        rangeEnd = level;
+      } else {
+        flushRange();
+        rangeStart = level;
+        rangeEnd = level;
+      }
+      continue;
+    }
+    flushRange();
+    labels.push(formatUsageRoleLabel(id));
+  }
+  flushRange();
+  return labels;
+}
+
+function orderUsageRoleIds(roleIds) {
+  const set = new Set(roleIds);
+  const ordered = [];
+  for (const id of HEADING_ROLE_ORDER) {
+    if (set.has(id)) ordered.push(id);
+  }
+  for (const id of ["heading", "body", "button", "link"]) {
+    if (set.has(id)) ordered.push(id);
+  }
+  for (const id of roleIds) {
+    if (!ordered.includes(id)) ordered.push(id);
+  }
+  return ordered;
+}
+
+/**
+ * Each typography role (H1, Body, Button, …) is owned by exactly one family —
+ * the strongest scorer for that role among the curated fonts — so designers
+ * don't see overlapping chips across cards.
+ */
+export function assignExclusiveUsageRoles(entries) {
+  const list = (entries || []).filter(Boolean);
+  const winners = new Map(); // roleId -> { familyKey, score }
+
+  for (const entry of list) {
+    const familyKey = normalizeFontKey(entry.family);
+    if (!familyKey || !(entry.roleScores instanceof Map)) continue;
+    for (const [roleId, score] of entry.roleScores) {
+      if (!roleId || !(score > 0)) continue;
+      const current = winners.get(roleId);
+      if (
+        !current ||
+        score > current.score ||
+        (score === current.score && familyKey < current.familyKey)
+      ) {
+        winners.set(roleId, { familyKey, score });
+      }
+    }
+  }
+
+  const byFamily = new Map();
+  for (const [roleId, { familyKey }] of winners) {
+    const roles = byFamily.get(familyKey) || [];
+    roles.push(roleId);
+    byFamily.set(familyKey, roles);
+  }
+
+  const labelsByFamily = new Map();
+  for (const [familyKey, roleIds] of byFamily) {
+    const ordered = orderUsageRoleIds(roleIds).slice(0, MAX_USAGE_ROLES);
+    labelsByFamily.set(familyKey, formatUsageRoleLabels(ordered));
+  }
+  return labelsByFamily;
+}
 
 function sampleScore(sample) {
   const contextWeight = CONTEXT_WEIGHT[sample.context] || CONTEXT_WEIGHT.other;
@@ -106,6 +237,7 @@ function aggregateFamilies(fontSamples, sectionCount = 1) {
       uiScore: 0,
       sectionIds: new Set(),
       weightBuckets: new Map(),
+      roleScores: new Map(),
       hasHeroHeading: false,
       hasNav: false,
       sourceCategories: new Set(),
@@ -117,6 +249,11 @@ function aggregateFamilies(fontSamples, sectionCount = 1) {
     entry.totalScore += score;
     entry.sampleCount += 1;
     if (sample.sectionId) entry.sectionIds.add(sample.sectionId);
+
+    const usageRole = sampleUsageRole(sample);
+    if (usageRole) {
+      entry.roleScores.set(usageRole, (entry.roleScores.get(usageRole) || 0) + score);
+    }
 
     const snappedWeight = snapFontWeight(sample.weight);
     const bucket = entry.weightBuckets.get(snappedWeight) || createWeightBucket();
@@ -231,7 +368,7 @@ function pickDistinct(candidates, usedKeys, scoreFn) {
   return null;
 }
 
-function buildFontResult(entry, role) {
+function buildFontResult(entry, role, usageRoles = []) {
   const weights = selectSignificantWeights(entry);
   const dominantWeight = dominantFontWeight(weights);
 
@@ -245,6 +382,7 @@ function buildFontResult(entry, role) {
     identityScore: entry.identityScore,
     weight: dominantWeight,
     roleLabel: formatFontRole(role),
+    usageRoles: Array.isArray(usageRoles) ? usageRoles : [],
     score: entry.totalScore,
     areaShare: entry.totalArea
   };
@@ -276,7 +414,7 @@ export function curateFonts(extraction) {
   const aggregated = aggregateFamilies(fontSamples, sectionCount);
   const significant = selectSignificantFamilies(aggregated);
   const usedKeys = new Set();
-  const fonts = [];
+  const selected = [];
 
   const primary =
     pickDistinct(significant, usedKeys, (entry) => entry.headingScore || entry.totalScore) ||
@@ -284,7 +422,7 @@ export function curateFonts(extraction) {
 
   if (primary) {
     usedKeys.add(normalizeFontKey(primary.family));
-    fonts.push(buildFontResult(primary, "primary"));
+    selected.push({ entry: primary, role: "primary" });
   }
 
   const secondary =
@@ -296,7 +434,7 @@ export function curateFonts(extraction) {
 
   if (secondary) {
     usedKeys.add(normalizeFontKey(secondary.family));
-    fonts.push(buildFontResult(secondary, "secondary"));
+    selected.push({ entry: secondary, role: "secondary" });
   }
 
   const tertiary = pickDistinct(
@@ -306,22 +444,22 @@ export function curateFonts(extraction) {
   );
   if (tertiary && tertiary.totalScore > 0) {
     usedKeys.add(normalizeFontKey(tertiary.family));
-    fonts.push(buildFontResult(tertiary, "tertiary"));
+    selected.push({ entry: tertiary, role: "tertiary" });
   }
 
   // Include every remaining significant family so genuinely-used fonts (a code
   // face, a second display font, etc.) aren't dropped just because the first
   // three roles were already filled.
   for (const entry of [...significant].sort((a, b) => b.totalScore - a.totalScore)) {
-    if (fonts.length >= MAX_FONTS) break;
+    if (selected.length >= MAX_FONTS) break;
     const key = normalizeFontKey(entry.family);
     if (usedKeys.has(key)) continue;
     usedKeys.add(key);
-    fonts.push(buildFontResult(entry, "supporting"));
+    selected.push({ entry, role: "supporting" });
   }
 
   for (const token of tokenHints) {
-    if (fonts.length >= MAX_FONTS) break;
+    if (selected.length >= MAX_FONTS) break;
     const key = normalizeFontKey(token.family);
     if (!key || usedKeys.has(key) || isGenericFamily(token.family)) continue;
 
@@ -329,8 +467,13 @@ export function curateFonts(extraction) {
     if (!match || match.totalScore < 1) continue;
 
     usedKeys.add(key);
-    fonts.push(buildFontResult(match, "supporting"));
+    selected.push({ entry: match, role: "supporting" });
   }
+
+  const usageByFamily = assignExclusiveUsageRoles(selected.map((item) => item.entry));
+  const fonts = selected.map(({ entry, role }) =>
+    buildFontResult(entry, role, usageByFamily.get(normalizeFontKey(entry.family)) || [])
+  );
 
   return {
     fonts,

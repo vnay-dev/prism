@@ -1,6 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { curateFonts } from "../src/core/curateFonts.js";
+import {
+  assignExclusiveUsageRoles,
+  curateFonts,
+  formatUsageRoleLabels,
+  sampleUsageRole
+} from "../src/core/curateFonts.js";
 import {
   fontStackMatchesTarget,
   formatFontWeight,
@@ -116,6 +121,216 @@ test("snapFontWeight normalizes observed weights to standard CSS weights", () =>
   assert.equal(snapFontWeight(527), 500);
   assert.equal(snapFontWeight("normal"), 400);
   assert.equal(snapFontWeight("bold"), 700);
+});
+
+test("sampleUsageRole maps heading levels and contexts", () => {
+  assert.equal(sampleUsageRole({ headingLevel: 1, context: "heading" }), "h1");
+  assert.equal(sampleUsageRole({ headingLevel: 3, context: "heading" }), "h3");
+  assert.equal(sampleUsageRole({ context: "heading" }), "heading");
+  assert.equal(sampleUsageRole({ context: "text" }), "body");
+  assert.equal(sampleUsageRole({ context: "button" }), "button");
+  assert.equal(sampleUsageRole({ context: "link", sourceCategory: "navigation" }), "link");
+  assert.equal(sampleUsageRole({ context: "other" }), null);
+});
+
+test("formatUsageRoleLabels collapses consecutive headings", () => {
+  assert.deepEqual(formatUsageRoleLabels(["h1", "h2", "h3", "body", "button"]), [
+    "H1–H3",
+    "Body",
+    "Button"
+  ]);
+  assert.deepEqual(formatUsageRoleLabels(["h1", "h3", "body"]), ["H1", "H3", "Body"]);
+  assert.deepEqual(formatUsageRoleLabels(["body", "link"]), ["Body", "Link"]);
+});
+
+test("curateFonts exposes usage role labels per family", () => {
+  const result = curateFonts({
+    sectionCount: 2,
+    fontSamples: [
+      {
+        family: "Söhne",
+        weight: 700,
+        fontSize: 48,
+        textLength: 20,
+        headingLevel: 1,
+        viewportVisible: true,
+        area: 10000,
+        context: "heading",
+        contentZone: "website_chrome",
+        importance: 800,
+        rawImportance: 100,
+        brandWeight: 8,
+        sourceCategory: "hero_cta",
+        sectionId: "section-0"
+      },
+      {
+        family: "Söhne",
+        weight: 600,
+        fontSize: 28,
+        textLength: 18,
+        headingLevel: 2,
+        viewportVisible: true,
+        area: 6000,
+        context: "heading",
+        contentZone: "website_chrome",
+        importance: 400,
+        rawImportance: 60,
+        brandWeight: 8,
+        sourceCategory: "hero_cta",
+        sectionId: "section-0"
+      },
+      {
+        family: "Inter",
+        weight: 400,
+        fontSize: 16,
+        textLength: 200,
+        headingLevel: null,
+        viewportVisible: true,
+        area: 40000,
+        context: "text",
+        contentZone: "page_content",
+        importance: 100,
+        rawImportance: 10,
+        brandWeight: 3,
+        sourceCategory: "default",
+        sectionId: "section-1"
+      },
+      {
+        family: "Inter",
+        weight: 500,
+        fontSize: 14,
+        textLength: 10,
+        headingLevel: null,
+        viewportVisible: true,
+        area: 2000,
+        context: "button",
+        contentZone: "website_chrome",
+        importance: 200,
+        rawImportance: 40,
+        brandWeight: 6,
+        sourceCategory: "primary_button",
+        sectionId: "section-0"
+      }
+    ]
+  });
+
+  const sohne = result.fonts.find((font) => font.family === "Söhne");
+  const inter = result.fonts.find((font) => font.family === "Inter");
+  assert.ok(sohne);
+  assert.ok(inter);
+  assert.deepEqual(sohne.usageRoles, ["H1–H2"]);
+  assert.ok(inter.usageRoles.includes("Body"));
+  assert.ok(inter.usageRoles.includes("Button"));
+  assert.ok(!inter.usageRoles.some((label) => /H\d/.test(label)));
+});
+
+test("usage roles are exclusive across font cards", () => {
+  const result = curateFonts({
+    sectionCount: 2,
+    fontSamples: [
+      {
+        family: "Display Face",
+        weight: 700,
+        fontSize: 48,
+        textLength: 16,
+        headingLevel: 1,
+        viewportVisible: true,
+        area: 12000,
+        context: "heading",
+        contentZone: "website_chrome",
+        importance: 900,
+        rawImportance: 100,
+        brandWeight: 8,
+        sourceCategory: "hero_cta",
+        sectionId: "section-0"
+      },
+      {
+        family: "Display Face",
+        weight: 600,
+        fontSize: 32,
+        textLength: 14,
+        headingLevel: 2,
+        viewportVisible: true,
+        area: 8000,
+        context: "heading",
+        contentZone: "website_chrome",
+        importance: 500,
+        rawImportance: 80,
+        brandWeight: 8,
+        sourceCategory: "hero_cta",
+        sectionId: "section-0"
+      },
+      {
+        family: "Body Face",
+        weight: 400,
+        fontSize: 16,
+        textLength: 180,
+        headingLevel: null,
+        viewportVisible: true,
+        area: 50000,
+        context: "text",
+        contentZone: "page_content",
+        importance: 100,
+        rawImportance: 10,
+        brandWeight: 3,
+        sourceCategory: "default",
+        sectionId: "section-1"
+      },
+      // Weaker H2 usage on the body face — must not steal H2 from Display Face.
+      {
+        family: "Body Face",
+        weight: 600,
+        fontSize: 22,
+        textLength: 12,
+        headingLevel: 2,
+        viewportVisible: true,
+        area: 1500,
+        context: "heading",
+        contentZone: "page_content",
+        importance: 40,
+        rawImportance: 10,
+        brandWeight: 3,
+        sourceCategory: "default",
+        sectionId: "section-1"
+      }
+    ]
+  });
+
+  const display = result.fonts.find((font) => font.family === "Display Face");
+  const body = result.fonts.find((font) => font.family === "Body Face");
+  assert.ok(display);
+  assert.ok(body);
+  assert.ok(display.usageRoles.includes("H1–H2") || display.usageRoles.includes("H2"));
+  assert.ok(!body.usageRoles.some((label) => label === "H2" || label.includes("H2")));
+
+  const seen = new Set();
+  for (const font of result.fonts) {
+    for (const label of font.usageRoles || []) {
+      assert.ok(!seen.has(label), `role ${label} appears on multiple cards`);
+      seen.add(label);
+    }
+  }
+});
+
+test("assignExclusiveUsageRoles picks the strongest family per role", () => {
+  const roles = assignExclusiveUsageRoles([
+    {
+      family: "A",
+      roleScores: new Map([
+        ["h2", 10],
+        ["body", 50]
+      ])
+    },
+    {
+      family: "B",
+      roleScores: new Map([
+        ["h2", 40],
+        ["button", 20]
+      ])
+    }
+  ]);
+  assert.deepEqual(roles.get("a"), ["Body"]);
+  assert.deepEqual(roles.get("b"), ["H2", "Button"]);
 });
 
 test("curateFonts keeps meaningful weights and drops insignificant outliers", () => {

@@ -15,7 +15,7 @@ export const COLOR_VIEW_ORDER = Object.freeze([
 export const COLOR_VIEW_META = Object.freeze({
   [COLOR_VIEW_MODES.ROLES]: {
     label: "Organized",
-    title: "Organized by role",
+    title: "Grid view",
     icon: "grid_view"
   },
   [COLOR_VIEW_MODES.STACK]: {

@@ -25,10 +25,17 @@ export const PANEL_HOST_MESSAGE_TYPES = Object.freeze([
   "prism-drag-start",
   "prism-drag-move",
   "prism-drag-end",
-  "prism-resize"
+  "prism-resize",
+  "prism-color-picker-open",
+  "prism-color-picker-close"
 ]);
 
-export const PANEL_CHILD_MESSAGE_TYPES = Object.freeze(["prism-request-resize"]);
+export const PANEL_CHILD_MESSAGE_TYPES = Object.freeze([
+  "prism-request-resize",
+  "prism-color-picker-input",
+  "prism-color-picker-commit",
+  "prism-color-picker-closed"
+]);
 
 export function isKnownHostMessageType(type) {
   return typeof type === "string" && PANEL_HOST_MESSAGE_TYPES.includes(type);

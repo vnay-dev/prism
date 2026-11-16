@@ -44,7 +44,13 @@
         cursor: default;
       }
       #${ROOT_ID} .prism-lightbox-close {
+        /* Reset aggressively — host page button rules often shift the icon. */
+        all: unset;
+        box-sizing: border-box;
         flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         width: var(--prism-lightbox-close-size);
         height: var(--prism-lightbox-close-size);
         margin: 0;
@@ -54,8 +60,8 @@
         background: rgba(253, 253, 253, 0.95);
         color: #1c1c1c;
         cursor: pointer;
-        display: grid;
-        place-items: center;
+        line-height: 0;
+        font-size: 0;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
       }
       #${ROOT_ID} .prism-lightbox-close:hover {
@@ -70,6 +76,9 @@
         display: block;
         width: 16px;
         height: 16px;
+        margin: 0;
+        flex: 0 0 auto;
+        pointer-events: none;
       }
       #${ROOT_ID} .prism-lightbox-image {
         display: block;
@@ -150,7 +159,7 @@
     closeBtn.setAttribute("aria-label", "Close preview");
     closeBtn.title = "Close";
     closeBtn.innerHTML =
-      '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.2 3.2a.75.75 0 0 1 1.06 0L8 6.94l3.74-3.74a.75.75 0 1 1 1.06 1.06L9.06 8l3.74 3.74a.75.75 0 1 1-1.06 1.06L8 9.06l-3.74 3.74a.75.75 0 0 1-1.06-1.06L6.94 8 3.2 4.26a.75.75 0 0 1 0-1.06z" fill="currentColor"/></svg>';
+      '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path fill="currentColor" d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12 5.7 16.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z"/></svg>';
     closeBtn.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();

@@ -92,7 +92,8 @@ function stopDragListeners(move, up) {
 }
 
 /**
- * Opens a Figma-style color picker mounted in-flow inside `mountEl`.
+ * Opens a Figma-style color picker mounted inside `mountEl`.
+ * Colors apply live; the close control dismisses without a separate Apply step.
  * Returns { close, root, setHex }.
  */
 export function openColorPicker({
@@ -101,7 +102,8 @@ export function openColorPicker({
   onInput,
   onCommit,
   onClose,
-  animateClose
+  animateClose,
+  escapeToClose = true
 }) {
   closeColorPicker({ immediate: true });
 
@@ -109,7 +111,7 @@ export function openColorPicker({
   const rgb = hexToRgb(hex) || { r: 0, g: 198, b: 0 };
   const hsv = rgbToHsv(rgb);
   const state = { h: hsv.h, s: hsv.s, v: hsv.v };
-  let applied = false;
+  let applied = true;
 
   const root = document.createElement("div");
   root.className = "color-picker";
@@ -161,13 +163,8 @@ export function openColorPicker({
         </div>
       </div>
     </div>
-    <button type="button" class="cp-done btn btn-primary btn-block">
-      <span class="material-symbols-outlined" aria-hidden="true">check</span>
-      <span>Apply color</span>
-    </button>
   `;
 
-  const doneBtn = root.querySelector(".cp-done");
   const svWrap = root.querySelector(".cp-sv-wrap");
   const svEl = root.querySelector(".cp-sv");
   const svThumb = root.querySelector(".cp-sv-thumb");
@@ -204,14 +201,6 @@ export function openColorPicker({
   if (!window.EyeDropper) {
     eyedropperBtn.hidden = true;
   }
-
-  doneBtn.addEventListener("click", (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    applied = true;
-    emit("commit");
-    close();
-  });
 
   function emit(kind) {
     const color = colorFromState(state);
@@ -511,10 +500,10 @@ export function openColorPicker({
   });
 
   function onKeyDown(event) {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      close();
-    }
+    if (event.key !== "Escape" || !escapeToClose) return;
+    event.preventDefault();
+    event.stopPropagation();
+    close();
   }
 
   let closing = false;
@@ -528,6 +517,8 @@ export function openColorPicker({
   function close({ immediate = false } = {}) {
     if (activePicker !== api || closing) return;
     closing = true;
+    applied = true;
+    emit("commit");
     document.removeEventListener("keydown", onKeyDown, true);
 
     if (immediate || !animateClose) {

@@ -1,7 +1,8 @@
 /**
- * Highlight visible text on the page that uses a given font family.
+ * Highlight text on the page that uses a given font family.
  * Uses the CSS Highlight API so only glyphs are marked, not containers.
- * Viewport matches appear first; more are revealed as the user scrolls.
+ * All current matches are painted on the first click; scroll/DOM mutations
+ * pick up lazy-loaded or virtualized occurrences afterward.
  */
 (function initPrismFontHighlight() {
   const STYLE_ID = "prism-font-highlight-style";
@@ -275,17 +276,24 @@
     return nodes;
   }
 
-  function removeScrollListeners(state) {
-    if (!state?.onScroll) return;
-    window.removeEventListener("scroll", state.onScroll, true);
-    window.removeEventListener("resize", state.onScroll);
+  function removeSessionListeners(state) {
+    if (state?.onScroll) {
+      document.removeEventListener("scroll", state.onScroll, true);
+      window.removeEventListener("scroll", state.onScroll, true);
+      window.removeEventListener("resize", state.onScroll);
+      state.onScroll = null;
+    }
+    if (state?.mutationObserver) {
+      state.mutationObserver.disconnect();
+      state.mutationObserver = null;
+    }
   }
 
   function teardownSession() {
     const state = window[STATE_KEY];
     if (!state) return;
 
-    removeScrollListeners(state);
+    removeSessionListeners(state);
 
     if (state.mode === "highlight-api" && supportsHighlightApi()) {
       CSS.highlights.delete(HIGHLIGHT_NAME);
@@ -307,6 +315,7 @@
 
   function addWrapHighlight(textNode, state) {
     if (state.highlighted.has(textNode)) return false;
+    if (!textNode.isConnected) return false;
 
     const parent = textNode.parentElement;
     if (!parent || parent.hasAttribute(WRAP_ATTR)) return false;
@@ -322,18 +331,31 @@
 
   function addRangeHighlight(textNode, state) {
     if (state.highlighted.has(textNode)) return false;
+    if (!textNode.isConnected) return false;
 
     const range = document.createRange();
     range.selectNodeContents(textNode);
-    if (!range.getClientRects().length) return false;
-
+    // Off-screen text often has no client rects yet; still highlight it so
+    // matches below the fold are marked on the first click.
     state.highlight.add(range);
     state.highlighted.add(textNode);
     state.highlightedCount += 1;
     return true;
   }
 
-  function revealViewportMatches(state) {
+  function mergeCandidates(state, nodes) {
+    let added = 0;
+    for (const textNode of nodes) {
+      if (state.candidateSet.has(textNode)) continue;
+      state.candidateSet.add(textNode);
+      state.candidates.push(textNode);
+      added += 1;
+    }
+    if (added > 0) state.done = false;
+    return added;
+  }
+
+  function highlightAllMatches(state) {
     if (!state || state.done) return;
 
     for (const textNode of state.candidates) {
@@ -342,20 +364,34 @@
         break;
       }
       if (state.highlighted.has(textNode)) continue;
-      if (!isTextNodeInViewport(textNode)) continue;
+      if (!textNode.isConnected) continue;
 
-      const added =
-        state.mode === "highlight-api"
-          ? addRangeHighlight(textNode, state)
-          : addWrapHighlight(textNode, state);
-
-      if (!added) continue;
+      if (state.mode === "highlight-api") {
+        addRangeHighlight(textNode, state);
+      } else {
+        addWrapHighlight(textNode, state);
+      }
     }
 
     if (state.highlightedCount >= state.candidates.length) {
       state.done = true;
-      removeScrollListeners(state);
     }
+  }
+
+  function refreshAndHighlight(state) {
+    if (!state) return;
+    mergeCandidates(state, collectMatchingTextNodes(state.targetKey));
+    highlightAllMatches(state);
+  }
+
+  function scheduleRefresh(state) {
+    if (!state || state.refreshScheduled) return;
+    state.refreshScheduled = true;
+    requestAnimationFrame(() => {
+      state.refreshScheduled = false;
+      if (window[STATE_KEY] !== state) return;
+      refreshAndHighlight(state);
+    });
   }
 
   function startHighlightSession(family, targetKey) {
@@ -364,44 +400,53 @@
 
     const candidates = collectMatchingTextNodes(targetKey);
     const useHighlightApi = supportsHighlightApi();
+    const candidateSet = new Set(candidates);
 
     const state = {
       family,
       targetKey,
       candidates,
+      candidateSet,
       highlighted: new WeakSet(),
       highlightedCount: 0,
       done: candidates.length === 0,
       mode: useHighlightApi ? "highlight-api" : "wrap",
       highlight: useHighlightApi ? new Highlight() : null,
-      onScroll: null
+      onScroll: null,
+      mutationObserver: null,
+      refreshScheduled: false
     };
 
     if (useHighlightApi) {
       CSS.highlights.set(HIGHLIGHT_NAME, state.highlight);
     }
 
-    if (!state.done) {
-      state.onScroll = () => {
-        if (state.scrollScheduled) return;
-        state.scrollScheduled = true;
-        requestAnimationFrame(() => {
-          state.scrollScheduled = false;
-          revealViewportMatches(state);
-        });
-      };
+    window[STATE_KEY] = state;
+    highlightAllMatches(state);
 
-      window.addEventListener("scroll", state.onScroll, { capture: true, passive: true });
-      window.addEventListener("resize", state.onScroll, { passive: true });
+    // Keep listening for lazy-loaded / virtualized text that appears later.
+    state.onScroll = () => scheduleRefresh(state);
+    document.addEventListener("scroll", state.onScroll, { capture: true, passive: true });
+    window.addEventListener("scroll", state.onScroll, { capture: true, passive: true });
+    window.addEventListener("resize", state.onScroll, { passive: true });
+
+    // Highlight API doesn't mutate the DOM; observe new text safely.
+    // Wrap mode skips MutationObserver to avoid feedback from our own spans.
+    if (useHighlightApi && typeof MutationObserver === "function") {
+      state.mutationObserver = new MutationObserver(() => scheduleRefresh(state));
+      state.mutationObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true
+      });
     }
 
-    window[STATE_KEY] = state;
-    revealViewportMatches(state);
-
-    // Bring the first match into view when nothing is already on screen.
+    // If nothing is on screen yet, nudge to the first match (already highlighted).
     if (candidates.length) {
       const scrollTarget =
-        candidates.find((node) => isTextNodeInViewport(node)) || candidates[0];
+        candidates.find((node) => node.isConnected && isTextNodeInViewport(node)) ||
+        candidates.find((node) => node.isConnected) ||
+        candidates[0];
       const anchor = scrollTarget?.parentElement;
       if (anchor && !isTextNodeInViewport(scrollTarget)) {
         try {
@@ -409,23 +454,12 @@
         } catch {
           anchor.scrollIntoView(true);
         }
-        // After scroll settles, paint newly visible matches.
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => revealViewportMatches(state));
-        });
-        window.setTimeout(() => revealViewportMatches(state), 350);
-      } else if (anchor) {
-        try {
-          anchor.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
-        } catch {
-          /* ignore */
-        }
       }
     }
 
     return {
       family,
-      count: candidates.length,
+      count: state.candidates.length,
       highlighted: state.highlightedCount
     };
   }

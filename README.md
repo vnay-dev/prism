@@ -49,7 +49,7 @@ Chrome extension that extracts a curated **8-color design palette**, **font fami
 1. Open a tab with the site you want to sample.
 2. Click the **Prism** extension icon — the panel opens immediately and extraction starts automatically on supported pages, with a short loader while colors, fonts, images, and icons are scanned together. Only the tabs with actual results appear once it finishes, even on long or content-heavy pages.
 3. Choose a tab:
-   - **Color palette** — review usage-labeled swatches and gradients (with the site brand above), switch **Organized** / **Stack**, optionally **Shuffle** or edit swatches, then **Copy to clipboard** to paste the PNG into Figma or another tool.
+   - **Color palette** — review usage-labeled swatches and gradients (with the site brand above), switch **Organized** / **Stack**, optionally **Shuffle** or edit swatches, then **Copy color palette to Figma** and paste on the Figma canvas as editable layers.
    - **Font families** — each card previews the family in its own typeface; use the copy icon to copy the name, or select a card to highlight that font’s text on the page.
    - **Images** / **Icons** — preview assets in a lightbox; download one file or multi-select as a ZIP. On Icons, use the top-right copy control to paste SVG code.
 4. Use **Reset** if you want to return to manual Extract.
