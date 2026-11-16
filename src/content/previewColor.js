@@ -7,6 +7,8 @@
   const STATE_KEY = "__prismColorPreviewState";
   const ATTR = "data-prism-color-preview";
   const MAX_PATCHES = 500;
+  /** Wall-clock budget for match collection so huge DOMs stay responsive. */
+  const MATCH_BUDGET_MS = 24;
   const COLOR_PROPS = [
     "backgroundColor",
     "color",
@@ -226,6 +228,7 @@
     const matches = [];
     if (!fromRgb) return matches;
     const seen = new Set();
+    const deadline = performance.now() + MATCH_BUDGET_MS;
 
     // TreeWalker(root) never yields `root` itself — page canvas colors often live
     // on html/body (e.g. Apple Store #f5f5f7), so check them explicitly first.
@@ -242,6 +245,7 @@
     });
 
     while (walker.nextNode() && matches.length < limit) {
+      if (performance.now() >= deadline) break;
       pushSolidMatch(matches, walker.currentNode, fromRgb, 0, seen);
     }
     return matches;
@@ -259,6 +263,7 @@
     const matches = [];
     if (!fromCss) return matches;
     const seen = new Set();
+    const deadline = performance.now() + MATCH_BUDGET_MS;
 
     pushGradientMatch(matches, document.documentElement, fromCss, seen);
     pushGradientMatch(matches, document.body, fromCss, seen);
@@ -272,6 +277,7 @@
     });
 
     while (walker.nextNode() && matches.length < limit) {
+      if (performance.now() >= deadline) break;
       pushGradientMatch(matches, walker.currentNode, fromCss, seen);
     }
     return matches;
@@ -302,10 +308,13 @@
   function applyCssVarPreview(fromRgb, toCss, state, owner) {
     const roots = [document.documentElement, document.body].filter(Boolean);
     let painted = 0;
+    const deadline = performance.now() + MATCH_BUDGET_MS;
     for (const root of roots) {
+      if (performance.now() >= deadline) break;
       const styles = getComputedStyle(root);
       const vars = state.varPatches.get(root) || {};
       for (let i = 0; i < styles.length; i += 1) {
+        if (performance.now() >= deadline) break;
         const name = styles[i];
         if (!name || !name.startsWith("--")) continue;
 

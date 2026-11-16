@@ -1766,11 +1766,8 @@ function openSwatchColorPicker(swatch, tile) {
   const startSwatch = currentPalette.find((s) => s.id === swatch.id) || swatch;
   activePickerBaseline = snapshotSwatchForPicker(startSwatch);
 
-  // Editing should always be able to paint the page; arm the toggle so the
-  // preference matches what the user is about to see.
-  if (!pagePreviewEnabled) {
-    setPagePreviewEnabled(true, { persist: true });
-  }
+  // Live preview while the picker is open comes from `activePickerMode` in
+  // shouldPreviewColorOnPage — do not flip/persist the toolbar preference here.
 
   if (isEmbedded) {
     openHostColorPicker({
@@ -1801,9 +1798,8 @@ function openGradientColorPicker(gradient, tile) {
   const latest = currentGradients.find((item) => item.id === gradient.id) || gradient;
   activePickerGradientBaselineCss = latest.css || null;
 
-  if (!pagePreviewEnabled) {
-    setPagePreviewEnabled(true, { persist: true });
-  }
+  // Live preview while the picker is open comes from `activePickerMode` — the
+  // toolbar toggle is only persisted when the user flips it explicitly.
 
   if (isEmbedded) {
     openHostColorPicker({

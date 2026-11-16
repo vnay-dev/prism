@@ -88,7 +88,7 @@ Color tab (Gradients section)  →  tiles · edit · copy CSS · optional live p
 |--------|----------------|
 | `src/content/extractInPage.js` | Full-page virtual section scan, area measurement, color + font + gradient sampling |
 | `src/content/extractAssets.js` | Page image/icon candidate collection (URLs, inline SVG, geometry) |
-| `src/content/highlightFont.js` | On-page highlighting of text matching a selected font family (CSS Highlight API, viewport-first, span-wrap fallback) |
+| `src/content/highlightFont.js` | On-page highlighting of text matching a selected font family (CSS Highlight API all-matches + mutation refresh, span-wrap fallback) |
 | `src/content/previewColor.js` | On-demand live page paint for swatch/gradient edits while preview is armed |
 | `src/content/imageLightbox.js` | Full-page lightbox for previewing a selected image/icon |
 | `src/popup/paletteLayout.js` | Shared bento geometry used by the popup render and Figma SVG export (incl. gradient rows) |
@@ -558,13 +558,14 @@ Runs in the extension popup when the user extracts on the **Font families** tab.
 
 ### 9.3 Family selection
 
-Up to three distinct families, chosen by heading score, body text score, and UI/chrome score:
+Up to **six** distinct families (`MAX_FONTS`):
 
 1. Primary — strongest heading/hero signal
 2. Secondary — dominant body text face
 3. Tertiary — nav/UI chrome face (when distinct)
+4. Supporting — any remaining significant families (e.g. mono/code or a second display face), filled by score until the cap
 
-CSS custom-property **token hints** can fill gaps when samples under-represent a declared token family.
+CSS custom-property **token hints** can fill remaining slots when samples under-represent a declared token family.
 
 ### 9.4 Popup output
 
@@ -574,7 +575,7 @@ Each family card shows:
 - `Weights: 400, 500, 600` — comma-separated list of meaningful weights
 - Usage role chips when detected (H1–H6 ranges, Body, Button, Link)
 - Copy icon — writes the family name to the clipboard
-- Card select — click the card (same hover/select chrome as Images/Icons) to inject `highlightFont.js` and highlight every visible run of that family on the page (viewport-first, revealed on scroll; ignores visually-hidden text); click again or close the panel to clear
+- Card select — click the card (same hover/select chrome as Images/Icons) to inject `highlightFont.js` and highlight **all current matching text** on the page (not viewport-only); scroll/resize and (Highlight API path) DOM mutations refresh for lazy-loaded or virtualized text; ignores visually-hidden text; click again or close the panel to clear
 
 Figma SVG / CSS export includes **colors (and gradients) only**; typography is clipboard-only per family.
 
