@@ -20,7 +20,8 @@ import { COLOR_VIEW_MODES, buildStackLayout, normalizeColorViewMode } from "./pa
 import {
   parseCssGradient,
   paintParsedGradient,
-  cssLinearEndpoints
+  cssLinearEndpoints,
+  resolveRadialGeometry
 } from "../core/paintGradient.js";
 import { getTargetTab } from "./tabs.js";
 
@@ -135,7 +136,7 @@ function drawImageCover(ctx, img, x, y, width, height, radius) {
   ctx.restore();
 }
 
-function loadImage(src) {
+export function loadImage(src) {
   return new Promise((resolve) => {
     if (!src) {
       resolve(null);
@@ -396,7 +397,7 @@ function drawSwatchTile(ctx, swatch, x, y, width, height, radius, borderWidth) {
   }
 }
 
-function escapeXmlAttr(value) {
+export function escapeXmlAttr(value) {
   return String(value || "")
     .replace(/&/g, "&amp;")
     .replace(/"/g, "&quot;")
@@ -404,7 +405,7 @@ function escapeXmlAttr(value) {
     .replace(/>/g, "&gt;");
 }
 
-function resolveGradientStops(parsed, fallbackTokens = []) {
+export function resolveGradientStops(parsed, fallbackTokens = []) {
   const fromParsed = (parsed?.stops || [])
     .map((stop) => {
       const color = resolveCssColorForCanvas(stop.color);
@@ -417,6 +418,20 @@ function resolveGradientStops(parsed, fallbackTokens = []) {
     .filter(Boolean);
 
   if (fromParsed.length >= 2) {
+    // CSS blends with premultiplied alpha; SVG/Figma blend straight RGB, so a
+    // "transparent" (black, a=0) stop would muddy the fade to grey. Borrow the
+    // RGB of the nearest visible stop so only the alpha changes.
+    fromParsed.forEach((stop, i) => {
+      if (stop.a > 0) return;
+      const donor =
+        fromParsed.slice(0, i).reverse().find((s) => s.a > 0) ||
+        fromParsed.slice(i + 1).find((s) => s.a > 0);
+      if (!donor) return;
+      stop.r = donor.r;
+      stop.g = donor.g;
+      stop.b = donor.b;
+      stop.css = `rgba(${donor.r}, ${donor.g}, ${donor.b}, 0)`;
+    });
     for (let i = 1; i < fromParsed.length; i += 1) {
       if (fromParsed[i].offset < fromParsed[i - 1].offset) {
         fromParsed[i].offset = fromParsed[i - 1].offset;
@@ -444,7 +459,8 @@ function resolveGradientStops(parsed, fallbackTokens = []) {
   ];
 }
 
-function buildGradientSvgMarkup(parsed, width, height, stops) {
+/** `<linearGradient>` / `<radialGradient>` definition for the given gradient id. */
+export function buildGradientPaintDef(id, parsed, width, height, stops) {
   const w = Math.max(1, Math.round(width));
   const h = Math.max(1, Math.round(height));
   // SVG 1.1 ignores alpha inside stop-color rgba(); put opacity on stop-opacity.
@@ -457,14 +473,20 @@ function buildGradientSvgMarkup(parsed, width, height, stops) {
     })
     .join("");
 
-  let paint;
   if (parsed?.type === "radial") {
-    paint = `<radialGradient id="g" cx="50%" cy="50%" r="75%">${stopXml}</radialGradient>`;
-  } else {
-    const angle = parsed?.type === "conic" ? 90 : parsed?.angle ?? 180;
-    const line = cssLinearEndpoints(angle, w, h);
-    paint = `<linearGradient id="g" gradientUnits="userSpaceOnUse" x1="${line.x1}" y1="${line.y1}" x2="${line.x2}" y2="${line.y2}">${stopXml}</linearGradient>`;
+    // Unit circle moved/scaled onto the CSS center + radii (supports ellipses).
+    const g = resolveRadialGeometry(parsed.radial, w, h);
+    return `<radialGradient id="${id}" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="1" gradientTransform="translate(${g.cx} ${g.cy}) scale(${g.rx} ${g.ry})">${stopXml}</radialGradient>`;
   }
+  const angle = parsed?.type === "conic" ? 90 : parsed?.angle ?? 180;
+  const line = cssLinearEndpoints(angle, w, h);
+  return `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${line.x1}" y1="${line.y1}" x2="${line.x2}" y2="${line.y2}">${stopXml}</linearGradient>`;
+}
+
+function buildGradientSvgMarkup(parsed, width, height, stops) {
+  const w = Math.max(1, Math.round(width));
+  const h = Math.max(1, Math.round(height));
+  const paint = buildGradientPaintDef("g", parsed, w, h, stops);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><defs>${paint}</defs><rect width="100%" height="100%" fill="url(#g)"/></svg>`;
 }

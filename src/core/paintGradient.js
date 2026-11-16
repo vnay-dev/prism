@@ -54,7 +54,116 @@ function isNonColorHint(part) {
   if (/^(?:circle|ellipse)\b/.test(p)) return true;
   if (/^(?:closest|farthest)-(?:side|corner)\b/.test(p)) return true;
   if (/^at\s+/.test(p)) return true;
+  // e.g. "100px at top left" / "50% 30% at center" (radial size + position).
+  if (/\sat\s/.test(p) && !startsWithColor(p)) return true;
   return false;
+}
+
+const POSITION_KEYWORDS = { left: 0, top: 0, center: 50, right: 100, bottom: 100 };
+
+function parsePositionToken(token) {
+  const value = String(token || "").trim().toLowerCase();
+  if (Object.prototype.hasOwnProperty.call(POSITION_KEYWORDS, value)) {
+    return { pct: POSITION_KEYWORDS[value] };
+  }
+  const m = value.match(/^([+-]?[\d.]+)(%|px)?$/);
+  if (!m) return null;
+  const n = Number(m[1]);
+  if (!Number.isFinite(n)) return null;
+  return m[2] === "px" ? { px: n } : { pct: n };
+}
+
+/**
+ * Radial shape / size / center from the leading hint, e.g.
+ * "circle farthest-corner at 100% 0%". Missing parts use CSS defaults
+ * (ellipse, farthest-corner, center).
+ */
+export function parseRadialHint(hint) {
+  const value = String(hint || "").trim().toLowerCase();
+  const [sizePart, atPart = ""] = value.split(/\bat\b/);
+  const tokens = sizePart.split(/\s+/).filter(Boolean);
+
+  let shape = "";
+  let sizeKeyword = "";
+  const lengths = [];
+  for (const token of tokens) {
+    if (token === "circle" || token === "ellipse") shape = token;
+    else if (/^(closest|farthest)-(side|corner)$/.test(token)) sizeKeyword = token;
+    else {
+      const len = parsePositionToken(token);
+      if (len && !("pct" in len && POSITION_KEYWORDS[token] !== undefined)) lengths.push(len);
+    }
+  }
+  if (!shape) shape = lengths.length === 1 ? "circle" : "ellipse";
+
+  let x = { pct: 50 };
+  let y = { pct: 50 };
+  const pos = atPart.split(/\s+/).filter(Boolean);
+  if (pos.length === 1) {
+    const only = pos[0];
+    if (only === "top" || only === "bottom") y = parsePositionToken(only) || y;
+    else x = parsePositionToken(only) || x;
+  } else if (pos.length >= 2) {
+    let [a, b] = pos;
+    // Keyword order may be swapped ("top left").
+    if (a === "top" || a === "bottom" || b === "left" || b === "right") [a, b] = [b, a];
+    x = parsePositionToken(a) || x;
+    y = parsePositionToken(b) || y;
+  }
+
+  return { shape, sizeKeyword: sizeKeyword || "farthest-corner", lengths, x, y };
+}
+
+/**
+ * Resolve a parsed radial hint against a w×h box into user-space geometry
+ * { cx, cy, rx, ry } following the CSS Images size rules.
+ */
+export function resolveRadialGeometry(radial, width, height) {
+  const r = radial || parseRadialHint("");
+  const toPx = (pos, total) => ("px" in pos ? pos.px : (pos.pct / 100) * total);
+  const cx = toPx(r.x, width);
+  const cy = toPx(r.y, height);
+
+  const left = Math.abs(cx);
+  const right = Math.abs(width - cx);
+  const top = Math.abs(cy);
+  const bottom = Math.abs(height - cy);
+
+  if (r.lengths.length) {
+    const rx = toPx(r.lengths[0], width);
+    const ry = r.shape === "circle" ? rx : toPx(r.lengths[1] || r.lengths[0], height);
+    return { cx, cy, rx: Math.max(rx, 0.01), ry: Math.max(ry, 0.01) };
+  }
+
+  const closest = r.sizeKeyword.startsWith("closest");
+  const corner = r.sizeKeyword.endsWith("corner");
+  const pick = (a, b) => (closest ? Math.min(a, b) : Math.max(a, b));
+
+  if (r.shape === "circle") {
+    let radius;
+    if (corner) {
+      const dists = [
+        Math.hypot(left, top),
+        Math.hypot(right, top),
+        Math.hypot(left, bottom),
+        Math.hypot(right, bottom)
+      ];
+      radius = closest ? Math.min(...dists) : Math.max(...dists);
+    } else {
+      radius = pick(pick(left, right), pick(top, bottom));
+    }
+    const safe = Math.max(radius, 0.01);
+    return { cx, cy, rx: safe, ry: safe };
+  }
+
+  // Ellipse: side keywords use each axis; corner keywords scale the side ratio by √2.
+  let rx = pick(left, right);
+  let ry = pick(top, bottom);
+  if (corner) {
+    rx *= Math.SQRT2;
+    ry *= Math.SQRT2;
+  }
+  return { cx, cy, rx: Math.max(rx, 0.01), ry: Math.max(ry, 0.01) };
 }
 
 function startsWithColor(part) {
@@ -176,10 +285,14 @@ export function parseCssGradient(css) {
 
   let angle = meta.type === "linear" ? 180 : 0;
   let index = 0;
+  let radialHint = "";
 
   // Consume leading direction / interpolation hints.
   while (index < parts.length && isNonColorHint(parts[index]) && !startsWithColor(parts[index])) {
     const hint = parts[index];
+    if (meta.type === "radial" && !/^in\s+/i.test(hint)) {
+      radialHint = `${radialHint} ${hint}`.trim();
+    }
     if (meta.type === "linear" && !/^in\s+/i.test(hint)) {
       angle = parseLinearDirection(hint);
     } else if (meta.type === "conic") {
@@ -235,6 +348,7 @@ export function parseCssGradient(css) {
     type: meta.type,
     repeating: meta.repeating,
     angle,
+    radial: meta.type === "radial" ? parseRadialHint(radialHint) : null,
     stops: resolved
   };
 }
