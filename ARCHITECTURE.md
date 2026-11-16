@@ -6,7 +6,7 @@ Prism is a Chrome extension that extracts **design-system colors**, **typography
 - **Fonts** — ranked font families with meaningful CSS weights, derived from computed styles on visible text.
 - **Images / Icons** — curated page assets (raster URLs and inline SVG) with lightbox preview and download / ZIP.
 
-The panel has four tabs (**Color palette** / **Font families** / **Images** / **Icons**). Each tab runs an in-page scan but curates a different slice of the extraction output. Color results support **Organized** and **Stack** layout views; extraction auto-starts on first open of a supported page.
+The panel has four tabs (**Color palette** / **Font families** / **Images** / **Icons**). Each tab runs an in-page scan but curates a different slice of the extraction output. Color results support **Organized**, **Stack**, and **CSS** views plus optional live page preview; extraction auto-starts on first open of a supported page.
 
 ### Color pipeline
 
@@ -36,7 +36,7 @@ The panel has four tabs (**Color palette** / **Font families** / **Images** / **
 └───────────────────────────────────┬─────────────────────────────────────┘
                                     │ role sections
                                     ▼
-              Color tab (Organized / Stack + Gradients) / PNG export
+              Color tab (Organized / Stack / CSS + Gradients) / Figma SVG + CSS export
 ```
 
 ### Font pipeline
@@ -77,7 +77,7 @@ extractInPage.js (background-image layers)  →  gradient candidates
 curateGradients.js (+ paintGradient.js)  →  distinct multi-stop CSS gradients
         │
         ▼
-Color tab (Gradients section)  →  tiles · copy CSS
+Color tab (Gradients section)  →  tiles · edit · copy CSS · optional live page preview
 ```
 
 ---
@@ -89,17 +89,22 @@ Color tab (Gradients section)  →  tiles · copy CSS
 | `src/content/extractInPage.js` | Full-page virtual section scan, area measurement, color + font + gradient sampling |
 | `src/content/extractAssets.js` | Page image/icon candidate collection (URLs, inline SVG, geometry) |
 | `src/content/highlightFont.js` | On-page highlighting of text matching a selected font family (CSS Highlight API, viewport-first, span-wrap fallback) |
+| `src/content/previewColor.js` | On-demand live page paint for swatch/gradient edits while preview is armed |
 | `src/content/imageLightbox.js` | Full-page lightbox for previewing a selected image/icon |
-| `src/popup/paletteLayout.js` | Shared bento geometry used by both the popup render and the PNG export (incl. gradient rows) |
+| `src/popup/paletteLayout.js` | Shared bento geometry used by the popup render and Figma SVG export (incl. gradient rows) |
 | `src/popup/paletteViews.js` | Organized vs Stack layout modes and hue-family stack ordering |
 | `src/popup/generationController.js` | Auto-extract on open, Reset/dismissed state, in-flight dedupe (colors/fonts/assets) |
 | `src/popup/assetsView.js` | Images/Icons grid rendering, selection, and download feedback |
 | `src/popup/downloadAsset.js` | Single-asset and multi-select ZIP download via the service worker |
+| `src/popup/exportPaletteSvg.js` | Palette SVG clipboard export for Figma editable layers |
+| `src/popup/exportPaletteCss.js` | Palette CSS variables preview + clipboard export |
+| `src/popup/gradientPicker.js` | In-panel gradient stop/color editor |
+| `src/popup/colorPickerFrame.html` / `colorPickerFrame.js` | Framed host for the floating color picker inside the panel |
 | `src/core/sourceClassification.js` | Source categories, weights, product demo detection, utility classification, scoring (test helper `classifySourceFromSignals`; live classifier lives in `extractInPage.js`) |
-| `src/core/curateFonts.js` | Font family curation and weight significance filtering |
+| `src/core/curateFonts.js` | Font family curation, weight significance filtering, and usage-role labels |
 | `src/core/curateGradients.js` | CSS gradient curation (area, distinct stops, cap) |
 | `src/core/curateImages.js` / `curateIcons.js` | Image and icon candidate ranking / filtering |
-| `src/core/paintGradient.js` | Gradient CSS parsing helpers for curation and preview |
+| `src/core/paintGradient.js` | Gradient CSS parsing helpers for curation, editing, and preview |
 | `src/core/assetUtils.js` | Shared asset URL/filename helpers |
 | `src/core/inlineSvg.js` | Inline SVG normalization for icon download/preview |
 | `src/core/zipStore.js` | Client-side ZIP packing for multi-select downloads |
@@ -567,10 +572,11 @@ Each family card shows:
 
 - Family name (rendered in the extracted typeface when the face can be loaded into the panel)
 - `Weights: 400, 500, 600` — comma-separated list of meaningful weights
+- Usage role chips when detected (H1–H6 ranges, Body, Button, Link)
 - Copy icon — writes the family name to the clipboard
 - Card select — click the card (same hover/select chrome as Images/Icons) to inject `highlightFont.js` and highlight every visible run of that family on the page (viewport-first, revealed on scroll; ignores visually-hidden text); click again or close the panel to clear
 
-PNG export includes **colors only**; typography is clipboard-only per family.
+Figma SVG / CSS export includes **colors (and gradients) only**; typography is clipboard-only per family.
 
 ---
 
@@ -667,19 +673,23 @@ asset candidates
 | `src/core/curateFonts.js` | `curateFonts(extraction)` → ranked families + weights |
 | `src/core/curateGradients.js` | `curateGradients(extraction)` → CSS gradient tiles |
 | `src/core/curateImages.js` / `curateIcons.js` | Ranked assets for Images / Icons tabs |
-| `src/popup/App.js` | Tabbed UI — auto-extract, Organized/Stack, gradients, shuffle, edit/lock, copy, fonts, assets |
+| `src/popup/App.js` | Tabbed UI — auto-extract, Organized/Stack/CSS, gradients, shuffle, edit/lock, page preview, Figma/CSS copy, fonts, assets |
 | `src/popup/generationController.js` | Per-page auto-generate / Reset / in-flight guards |
 | `src/popup/paletteViews.js` | View mode helpers and stack sort order |
 | `src/popup/colorPicker.js` | Custom HSV color picker for swatch editing |
-| `src/popup/exportPaletteImage.js` | Palette PNG generation (color tab only), using `paletteLayout.js` geometry |
-| `src/popup/paletteLayout.js` | Shared bento layout for popup render and PNG export |
+| `src/popup/gradientPicker.js` | Gradient stop editor used from the Colors tab |
+| `src/popup/exportPaletteSvg.js` | Palette SVG clipboard export for Figma (color tab) |
+| `src/popup/exportPaletteCss.js` | Palette CSS variables preview + clipboard export |
+| `src/popup/exportPaletteImage.js` | Shared export helpers (page meta, gradient paint defs) used by SVG/CSS paths |
+| `src/popup/paletteLayout.js` | Shared bento layout for popup render and Figma SVG export |
 | `src/popup/assetsView.js` / `downloadAsset.js` | Asset grid UI and download / ZIP |
 | `src/background/service-worker.js` | In-memory generation cache + validated message router + `chrome.downloads` |
 | `src/background/messageHandler.js` | Shared message validation / dispatch (unit-tested) |
 | `src/content/highlightFont.js` | Injected on demand to highlight visible text matching a selected font family |
+| `src/content/previewColor.js` | Injected on demand to preview swatch/gradient edits on the live page |
 | `src/content/imageLightbox.js` | Injected on demand for full-page asset preview |
 
-The popup injects `extractInPage.js` (and `extractAssets.js` for asset tabs) via `chrome.scripting.executeScript`, then runs curation in the extension context using shared core modules. On first open of a page, color extraction starts automatically unless the user has Reset for that page. The Font families tab additionally injects `highlightFont.js`; Images/Icons use `imageLightbox.js` for preview and the service worker for downloads.
+The popup injects `extractInPage.js` (and `extractAssets.js` for asset tabs) via `chrome.scripting.executeScript`, then runs curation in the extension context using shared core modules. On first open of a page, color extraction starts automatically unless the user has Reset for that page. The Font families tab additionally injects `highlightFont.js`; Colors preview injects `previewColor.js` when armed; Images/Icons use `imageLightbox.js` for preview and the service worker for downloads. The per-page preview preference is stored in `chrome.storage.local` (not the generation cache).
 
 ---
 

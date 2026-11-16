@@ -1,5 +1,40 @@
 # Release notes
 
+## 0.8.0 — Figma copy, CSS export & live page preview
+
+**Date:** November 17, 2026
+
+### New
+
+- **Copy color palette to Figma** — the Colors footer pastes editable SVG layers onto the Figma canvas (site brand, swatches, and gradients), replacing the old PNG clipboard image.
+- **CSS export** — switch the Colors view to **CSS** to preview palette variables, then **Copy CSS** for design tokens you can drop into code.
+- **Preview on page** — optional toggle paints swatch and gradient edits onto the live page so you can try changes in context before copying.
+- **Gradient editor** — click a gradient tile’s edit control to adjust stops and colors in a dedicated picker.
+- **Font usage roles** — Font cards show how a family is used on the page (for example H1–H3, Body, Button, Link).
+
+### Improved
+
+- **Color picker** — floating in-panel picker for swatch and gradient-stop edits, including a framed picker host for smoother interaction inside the panel.
+
+### Permissions
+
+- **`storage`** — remembers the per-page “preview on page” preference locally. Chrome may ask you to re-enable the extension after update.
+
+### Technical
+
+- New modules: `exportPaletteSvg.js`, `exportPaletteCss.js`, `gradientPicker.js`, `colorPickerFrame`, `previewColor.js`; gradient paint helpers extended in `paintGradient.js`.
+- `chrome.storage.local` keys are scoped per page path for the preview toggle only (not generation cache).
+- Security allowlist updated for `storage`.
+
+### Package
+
+```bash
+npm run package:store
+# → dist/prism-0.8.0.zip
+```
+
+---
+
 ## 0.7.2 — True font previews & small-laptop panel fit
 
 **Date:** November 12, 2026

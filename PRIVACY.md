@@ -1,7 +1,7 @@
 # Privacy Policy — Prism
 
-**Last updated:** November 12, 2026  
-**Version:** 0.7.2
+**Last updated:** November 17, 2026  
+**Version:** 0.8.0
 
 Prism (“the extension”) is a Chrome extension that helps designers extract color palettes, font families, images, and icons from web pages. This policy describes what the extension accesses and how that information is handled.
 
@@ -22,6 +22,7 @@ When you use Prism on a website tab, the extension may access:
 - **Page asset URLs** (and inline SVG markup for icons) for images and icons you browse or download in the Images / Icons tabs.
 - **Page metadata** used for export labels (document title, hostname, and optional `og:site_name` / `application-name` meta tags).
 - **Tab information** for the active tab you invoked the extension on (such as URL and title), only to run extraction and label exports.
+- **Optional live preview edits** on that same tab when you enable “preview on page” or edit a swatch/gradient with the picker open — Prism temporarily overrides matching colors/gradients in the page DOM for feedback, and does not send those edits off-device.
 
 Prism does not read passwords, form fields, or browsing history beyond the tab you are working with, or data from other tabs in the background. Prism does **not** read or extract the browser cookie store directly. When you start a multi-asset ZIP or batch download, the extension may fetch those asset URLs **in the page context** with `credentials: "include"` so same-origin or cookie-gated assets the page could already load can be packaged — that uses the site’s existing cookies for those requests only, under your download action (see [Network connections](#network-connections)).
 
@@ -47,8 +48,9 @@ The extension **UI** loads its own chrome typography from Google Fonts (`fonts.g
 |------------|---------|
 | `activeTab` | Access the tab you clicked the extension icon on, only while you use Prism |
 | `scripting` | Inject a short-lived script to sample colors, gradients, typography, and asset URLs on that tab |
-| `clipboardWrite` | Copy the generated palette PNG, a font family name, or SVG icon markup when you click copy |
+| `clipboardWrite` | Copy the generated palette SVG/CSS, a font family name, or SVG icon markup when you click copy |
 | `downloads` | Save an image/icon (or a zip of your multi-select) to your Downloads folder when you click Download |
+| `storage` | Remember the per-page “preview on page” preference in `chrome.storage.local` on your device |
 
 `web_accessible_resources` allows the in-page panel (iframe) to load the extension UI on sites you visit. It does not grant ongoing access to all sites without your action.
 
@@ -65,7 +67,7 @@ Extracted palettes, fonts, gradients, and asset lists are kept **only on your de
 - The worker’s `prism-generation-cache-clear` message can delete one page key when invoked; the panel close path does not currently send it.
 - Full process / worker restart drops the in-memory map.
 
-Prism does not write generation results to `chrome.storage` or disk beyond what you explicitly download or copy.
+**Local preference storage:** when you use “preview on page,” Prism may write a small per-page preference (`enabled` + timestamp) under a key derived from that page’s origin and path in `chrome.storage.local`. That preference stays on your device; Prism does not sync it to remote servers. Generation results (palettes, fonts, assets) are still **not** written to `chrome.storage` — only the in-memory service-worker cache and whatever you explicitly download or copy.
 
 ## Children
 
