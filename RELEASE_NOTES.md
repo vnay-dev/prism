@@ -1,5 +1,23 @@
 # Release notes
 
+## 0.8.1 — Palette tooltip clearance
+
+**Date:** November 17, 2026
+
+### Fixed
+
+- **Hex tooltips** — tips stay fully visible above the tile even when a row sits at the top of the scrollport; the native “Click to copy hex” browser tip is removed so only the custom hex tooltip shows.
+- **View toggle overlap** — bottom clearance under the palette keeps the floating Organized/Stack control from covering the last swatch; when the list is height-capped you can scroll that tile clear.
+
+### Package
+
+```bash
+npm run package:store
+# → dist/prism-0.8.1.zip
+```
+
+---
+
 ## 0.8.0 — Figma copy, CSS export & live page preview
 
 **Date:** November 17, 2026
@@ -15,11 +33,6 @@
 ### Improved
 
 - **Color picker** — floating in-panel picker for swatch and gradient-stop edits, including a framed picker host for smoother interaction inside the panel.
-
-### Fixed
-
-- **Hex tooltips** — swatch tips stay fully visible above the tile (including when a row sits at the top of the scrollport); the native “Click to copy hex” browser tip is removed so only the custom hex tooltip shows.
-- **View toggle overlap** — bottom clearance under the palette keeps the floating Organized/Stack control from covering the last swatch; when the list is height-capped you can scroll that tile clear.
 
 ### Permissions
 
