@@ -38,7 +38,7 @@
 
     <main class="app state-intro mode-colors">
 
-      <header class="panel-header">
+      <header class="panel-header" aria-label="Prism">
 
         <span id="dragHandle" class="drag-handle" aria-hidden="true" hidden>
 
@@ -46,7 +46,12 @@
 
         </span>
 
-        <h1>Prism</h1>
+        <div id="siteBrand" class="site-brand" hidden>
+          <span id="siteBrandLogoWrap" class="site-brand-logo-wrap" hidden>
+            <img id="siteBrandLogo" class="site-brand-logo" alt="" />
+          </span>
+          <span id="siteBrandTitle" class="site-brand-title"></span>
+        </div>
 
         <button
 
@@ -69,8 +74,6 @@
         </button>
 
       </header>
-
-
 
       <nav id="tabBar" class="tab-bar" data-active="colors" role="tablist" aria-label="Extraction mode">
         <div id="tabIndicator" class="tab-indicator" aria-hidden="true"></div>
@@ -165,8 +168,6 @@
 
       </nav>
 
-      <div id="colorPickerStage" class="color-picker-stage" hidden></div>
-
       <div class="panel-body">
 
         <div id="loading" class="loading" hidden>
@@ -202,16 +203,86 @@
 
           <div class="results-toolbar">
 
-            <div id="siteBrand" class="site-brand" hidden>
-              <img id="siteBrandLogo" class="site-brand-logo" alt="" hidden />
-              <span id="siteBrandTitle" class="site-brand-title"></span>
+            <div class="results-toolbar-leading">
+              <p id="status" class="status"></p>
+              <div id="pagePreviewToggleWrap" class="page-preview-toggle">
+                <label class="page-preview-toggle-control" for="pagePreviewToggle">
+                  <input id="pagePreviewToggle" type="checkbox" />
+                  <span id="pagePreviewToggleLabel" class="page-preview-toggle-label"
+                    >Changes stay in the palette</span
+                  >
+                </label>
+                <span class="page-preview-info">
+                  <button
+                    id="pagePreviewInfoBtn"
+                    class="page-preview-info-btn"
+                    type="button"
+                    aria-describedby="pagePreviewInfoTip"
+                    aria-label="About preview on page"
+                  >
+                    <span class="material-symbols-outlined" aria-hidden="true">info</span>
+                  </button>
+                </span>
+                <span id="pagePreviewInfoTip" class="page-preview-info-tip" role="tooltip">
+                  See your palette color changes live on this webpage.
+                </span>
+              </div>
             </div>
 
-            <p id="status" class="status"></p>
+            <div class="results-toolbar-actions">
+              <div id="colorContentMenu" class="content-menu" data-active="palette">
+                <button
+                  id="colorContentMenuBtn"
+                  class="content-menu-btn"
+                  type="button"
+                  aria-haspopup="listbox"
+                  aria-expanded="false"
+                  aria-controls="colorContentMenuList"
+                  title="Switch view"
+                >
+                  <span id="colorContentMenuIcon" class="material-symbols-outlined" aria-hidden="true">palette</span>
+                  <span id="colorContentMenuLabel">Palette</span>
+                  <span class="material-symbols-outlined content-menu-caret" aria-hidden="true">expand_more</span>
+                </button>
+                <div
+                  id="colorContentMenuList"
+                  class="content-menu-list"
+                  role="listbox"
+                  aria-label="Color results view"
+                  hidden
+                >
+                  <button
+                    type="button"
+                    class="content-menu-option is-active"
+                    role="option"
+                    aria-selected="true"
+                    data-content="palette"
+                  >
+                    <span class="material-symbols-outlined" aria-hidden="true">palette</span>
+                    <span>Palette</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="content-menu-option"
+                    role="option"
+                    aria-selected="false"
+                    data-content="css"
+                  >
+                    <span class="material-symbols-outlined" aria-hidden="true">data_object</span>
+                    <span>CSS</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="palette-stage">
+            <div id="swatches" class="swatches" data-view="roles"></div>
 
             <div
               id="colorViewToggle"
-              class="view-toggle"
+              class="view-toggle view-toggle-float"
               data-active="roles"
               role="radiogroup"
               aria-label="Color palette layout"
@@ -223,8 +294,8 @@
                 role="radio"
                 aria-checked="true"
                 data-view="roles"
-                title="Organized by role"
-                aria-label="Organized by role"
+                title="Grid view"
+                aria-label="Grid view"
               >
                 <span class="material-symbols-outlined" aria-hidden="true">grid_view</span>
               </button>
@@ -240,10 +311,11 @@
                 <span class="material-symbols-outlined" aria-hidden="true">view_agenda</span>
               </button>
             </div>
-
           </div>
 
-          <div id="swatches" class="swatches" data-view="roles"></div>
+          <div id="cssExportPanel" class="css-export-panel" hidden>
+            <pre id="cssExportCode" class="css-export-code" tabindex="0" aria-label="Palette CSS variables"></pre>
+          </div>
 
         </section>
 
@@ -291,14 +363,14 @@
             title="Generate a new palette from this page"
           >
             <span class="material-symbols-outlined" aria-hidden="true">shuffle</span>
-            <span>Shuffle</span>
+            <span>Shuffle colors</span>
           </button>
 
           <button id="copyBtn" class="btn btn-primary" type="button">
 
             <span id="copyBtnIcon" class="material-symbols-outlined" aria-hidden="true">content_copy</span>
 
-            <span id="copyBtnLabel">Copy to clipboard</span>
+            <span id="copyBtnLabel">Copy color palette to Figma</span>
 
           </button>
 

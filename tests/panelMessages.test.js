@@ -122,7 +122,15 @@ test("shouldAcceptChildPanelMessage enforces parent source and type", () => {
     ),
     false
   );
-  assert.deepEqual([...PANEL_CHILD_MESSAGE_TYPES], ["prism-request-resize"]);
+  assert.deepEqual(
+    [...PANEL_CHILD_MESSAGE_TYPES],
+    [
+      "prism-request-resize",
+      "prism-color-picker-input",
+      "prism-color-picker-commit",
+      "prism-color-picker-closed"
+    ]
+  );
 });
 
 test("App.js embedded listener uses shouldAcceptChildPanelMessage", () => {

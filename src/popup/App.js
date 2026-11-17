@@ -3,14 +3,13 @@ import { assignRoles } from "../core/assignRoles.js";
 import { curateFonts } from "../core/curateFonts.js";
 import { curateImages } from "../core/curateImages.js";
 import { curateIcons } from "../core/curateIcons.js";
-import { curateGradients } from "../core/curateGradients.js";
+import { curateGradients, extractGradientStops, gradientKind } from "../core/curateGradients.js";
 import { shadeColor, hexToRgb, rgbToHsl, rgbToHex, isPureBlackOrWhite } from "../core/colorLab.js";
 import { openColorPicker, closeColorPicker } from "./colorPicker.js";
-import {
-  copyPaletteImage,
-  formatExportTitle,
-  readPageMetaFromTab
-} from "./exportPaletteImage.js";
+import { openGradientPicker, closeGradientPicker } from "./gradientPicker.js";
+import { formatExportTitle, readPageMetaFromTab } from "./exportPaletteImage.js";
+import { copyPaletteSvg } from "./exportPaletteSvg.js";
+import { buildPaletteCss, copyPaletteCss } from "./exportPaletteCss.js";
 import { buildRoleSections, isLightSwatch, isDarkSwatch } from "./paletteLayout.js";
 import {
   COLOR_VIEW_MODES,
@@ -104,14 +103,38 @@ const tabImagesBtn = document.getElementById("tabImages");
 const tabIconsBtn = document.getElementById("tabIcons");
 const tabIndicatorEl = document.getElementById("tabIndicator");
 const colorViewToggleEl = document.getElementById("colorViewToggle");
+const pagePreviewToggleEl = document.getElementById("pagePreviewToggle");
+const pagePreviewToggleWrapEl = document.getElementById("pagePreviewToggleWrap");
+const pagePreviewToggleLabelEl = document.getElementById("pagePreviewToggleLabel");
+const colorContentMenuEl = document.getElementById("colorContentMenu");
+const colorContentMenuBtn = document.getElementById("colorContentMenuBtn");
+const colorContentMenuList = document.getElementById("colorContentMenuList");
+const colorContentMenuIcon = document.getElementById("colorContentMenuIcon");
+const colorContentMenuLabel = document.getElementById("colorContentMenuLabel");
+const paletteStageEl = document.querySelector(".palette-stage");
+const cssExportPanelEl = document.getElementById("cssExportPanel");
+const cssExportCodeEl = document.getElementById("cssExportCode");
 const siteBrandEl = document.getElementById("siteBrand");
+const siteBrandLogoWrapEl = document.getElementById("siteBrandLogoWrap");
 const siteBrandLogoEl = document.getElementById("siteBrandLogo");
 const siteBrandTitleEl = document.getElementById("siteBrandTitle");
 const panelHeaderEl = document.querySelector(".panel-header");
 const dragHandleEl = document.getElementById("dragHandle");
-const colorPickerStageEl = document.getElementById("colorPickerStage");
-
 const isEmbedded = window.parent !== window;
+const localColorPickerMountEl = document.createElement("div");
+localColorPickerMountEl.className = "color-picker-floating-mount";
+localColorPickerMountEl.hidden = true;
+document.body.appendChild(localColorPickerMountEl);
+
+const localStopColorPickerMountEl = document.createElement("div");
+localStopColorPickerMountEl.className = "color-picker-floating-mount color-picker-stop-floating-mount";
+localStopColorPickerMountEl.hidden = true;
+document.body.appendChild(localStopColorPickerMountEl);
+
+let localGradientPickerApi = null;
+let localStopEditId = null;
+let localStopPickerGen = 0;
+let ignoreLocalStopClose = false;
 const EXTRACTION_TIMEOUT_MS = 8000;
 const FULL_SCAN_PAGE_MS = 8000;
 const FULL_SCAN_ASSETS_MS = 6000;
@@ -122,7 +145,7 @@ const MODE_COPY = {
   colors: {
     extractLabel: "Extract color palette",
     extractIcon: "palette",
-    copyLabel: "Copy to clipboard",
+    copyLabel: "Copy color palette to Figma",
     intro: "Extract the color palette used on this webpage",
     loadingStart: "Looking at colors on this page…",
     loadingBuild: "Putting your palette together…",
@@ -242,9 +265,17 @@ let selectedAssetIds = new Set();
 let exportPageMeta = { title: "", siteName: "", hostname: "", url: "", iconDataUrl: "" };
 let copyFeedbackTimer = null;
 let colorViewMode = COLOR_VIEW_MODES.ROLES;
+let cssPreviewOpen = false;
+let pagePreviewEnabled = false;
+let pagePreviewTimer = null;
+let pagePreviewPending = null;
+const PAGE_PREVIEW_LABEL_ON = "Changes show on the page";
+const PAGE_PREVIEW_LABEL_OFF = "Changes stay in the palette";
 let generation = createGenerationState();
 
 const COPY_LABEL_COPIED = "Copied! Paste in Figma";
+const COPY_LABEL_CSS = "Copy CSS";
+const COPY_LABEL_CSS_COPIED = "Copied!";
 const FONT_COPY_LABEL_COPIED = "Copied!";
 const COPY_LABEL_FAILED = "Copy failed";
 const COPY_ICON_DEFAULT = "content_copy";
@@ -288,10 +319,17 @@ function sendRuntimeMessage(payload) {
 
 async function persistGenerationCache() {
   if (!generation.pageKey) return;
+  const cache = serializeGenerationCache(generation);
+  // Never persist in-session color edits or shuffles. On reopen the palette
+  // should match the webpage scan again, not the user's temporary tweaks.
+  if (generation.rawExtraction && !generation.dismissed?.colors) {
+    cache.palette = curateColorsFromRaw(generation.rawExtraction) || [];
+    cache.gradients = curateGradientsFromRaw(generation.rawExtraction) || [];
+  }
   await sendRuntimeMessage({
     type: "prism-generation-cache-set",
     pageKey: generation.pageKey,
-    cache: serializeGenerationCache(generation)
+    cache
   });
 }
 
@@ -336,16 +374,6 @@ function measureAppHeight(app) {
 
   let height = Math.max(app.scrollHeight, app.offsetHeight);
 
-  const appRect = app.getBoundingClientRect();
-  for (const selector of [".color-picker-stage:not([hidden])", ".color-picker"]) {
-    const el = app.querySelector(selector);
-    if (!isDisplayed(el)) continue;
-    const rect = el.getBoundingClientRect();
-    if (rect.height > 0) {
-      height = Math.max(height, rect.bottom - appRect.top);
-    }
-  }
-
   // Bottom of the last in-flow child is the true content edge.
   for (const child of app.children) {
     if (!isDisplayed(child)) continue;
@@ -355,10 +383,6 @@ function measureAppHeight(app) {
   }
 
   return Math.max(1, Math.ceil(height));
-}
-
-function prefersReducedMotion() {
-  return window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches === true;
 }
 
 let lastReportedHeight = 0;
@@ -402,6 +426,7 @@ function reportHeight() {
       html.style.removeProperty("overflow");
       body.style.removeProperty("overflow");
     }
+    syncPaletteScrollGutters();
     return;
   }
 
@@ -410,9 +435,17 @@ function reportHeight() {
   app.style.removeProperty("height");
   app.classList.remove("is-height-capped");
 
+  syncPaletteScrollGutters();
   if (Math.abs(contentHeight - lastReportedHeight) < 1) return;
   lastReportedHeight = contentHeight;
   resizeStandaloneWindow();
+}
+
+function syncPaletteScrollGutters() {
+  if (!swatchesEl || !paletteStageEl) return;
+  // 1px slack avoids flicker when fractional layout heights are near equal.
+  const hasScroll = swatchesEl.scrollHeight > swatchesEl.clientHeight + 1;
+  paletteStageEl.classList.toggle("has-v-scroll", hasScroll);
 }
 
 /** Remeasure after layout settles so tab/view switches hug the new content. */
@@ -422,6 +455,7 @@ function reportHeightAfterLayout() {
     requestAnimationFrame(() => {
       layoutTabIndicator();
       reportHeight();
+      syncPaletteScrollGutters();
     });
   });
 }
@@ -520,8 +554,16 @@ if (isEmbedded) {
     new ResizeObserver(() => {
       // Debounce RO so html/body height writes don't thrash with measurements.
       cancelAnimationFrame(resizeFrame);
-      resizeFrame = requestAnimationFrame(() => reportHeight());
+      resizeFrame = requestAnimationFrame(() => {
+        reportHeight();
+        syncPaletteScrollGutters();
+      });
     }).observe(appEl);
+  }
+  if (swatchesEl) {
+    new ResizeObserver(() => {
+      requestAnimationFrame(() => syncPaletteScrollGutters());
+    }).observe(swatchesEl);
   }
   window.addEventListener("load", () => {
     lastReportedHeight = 0;
@@ -533,7 +575,9 @@ if (isEmbedded) {
     if (event.data?.type === "prism-request-resize") {
       lastReportedHeight = 0;
       reportHeight();
+      return;
     }
+    onHostColorPickerMessage(event);
   });
   lastReportedHeight = 0;
   reportHeight();
@@ -559,15 +603,127 @@ function setCopyButtonState(label, iconName = COPY_ICON_DEFAULT) {
   reportHeight();
 }
 
+function defaultCopyLabel() {
+  return cssPreviewOpen ? COPY_LABEL_CSS : MODE_COPY.colors.copyLabel;
+}
+
+function defaultCopySuccessLabel() {
+  return cssPreviewOpen ? COPY_LABEL_CSS_COPIED : COPY_LABEL_COPIED;
+}
+
+function currentCssExportOptions() {
+  return {
+    gradients: currentGradients.length ? currentGradients : generation.gradients || [],
+    pageMeta: exportPageMeta
+  };
+}
+
+function refreshCssExportPreview() {
+  if (!cssExportCodeEl) return;
+  cssExportCodeEl.textContent = buildPaletteCss(currentPalette, currentCssExportOptions());
+}
+
+const COLOR_CONTENT_OPTIONS = {
+  palette: { label: "Palette", icon: "palette" },
+  css: { label: "CSS", icon: "data_object" }
+};
+
+function setColorContentMenuOpen(open) {
+  if (!colorContentMenuEl || !colorContentMenuBtn || !colorContentMenuList) return;
+  colorContentMenuEl.classList.toggle("is-open", open);
+  colorContentMenuBtn.setAttribute("aria-expanded", open ? "true" : "false");
+  colorContentMenuList.hidden = !open;
+}
+
+function closeColorContentMenu() {
+  setColorContentMenuOpen(false);
+}
+
+function applyColorContentMenuUi() {
+  if (!colorContentMenuEl) return;
+  const active = cssPreviewOpen ? "css" : "palette";
+  const option = COLOR_CONTENT_OPTIONS[active] || COLOR_CONTENT_OPTIONS.palette;
+  colorContentMenuEl.dataset.active = active;
+  if (colorContentMenuIcon) colorContentMenuIcon.textContent = option.icon;
+  if (colorContentMenuLabel) colorContentMenuLabel.textContent = option.label;
+  for (const btn of colorContentMenuEl.querySelectorAll("[data-content]")) {
+    const on = btn.dataset.content === active;
+    btn.classList.toggle("is-active", on);
+    btn.setAttribute("aria-selected", on ? "true" : "false");
+  }
+  closeColorContentMenu();
+}
+
+function applyPagePreviewToggleUi() {
+  if (pagePreviewToggleEl) pagePreviewToggleEl.checked = pagePreviewEnabled;
+  if (pagePreviewToggleLabelEl) {
+    pagePreviewToggleLabelEl.textContent = pagePreviewEnabled
+      ? PAGE_PREVIEW_LABEL_ON
+      : PAGE_PREVIEW_LABEL_OFF;
+  }
+  if (pagePreviewToggleWrapEl) {
+    pagePreviewToggleWrapEl.hidden = cssPreviewOpen;
+    pagePreviewToggleWrapEl.classList.toggle("is-on", pagePreviewEnabled);
+  }
+}
+
+function applyCssPreviewUi() {
+  appEl.classList.toggle("is-css-preview", cssPreviewOpen);
+  if (cssExportPanelEl) cssExportPanelEl.hidden = !cssPreviewOpen;
+  applyColorContentMenuUi();
+  if (colorViewToggleEl) {
+    colorViewToggleEl.setAttribute("aria-hidden", cssPreviewOpen ? "true" : "false");
+  }
+  applyPagePreviewToggleUi();
+  if (shuffleBtn) shuffleBtn.hidden = activeMode !== "colors" || cssPreviewOpen;
+  if (!copyFeedbackTimer) {
+    setCopyButtonState(defaultCopyLabel(), COPY_ICON_DEFAULT);
+  }
+}
+
+function openCssPreview() {
+  if (!currentPalette.length) {
+    showError(null, { noPalette: true });
+    return;
+  }
+  dismissSwatchColorPicker({ immediate: true });
+  cssPreviewOpen = true;
+  refreshCssExportPreview();
+  applyCssPreviewUi();
+  updateFooterForMode();
+  reportHeightAfterLayout();
+}
+
+function closeCssPreview({ report = true } = {}) {
+  if (!cssPreviewOpen) {
+    applyCssPreviewUi();
+    return;
+  }
+  cssPreviewOpen = false;
+  applyCssPreviewUi();
+  updateFooterForMode();
+  if (report) reportHeightAfterLayout();
+}
+
+function setColorContentView(view) {
+  const next = view === "css" ? "css" : "palette";
+  if (next === "css") {
+    openCssPreview();
+    return;
+  }
+  closeCssPreview();
+  updateFooterForMode();
+}
+
 function flashCopyFeedback(success) {
   clearTimeout(copyFeedbackTimer);
   setCopyButtonState(
-    success ? COPY_LABEL_COPIED : COPY_LABEL_FAILED,
+    success ? defaultCopySuccessLabel() : COPY_LABEL_FAILED,
     success ? COPY_ICON_COPIED : COPY_ICON_FAILED
   );
   copyFeedbackTimer = setTimeout(() => {
     copyFeedbackTimer = null;
-    setCopyButtonState(MODE_COPY.colors.copyLabel, COPY_ICON_DEFAULT);
+    setCopyButtonState(defaultCopyLabel(), COPY_ICON_DEFAULT);
   }, 3500);
 }
 
@@ -665,7 +821,7 @@ function updateModeChrome() {
   applyTabVisuals();
 
   if (!copyFeedbackTimer && activeMode === "colors") {
-    setCopyButtonState(MODE_COPY.colors.copyLabel, COPY_ICON_DEFAULT);
+    setCopyButtonState(defaultCopyLabel(), COPY_ICON_DEFAULT);
   }
 
   updateFooterForMode();
@@ -704,8 +860,8 @@ function updateFooterForMode() {
   appEl.classList.toggle("is-asset-selecting", selecting);
 
   if (activeMode === "colors") {
-    // Colors: Shuffle + Copy in the footer.
-    shuffleBtn.hidden = false;
+    // Colors: Shuffle (palette only) + Copy Figma / CSS in the footer.
+    if (shuffleBtn) shuffleBtn.hidden = cssPreviewOpen;
     copyBtn.hidden = false;
     if (reloadBtn) reloadBtn.hidden = true;
     if (clearSelectionBtn) {
@@ -713,13 +869,16 @@ function updateFooterForMode() {
       clearSelectionBtn.setAttribute("hidden", "");
     }
     if (!copyFeedbackTimer) {
-      setCopyButtonState(MODE_COPY.colors.copyLabel, COPY_ICON_DEFAULT);
+      setCopyButtonState(defaultCopyLabel(), COPY_ICON_DEFAULT);
     }
     return;
   }
 
+  closeCssPreview({ report: false });
+  closeColorContentMenu();
+
   // Fonts: Reload only. Images / Icons: Reload, or Download + Unselect when selecting.
-  shuffleBtn.hidden = true;
+  if (shuffleBtn) shuffleBtn.hidden = true;
   copyBtn.hidden = true;
   if (reloadBtn) {
     reloadBtn.hidden = !assetOrFonts;
@@ -831,8 +990,8 @@ function showError(error, context = {}) {
 }
 
 function setIntroState() {
-  closeColorPicker({ immediate: true });
-  exitPickingMode();
+  dismissSwatchColorPicker({ immediate: true });
+  closeCssPreview({ report: false });
   appEl.classList.remove("state-results", "state-guidance");
   appEl.classList.add("state-intro");
   introEl.hidden = false;
@@ -862,8 +1021,8 @@ function setResultsState() {
 
 function setLoading(active, message, { scope = "mode" } = {}) {
   if (active) {
-    closeColorPicker({ immediate: true });
-    exitPickingMode();
+    dismissSwatchColorPicker({ immediate: true });
+    closeCssPreview({ report: false });
   }
   appEl.classList.toggle("is-loading", active);
   loadingEl.hidden = !active;
@@ -1162,11 +1321,15 @@ function paintSwatchTile(tile, swatch) {
   tile.classList.toggle("swatch-dark", isDarkSwatch(swatch.hex));
   tile.setAttribute("aria-label", swatchAriaLabel(swatch));
   tile.dataset.hex = swatch.hex;
-  tile.title = "Click to copy hex";
+  tile.removeAttribute("title");
   const tip = tile.querySelector(".swatch-tooltip");
   if (tip) {
     tip.dataset.hexLabel = hexLabel;
-    tip.textContent = hexLabel;
+    const labelEl = tip.querySelector(".swatch-tooltip-label");
+    if (labelEl) labelEl.textContent = hexLabel;
+    else tip.textContent = hexLabel;
+    const copyBtn = tip.querySelector(".swatch-tooltip-copy");
+    if (copyBtn) copyBtn.dataset.copyValue = swatch.hex;
   }
   const editBtn = tile.querySelector(".swatch-edit-btn");
   if (editBtn) {
@@ -1175,7 +1338,14 @@ function paintSwatchTile(tile, swatch) {
   }
 }
 
+function shouldPreviewColorOnPage() {
+  // Live edits always preview while a picker is open; the toolbar toggle keeps
+  // preview armed for this page even between edits.
+  return pagePreviewEnabled || Boolean(activePickerMode);
+}
+
 function updateSwatchColor(swatchId, hex, { commit = false, tile = null } = {}) {
+  const previousHex = currentPalette.find((s) => s.id === swatchId)?.hex || null;
   const parsed = applyColorToSwatchState(swatchId, hex);
   if (!parsed) return;
 
@@ -1186,18 +1356,32 @@ function updateSwatchColor(swatchId, hex, { commit = false, tile = null } = {}) 
   });
   if (tile && !liveTiles.includes(tile)) liveTiles.push(tile);
   for (const liveTile of liveTiles) paintSwatchTile(liveTile, swatch);
+  const nextHex = String(parsed.hex || "").toLowerCase();
+  const baselineHex = String(
+    (activePickerBaseline?.id === swatchId && activePickerBaseline?.hex) || previousHex || ""
+  ).toLowerCase();
+  if (shouldPreviewColorOnPage() && baselineHex && nextHex && baselineHex !== nextHex) {
+    schedulePageColorPreview({
+      mode: "solid",
+      swatchId,
+      fromHex: baselineHex,
+      toHex: nextHex
+    });
+  }
   if (commit) {
     persistGenerationCache();
-    if (!appEl.classList.contains("is-picking-color")) reportHeight();
+    reportHeight();
   }
 }
 
 let activePickerSwatchId = null;
+let activePickerGradientId = null;
+let activePickerMode = null;
 let activePickerTile = null;
-let activePickerOriginRect = null;
 let activePickerBaseline = null;
-
-const PICKER_MORPH_MS = 340;
+let activePickerGradientBaselineCss = null;
+const LOCAL_PICKER_WIDTH = 280;
+const LOCAL_PICKER_GAP = 10;
 
 function snapshotSwatchForPicker(swatch) {
   if (!swatch) return null;
@@ -1211,291 +1395,454 @@ function snapshotSwatchForPicker(swatch) {
   };
 }
 
-function revertPickerBaseline() {
-  const baseline = activePickerBaseline;
-  if (!baseline?.id) return null;
-  currentPalette = currentPalette.map((s) =>
-    s.id === baseline.id
-      ? {
-          ...s,
-          hex: baseline.hex,
-          rgb: baseline.rgb,
-          hsl: baseline.hsl,
-          locked: baseline.locked,
-          usageRoles: Array.isArray(baseline.usageRoles) ? [...baseline.usageRoles] : []
-        }
-      : s
+function clearLocalStopColorPicker() {
+  localStopEditId = null;
+  localStopColorPickerMountEl.hidden = true;
+  localStopColorPickerMountEl.replaceChildren();
+  localStopColorPickerMountEl.style.left = "";
+  localStopColorPickerMountEl.style.top = "";
+}
+
+function clearActivePickerUi() {
+  activePickerTile?.classList.remove("is-editing");
+  activePickerSwatchId = null;
+  activePickerGradientId = null;
+  activePickerMode = null;
+  activePickerTile = null;
+  activePickerBaseline = null;
+  activePickerGradientBaselineCss = null;
+  localGradientPickerApi = null;
+  clearLocalStopColorPicker();
+  localColorPickerMountEl.hidden = true;
+  localColorPickerMountEl.replaceChildren();
+  localColorPickerMountEl.style.left = "";
+  localColorPickerMountEl.style.top = "";
+}
+
+function positionLocalColorPicker(tile) {
+  if (!tile || localColorPickerMountEl.hidden) return;
+  const tileRect = tile.getBoundingClientRect();
+  const height = Math.max(
+    160,
+    Math.ceil(localColorPickerMountEl.getBoundingClientRect().height || 280)
   );
-  generation = { ...generation, palette: currentPalette };
-  return currentPalette.find((s) => s.id === baseline.id) || null;
+  const leftCandidate = tileRect.left - LOCAL_PICKER_WIDTH - LOCAL_PICKER_GAP;
+  const rightCandidate = tileRect.right + LOCAL_PICKER_GAP;
+  let left =
+    leftCandidate >= 8
+      ? leftCandidate
+      : Math.min(rightCandidate, Math.max(8, window.innerWidth - LOCAL_PICKER_WIDTH - 8));
+  left = Math.min(Math.max(8, left), Math.max(8, window.innerWidth - LOCAL_PICKER_WIDTH - 8));
+  let top = Math.round(tileRect.top + tileRect.height / 2 - height / 2);
+  top = Math.min(Math.max(8, top), Math.max(8, window.innerHeight - height - 8));
+  localColorPickerMountEl.style.left = `${Math.round(left)}px`;
+  localColorPickerMountEl.style.top = `${Math.round(top)}px`;
+  positionLocalStopColorPicker();
 }
 
-function clearPickerStageOverlay() {
-  if (!colorPickerStageEl) return;
-  colorPickerStageEl.style.position = "";
-  colorPickerStageEl.style.left = "";
-  colorPickerStageEl.style.top = "";
-  colorPickerStageEl.style.width = "";
-  colorPickerStageEl.style.zIndex = "";
-}
-
-function lockPickerStageOverlay() {
-  if (!colorPickerStageEl || !appEl) return;
-  const appRect = appEl.getBoundingClientRect();
-  const stageRect = colorPickerStageEl.getBoundingClientRect();
-  if (!stageRect.width) return;
-  colorPickerStageEl.style.position = "absolute";
-  colorPickerStageEl.style.left = `${Math.round(stageRect.left - appRect.left)}px`;
-  colorPickerStageEl.style.top = `${Math.round(stageRect.top - appRect.top)}px`;
-  colorPickerStageEl.style.width = `${Math.round(stageRect.width)}px`;
-  colorPickerStageEl.style.zIndex = "6";
-}
-
-function exitPickingMode() {
-  appEl.classList.remove(
-    "is-picking-color",
-    "is-picking-enter",
-    "is-picking-enter-active",
-    "is-picking-exit",
-    "is-picking-exit-active"
+function positionLocalStopColorPicker() {
+  if (localStopColorPickerMountEl.hidden) return;
+  const height = Math.max(
+    160,
+    Math.ceil(localStopColorPickerMountEl.getBoundingClientRect().height || 280)
   );
-  clearPickerStageOverlay();
-  if (colorPickerStageEl) {
-    colorPickerStageEl.hidden = true;
-    colorPickerStageEl.style.height = "";
-    colorPickerStageEl.replaceChildren();
+  const gradientLeft = parseFloat(localColorPickerMountEl.style.left);
+  const gradientTop = parseFloat(localColorPickerMountEl.style.top);
+  let left;
+  let top;
+  if (!localColorPickerMountEl.hidden && Number.isFinite(gradientLeft) && Number.isFinite(gradientTop)) {
+    left = gradientLeft - LOCAL_PICKER_WIDTH - LOCAL_PICKER_GAP;
+    if (left < 8) left = gradientLeft + LOCAL_PICKER_WIDTH + LOCAL_PICKER_GAP;
+    top = gradientTop;
+  } else {
+    left = 8;
+    top = 8;
   }
-  activePickerOriginRect = null;
+  left = Math.min(Math.max(8, left), Math.max(8, window.innerWidth - LOCAL_PICKER_WIDTH - 8));
+  top = Math.min(Math.max(8, top), Math.max(8, window.innerHeight - height - 8));
+  localStopColorPickerMountEl.style.left = `${Math.round(left)}px`;
+  localStopColorPickerMountEl.style.top = `${Math.round(top)}px`;
 }
 
-function waitForTransition(el, property, ms) {
-  return new Promise((resolve) => {
-    if (!el || prefersReducedMotion()) {
-      resolve();
-      return;
-    }
-    let done = false;
-    const finish = () => {
-      if (done) return;
-      done = true;
-      el.removeEventListener("transitionend", onEnd);
-      resolve();
-    };
-    const onEnd = (event) => {
-      if (event.target !== el) return;
-      if (property && event.propertyName !== property) return;
-      finish();
-    };
-    el.addEventListener("transitionend", onEnd);
-    window.setTimeout(finish, ms + 40);
-  });
+function closeLocalStopColorPicker({ notifyGradient = true } = {}) {
+  const wasOpen = !localStopColorPickerMountEl.hidden;
+  ignoreLocalStopClose = true;
+  closeColorPicker({ immediate: true });
+  ignoreLocalStopClose = false;
+  clearLocalStopColorPicker();
+  if (wasOpen && notifyGradient) {
+    localGradientPickerApi?.clearStopColorEdit?.();
+  }
 }
 
-function morphPickerFromTile(root, tile) {
-  const surface = root?.querySelector(".cp-sv-wrap") || root;
-  if (!root || !tile || prefersReducedMotion()) {
-    root?.classList.remove("is-morphing", "is-morphing-in", "is-morphing-out", "is-morphing-active");
-    return Promise.resolve();
-  }
-
-  const from = activePickerOriginRect || tile.getBoundingClientRect();
-  const to = surface.getBoundingClientRect();
-  if (!from.width || !to.width) {
-    root.classList.remove("is-morphing", "is-morphing-in", "is-morphing-out", "is-morphing-active");
-    return Promise.resolve();
-  }
-
-  const dx = from.left + from.width / 2 - (to.left + to.width / 2);
-  const dy = from.top + from.height / 2 - (to.top + to.height / 2);
-  const sx = from.width / to.width;
-  const sy = from.height / to.height;
-
-  root.classList.add("is-morphing", "is-morphing-in");
-  root.classList.remove("is-morphing-out", "is-morphing-active");
-  surface.style.transformOrigin = "center center";
-  surface.style.borderRadius = "6px";
-  surface.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
-
-  return new Promise((resolve) => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        root.classList.add("is-morphing-active");
-        surface.style.transform = "";
-        surface.style.borderRadius = "";
-        waitForTransition(surface, "transform", PICKER_MORPH_MS).then(() => {
-          root.classList.remove("is-morphing", "is-morphing-in", "is-morphing-active");
-          surface.style.removeProperty("transform");
-          surface.style.removeProperty("transform-origin");
-          surface.style.removeProperty("border-radius");
-          resolve();
-        });
-      });
-    });
-  });
-}
-
-function morphPickerToTile(root) {
-  const surface = root?.querySelector(".cp-sv-wrap") || root;
-  if (!root || prefersReducedMotion()) {
-    appEl.classList.remove("is-picking-color");
-    appEl.classList.add("is-picking-exit", "is-picking-exit-active");
-    return Promise.resolve();
-  }
-
-  if (!surface.getBoundingClientRect().width) return Promise.resolve();
-
-  // Keep the picker overlaid while the palette fades back in underneath.
-  lockPickerStageOverlay();
-  appEl.classList.remove("is-picking-color");
-  appEl.classList.add("is-picking-exit");
-
-  // Origin was captured before layout changed; remeasure the live tile.
-  if (activePickerTile) {
-    const liveTile = activePickerTile.getBoundingClientRect();
-    if (liveTile.width && liveTile.height) {
-      activePickerOriginRect = {
-        left: liveTile.left,
-        top: liveTile.top,
-        width: liveTile.width,
-        height: liveTile.height
-      };
-    }
-  }
-  const to = activePickerOriginRect;
-  reportHeight();
-
-  // Fade chrome + contract surface together (no staged wait).
-  root.classList.add("is-morphing", "is-morphing-out", "is-morphing-active");
-  root.classList.remove("is-morphing-in");
-  surface.style.transformOrigin = "center center";
-
-  return new Promise((resolve) => {
-    requestAnimationFrame(() => {
-      appEl.classList.add("is-picking-exit-active");
-
-      const finish = () => {
-        root.classList.remove("is-morphing", "is-morphing-out", "is-morphing-active");
-        surface.style.removeProperty("transform");
-        surface.style.removeProperty("transform-origin");
-        surface.style.removeProperty("border-radius");
-        surface.style.removeProperty("opacity");
-        resolve();
-      };
-
-      if (!to?.width || !to?.height) {
-        surface.style.transform = "scale(0.98)";
-        surface.style.opacity = "0";
-        waitForTransition(surface, "opacity", PICKER_MORPH_MS).then(finish);
-        return;
-      }
-
-      const live = surface.getBoundingClientRect();
-      const dx = to.left + to.width / 2 - (live.left + live.width / 2);
-      const dy = to.top + to.height / 2 - (live.top + live.height / 2);
-      const sx = to.width / live.width;
-      const sy = to.height / live.height;
-
-      surface.style.borderRadius = "6px";
-      surface.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
-      waitForTransition(surface, "transform", PICKER_MORPH_MS).then(finish);
-    });
-  });
-}
-
-function openSwatchColorPicker(swatch, tile) {
-  if (activePickerSwatchId === swatch.id) {
-    closeColorPicker();
+function openLocalStopColorPicker(stop) {
+  if (!stop?.id) return;
+  if (localStopEditId === stop.id && !localStopColorPickerMountEl.hidden) {
+    closeLocalStopColorPicker({ notifyGradient: true });
     return;
   }
 
+  ignoreLocalStopClose = true;
   closeColorPicker({ immediate: true });
-  exitPickingMode();
+  ignoreLocalStopClose = false;
 
-  activePickerSwatchId = swatch.id;
-  activePickerTile = tile;
-  tile.classList.add("is-editing");
+  localStopEditId = stop.id;
+  localStopPickerGen += 1;
+  const gen = localStopPickerGen;
+  localStopColorPickerMountEl.hidden = false;
+  localStopColorPickerMountEl.replaceChildren();
 
-  if (!colorPickerStageEl) return;
+  const bar = document.createElement("div");
+  bar.className = "color-picker-card-bar";
 
-  const origin = tile.getBoundingClientRect();
-  activePickerOriginRect = {
-    left: origin.left,
-    top: origin.top,
-    width: origin.width,
-    height: origin.height
-  };
+  const title = document.createElement("h2");
+  title.className = "color-picker-card-title";
+  title.textContent = "Color picker";
 
-  colorPickerStageEl.hidden = false;
-  appEl.classList.add("is-picking-enter");
+  const closeBtn = document.createElement("button");
+  closeBtn.type = "button";
+  closeBtn.className = "cp-close";
+  closeBtn.title = "Close";
+  closeBtn.setAttribute("aria-label", "Close color picker");
+  closeBtn.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">close</span>';
+  bar.append(title, closeBtn);
 
-  const startHex = currentPalette.find((s) => s.id === swatch.id)?.hex || swatch.hex;
-  const startSwatch = currentPalette.find((s) => s.id === swatch.id) || swatch;
-  activePickerBaseline = snapshotSwatchForPicker(startSwatch);
+  const mount = document.createElement("div");
+  mount.className = "color-picker-frame-mount";
+  localStopColorPickerMountEl.append(bar, mount);
+  positionLocalStopColorPicker();
+
+  const picker = openColorPicker({
+    hex: stop.hex,
+    mountEl: mount,
+    // Gradient picker owns Escape while a stop editor is open.
+    escapeToClose: false,
+    onInput: (color) => {
+      if (gen !== localStopPickerGen) return;
+      localGradientPickerApi?.setStopHex?.(stop.id, color.hex, { commit: false });
+    },
+    onCommit: (color) => {
+      if (gen !== localStopPickerGen) return;
+      localGradientPickerApi?.setStopHex?.(stop.id, color.hex, { commit: true });
+    },
+    onClose: () => {
+      if (ignoreLocalStopClose || gen !== localStopPickerGen) return;
+      clearLocalStopColorPicker();
+      localGradientPickerApi?.clearStopColorEdit?.();
+    }
+  });
+
+  closeBtn.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    picker?.close?.({ immediate: true });
+  });
+
+  requestAnimationFrame(() => positionLocalStopColorPicker());
+}
+
+function paintGradientTile(tile, gradient) {
+  if (!tile || !gradient) return;
+  const css = gradient.css || "";
+  tile.style.backgroundColor = "transparent";
+  tile.style.backgroundImage = css || "none";
+  tile.dataset.gradientId = gradient.id || "";
+  tile.setAttribute("aria-label", `Gradient: ${css}`);
+  tile.title = "Click to copy CSS";
+  const tip = tile.querySelector(".swatch-tooltip");
+  if (tip) {
+    delete tip.dataset.cssLabel;
+    const labelEl = tip.querySelector(".swatch-tooltip-label");
+    if (labelEl && !tip.classList.contains("is-pinned")) labelEl.textContent = "";
+    const copyBtn = tip.querySelector(".swatch-tooltip-copy");
+    if (copyBtn) copyBtn.hidden = true;
+  }
+  const editBtn = tile.querySelector(".swatch-edit-btn");
+  if (editBtn) {
+    editBtn.title = "Edit gradient";
+    editBtn.setAttribute("aria-label", "Edit gradient");
+  }
+}
+
+function updateGradientCss(gradientId, css, { commit = false, tile = null } = {}) {
+  if (!gradientId || !css) return;
+  const previousCss = currentGradients.find((gradient) => gradient.id === gradientId)?.css || null;
+  currentGradients = currentGradients.map((gradient) =>
+    gradient.id === gradientId
+      ? {
+          ...gradient,
+          css,
+          kind: gradientKind(css),
+          stops: extractGradientStops(css)
+        }
+      : gradient
+  );
+  generation = { ...generation, gradients: currentGradients };
+  const latest = currentGradients.find((gradient) => gradient.id === gradientId);
+  const liveTiles = [...swatchesEl.querySelectorAll(".gradient-swatch")].filter(
+    (el) => el.dataset.gradientId === gradientId
+  );
+  if (tile && !liveTiles.includes(tile)) liveTiles.push(tile);
+  for (const liveTile of liveTiles) paintGradientTile(liveTile, latest);
+  const nextCss = String(css || "").trim();
+  const baselineCss = String(activePickerGradientBaselineCss || previousCss || "").trim();
+  if (shouldPreviewColorOnPage() && baselineCss && nextCss && baselineCss !== nextCss) {
+    schedulePageColorPreview({
+      mode: "gradient",
+      gradientId,
+      fromCss: baselineCss,
+      toCss: nextCss
+    });
+  }
+  if (commit) persistGenerationCache();
+}
+
+function handlePickerClosed() {
+  const editingTile = activePickerTile;
+  const swatchId = activePickerSwatchId;
+  const gradientId = activePickerGradientId;
+  clearActivePickerUi();
+  if (swatchId) {
+    const latest = currentPalette.find((s) => s.id === swatchId);
+    if (editingTile && latest) paintSwatchTile(editingTile, latest);
+    return;
+  }
+  if (gradientId) {
+    const latest = currentGradients.find((g) => g.id === gradientId);
+    if (editingTile && latest) paintGradientTile(editingTile, latest);
+  }
+}
+
+function dismissSwatchColorPicker({ immediate = true } = {}) {
+  if (isEmbedded) {
+    window.parent.postMessage({ type: "prism-color-picker-close" }, "*");
+  }
+  closeLocalStopColorPicker({ notifyGradient: false });
+  closeColorPicker({ immediate });
+  closeGradientPicker({ immediate });
+  if (activePickerSwatchId || activePickerGradientId) handlePickerClosed();
+}
+
+function openLocalFloatingColorPicker(swatch, tile, startHex) {
+  localColorPickerMountEl.hidden = false;
+  localColorPickerMountEl.replaceChildren();
+
+  const bar = document.createElement("div");
+  bar.className = "color-picker-card-bar";
+
+  const title = document.createElement("h2");
+  title.className = "color-picker-card-title";
+  title.textContent = "Color picker";
+
+  const closeBtn = document.createElement("button");
+  closeBtn.type = "button";
+  closeBtn.className = "cp-close";
+  closeBtn.title = "Close";
+  closeBtn.setAttribute("aria-label", "Close color picker");
+  closeBtn.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">close</span>';
+  bar.append(title, closeBtn);
+
+  const mount = document.createElement("div");
+  mount.className = "color-picker-frame-mount";
+  localColorPickerMountEl.append(bar, mount);
+  positionLocalColorPicker(tile);
 
   const picker = openColorPicker({
     hex: startHex,
-    mountEl: colorPickerStageEl,
+    mountEl: mount,
     onInput: (color) => {
       updateSwatchColor(swatch.id, color.hex, { tile });
     },
     onCommit: (color) => {
       updateSwatchColor(swatch.id, color.hex, { commit: true, tile });
     },
-    animateClose: (root, { applied = false } = {}) => {
-      const sv = root.querySelector(".cp-sv");
-      const hex = applied
-        ? currentPalette.find((s) => s.id === swatch.id)?.hex || startHex
-        : activePickerBaseline?.hex || startHex;
-      if (sv) {
-        sv.style.backgroundImage = "none";
-        sv.style.backgroundColor = hex;
-      }
-      return morphPickerToTile(root);
-    },
-    onClose: ({ applied = false } = {}) => {
-      const editingTile = activePickerTile;
-      const swatchId = activePickerSwatchId;
-      if (!applied) revertPickerBaseline();
-      activePickerSwatchId = null;
-      activePickerTile = null;
-      activePickerBaseline = null;
-      editingTile?.classList.remove("is-editing");
-      exitPickingMode();
-      const latest = currentPalette.find((s) => s.id === swatchId);
-      if (editingTile && latest) paintSwatchTile(editingTile, latest);
-      reportHeight();
+    onClose: () => {
+      handlePickerClosed();
     }
   });
 
-  const sv = picker?.root?.querySelector(".cp-sv");
-  if (sv) {
-    sv.style.backgroundImage = "none";
-    sv.style.backgroundColor = startHex;
-  }
-
-  // Overlay the picker on the palette so both can crossfade without a blank gap.
-  lockPickerStageOverlay();
-  reportHeight();
-
-  requestAnimationFrame(() => {
-    appEl.classList.add("is-picking-enter-active");
-    morphPickerFromTile(picker?.root, tile).then(() => {
-      appEl.classList.add("is-picking-color");
-      appEl.classList.remove("is-picking-enter", "is-picking-enter-active");
-      clearPickerStageOverlay();
-      if (sv) {
-        sv.style.removeProperty("background-image");
-        picker?.setHex?.(startHex);
-      }
-      reportHeight();
-    });
+  closeBtn.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    picker?.close?.({ immediate: true });
   });
+
+  requestAnimationFrame(() => positionLocalColorPicker(tile));
 }
 
-function truncateGradientLabel(css, max = 56) {
-  const value = String(css || "").replace(/\s+/g, " ").trim();
-  if (value.length <= max) return value;
-  return `${value.slice(0, max - 1)}…`;
+function openHostColorPicker(payload) {
+  const origin = payload.tile.getBoundingClientRect();
+  window.parent.postMessage(
+    {
+      type: "prism-color-picker-open",
+      ...payload.message,
+      anchor: {
+        left: origin.left,
+        top: origin.top,
+        width: origin.width,
+        height: origin.height
+      }
+    },
+    "*"
+  );
+}
+
+function openLocalFloatingGradientPicker(gradient, tile) {
+  clearLocalStopColorPicker();
+  localColorPickerMountEl.hidden = false;
+  localColorPickerMountEl.replaceChildren();
+
+  const bar = document.createElement("div");
+  bar.className = "color-picker-card-bar";
+
+  const title = document.createElement("h2");
+  title.className = "color-picker-card-title";
+  title.textContent = "Gradient";
+
+  const closeBtn = document.createElement("button");
+  closeBtn.type = "button";
+  closeBtn.className = "cp-close";
+  closeBtn.title = "Close";
+  closeBtn.setAttribute("aria-label", "Close color picker");
+  closeBtn.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">close</span>';
+  bar.append(title, closeBtn);
+
+  const mount = document.createElement("div");
+  mount.className = "color-picker-frame-mount";
+  localColorPickerMountEl.append(bar, mount);
+  positionLocalColorPicker(tile);
+
+  const picker = openGradientPicker({
+    css: gradient.css,
+    stops: gradient.stops,
+    mountEl: mount,
+    onInput: (payload) => {
+      updateGradientCss(gradient.id, payload.css, { tile });
+    },
+    onCommit: (payload) => {
+      updateGradientCss(gradient.id, payload.css, { commit: true, tile });
+    },
+    onEditStopColor: (stop) => {
+      openLocalStopColorPicker(stop);
+    },
+    onCloseStopColor: () => {
+      closeLocalStopColorPicker({ notifyGradient: false });
+    },
+    onLayoutChange: () => {
+      requestAnimationFrame(() => positionLocalColorPicker(tile));
+    },
+    onClose: () => {
+      closeLocalStopColorPicker({ notifyGradient: false });
+      handlePickerClosed();
+    }
+  });
+  localGradientPickerApi = picker;
+
+  closeBtn.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    picker?.close?.({ immediate: true });
+  });
+
+  requestAnimationFrame(() => positionLocalColorPicker(tile));
+}
+
+function openSwatchColorPicker(swatch, tile) {
+  if (activePickerMode === "solid" && activePickerSwatchId === swatch.id) {
+    dismissSwatchColorPicker({ immediate: true });
+    return;
+  }
+
+  closeCssPreview({ report: false });
+  dismissSwatchColorPicker({ immediate: true });
+
+  activePickerMode = "solid";
+  activePickerSwatchId = swatch.id;
+  activePickerGradientId = null;
+  activePickerTile = tile;
+  tile.classList.add("is-editing");
+
+  const startHex = currentPalette.find((s) => s.id === swatch.id)?.hex || swatch.hex;
+  const startSwatch = currentPalette.find((s) => s.id === swatch.id) || swatch;
+  activePickerBaseline = snapshotSwatchForPicker(startSwatch);
+
+  // Live preview while the picker is open comes from `activePickerMode` in
+  // shouldPreviewColorOnPage — do not flip/persist the toolbar preference here.
+
+  if (isEmbedded) {
+    openHostColorPicker({
+      tile,
+      message: { mode: "solid", hex: startHex, swatchId: swatch.id }
+    });
+  } else {
+    openLocalFloatingColorPicker(swatch, tile, startHex);
+  }
+}
+
+function openGradientColorPicker(gradient, tile) {
+  if (activePickerMode === "gradient" && activePickerGradientId === gradient.id) {
+    dismissSwatchColorPicker({ immediate: true });
+    return;
+  }
+
+  closeCssPreview({ report: false });
+  dismissSwatchColorPicker({ immediate: true });
+
+  activePickerMode = "gradient";
+  activePickerGradientId = gradient.id;
+  activePickerSwatchId = null;
+  activePickerTile = tile;
+  activePickerBaseline = null;
+  tile.classList.add("is-editing");
+
+  const latest = currentGradients.find((item) => item.id === gradient.id) || gradient;
+  activePickerGradientBaselineCss = latest.css || null;
+
+  // Live preview while the picker is open comes from `activePickerMode` — the
+  // toolbar toggle is only persisted when the user flips it explicitly.
+
+  if (isEmbedded) {
+    openHostColorPicker({
+      tile,
+      message: {
+        mode: "gradient",
+        gradientId: latest.id,
+        css: latest.css,
+        stops: latest.stops || []
+      }
+    });
+  } else {
+    openLocalFloatingGradientPicker(latest, tile);
+  }
+}
+
+function onHostColorPickerMessage(event) {
+  const { type, mode, hex, css, swatchId, gradientId } = event.data || {};
+  if (type === "prism-color-picker-input") {
+    if (mode === "gradient") {
+      if (!gradientId || gradientId !== activePickerGradientId) return;
+      updateGradientCss(gradientId, css, { tile: activePickerTile });
+      return;
+    }
+    if (!swatchId || swatchId !== activePickerSwatchId) return;
+    updateSwatchColor(swatchId, hex, { tile: activePickerTile });
+    return;
+  }
+  if (type === "prism-color-picker-commit") {
+    if (mode === "gradient") {
+      if (!gradientId || gradientId !== activePickerGradientId) return;
+      updateGradientCss(gradientId, css, { commit: true, tile: activePickerTile });
+      return;
+    }
+    if (!swatchId || swatchId !== activePickerSwatchId) return;
+    updateSwatchColor(swatchId, hex, { commit: true, tile: activePickerTile });
+    return;
+  }
+  if (type === "prism-color-picker-closed") {
+    if (swatchId && activePickerSwatchId && swatchId !== activePickerSwatchId) return;
+    if (gradientId && activePickerGradientId && gradientId !== activePickerGradientId) return;
+    handlePickerClosed();
+  }
 }
 
 const TOOLTIP_EDGE_PAD = 6;
@@ -1530,18 +1877,18 @@ function clampSwatchTooltip(tile) {
   return true;
 }
 
-/** Paint favicon + site title in the color results toolbar (matches export PNG). */
+/** Paint favicon + site title above the tabs (matches export naming). */
 function updateSiteBrand() {
   if (!siteBrandEl || !siteBrandTitleEl) return;
   const title = formatExportTitle(exportPageMeta);
   siteBrandTitleEl.textContent = title;
   if (siteBrandLogoEl) {
     if (exportPageMeta.iconDataUrl) {
-      siteBrandLogoEl.hidden = false;
       siteBrandLogoEl.src = exportPageMeta.iconDataUrl;
+      if (siteBrandLogoWrapEl) siteBrandLogoWrapEl.hidden = false;
     } else {
-      siteBrandLogoEl.hidden = true;
       siteBrandLogoEl.removeAttribute("src");
+      if (siteBrandLogoWrapEl) siteBrandLogoWrapEl.hidden = true;
     }
   }
   siteBrandEl.hidden = !title;
@@ -1549,26 +1896,40 @@ function updateSiteBrand() {
 
 function restoreTileTooltipLabel(tip) {
   if (!tip) return;
-  if (tip.dataset.fullCss) {
-    tip.textContent = truncateGradientLabel(tip.dataset.fullCss);
+  const labelEl = tip.querySelector(".swatch-tooltip-label");
+  const copyBtn = tip.querySelector(".swatch-tooltip-copy");
+  const display = tooltipDisplayLabel(tip);
+  if (labelEl) {
+    labelEl.textContent = display;
+    if (copyBtn) copyBtn.hidden = false;
     return;
   }
-  if (tip.dataset.hexLabel) {
-    tip.textContent = tip.dataset.hexLabel;
-    return;
-  }
+  tip.textContent = display;
 }
 
 function flashTileCopyFeedback(tile, success) {
   const tip = tile?.querySelector(".swatch-tooltip");
   if (!tip) return;
-  // Lock the hex/CSS clamp first. Reclamping after the shorter "Copied!" label
-  // would reduce left-edge shift and make the tip jump sideways.
-  clampSwatchTooltip(tile);
+  const labelEl = tip.querySelector(".swatch-tooltip-label");
+  const copyBtn = tip.querySelector(".swatch-tooltip-copy");
+  const hadHoverLabel = Boolean(
+    (labelEl?.textContent || tip.textContent || "").trim() || tip.dataset.hexLabel || tip.dataset.cssLabel
+  );
+  if (hadHoverLabel) clampSwatchTooltip(tile);
   const lockedShift = tip.style.getPropertyValue("--swatch-tooltip-shift") || "0px";
-  tip.textContent = success ? "Copied!" : "Copy failed";
+  const message = success ? "Copied!" : "Copy failed";
+  if (labelEl) {
+    labelEl.textContent = message;
+    if (copyBtn) copyBtn.hidden = true;
+  } else {
+    tip.textContent = message;
+  }
   tip.classList.add("is-pinned");
-  tip.style.setProperty("--swatch-tooltip-shift", lockedShift);
+  if (hadHoverLabel) {
+    tip.style.setProperty("--swatch-tooltip-shift", lockedShift);
+  } else {
+    requestAnimationFrame(() => clampSwatchTooltip(tile));
+  }
   clearTimeout(tile._copyFeedbackTimer);
   tile._copyFeedbackTimer = window.setTimeout(() => {
     restoreTileTooltipLabel(tip);
@@ -1576,6 +1937,57 @@ function flashTileCopyFeedback(tile, success) {
     requestAnimationFrame(() => clampSwatchTooltip(tile));
     tile._copyFeedbackTimer = null;
   }, 1200);
+}
+
+function truncateCssTooltipLabel(css, max = 36) {
+  const value = String(css || "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (value.length <= max) return value;
+  return `${value.slice(0, Math.max(1, max - 1))}…`;
+}
+
+function tooltipDisplayLabel(tip) {
+  if (!tip) return "";
+  if (tip.dataset.hexLabel) return tip.dataset.hexLabel;
+  if (tip.dataset.cssLabel) return truncateCssTooltipLabel(tip.dataset.cssLabel);
+  return "";
+}
+
+function createSwatchTooltip({ labelText = "", hexLabel = "", cssLabel = "", copyValue = "", copyTitle = "Copy" } = {}) {
+  const tooltip = document.createElement("div");
+  tooltip.className = "swatch-tooltip";
+  tooltip.setAttribute("role", "tooltip");
+  if (hexLabel) tooltip.dataset.hexLabel = hexLabel;
+  if (cssLabel) tooltip.dataset.cssLabel = cssLabel;
+
+  const label = document.createElement("span");
+  label.className = "swatch-tooltip-label";
+  label.textContent = labelText;
+  tooltip.appendChild(label);
+
+  const copyBtn = document.createElement("button");
+  copyBtn.type = "button";
+  copyBtn.className = "swatch-tooltip-copy";
+  copyBtn.title = copyTitle;
+  copyBtn.setAttribute("aria-label", copyTitle);
+  copyBtn.dataset.copyValue = copyValue;
+  copyBtn.innerHTML =
+    '<span class="material-symbols-outlined" aria-hidden="true">content_copy</span>';
+  copyBtn.addEventListener("click", async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const tile = tooltip.closest(".swatch");
+    const value = copyBtn.dataset.copyValue || copyValue || "";
+    try {
+      await navigator.clipboard.writeText(value);
+      if (tile) flashTileCopyFeedback(tile, true);
+    } catch {
+      if (tile) flashTileCopyFeedback(tile, false);
+    }
+  });
+  tooltip.appendChild(copyBtn);
+  return tooltip;
 }
 
 async function copySwatchHex(swatch, tile) {
@@ -1606,16 +2018,17 @@ function createSwatchTile(swatch, { variant = "roles" } = {}) {
   if (variant === "stack") tile.classList.add("swatch-stack");
   if (isLightSwatch(swatch.hex)) tile.classList.add("swatch-light");
   if (isDarkSwatch(swatch.hex)) tile.classList.add("swatch-dark");
+  const hexLabel = String(swatch.hex || "").toUpperCase();
   tile.setAttribute("aria-label", swatchAriaLabel(swatch));
   tile.dataset.hex = swatch.hex;
-  tile.title = "Click to copy hex";
   tile.style.backgroundColor = swatch.hex;
 
-  const tooltip = document.createElement("div");
-  tooltip.className = "swatch-tooltip";
-  tooltip.dataset.hexLabel = swatch.hex.toUpperCase();
-  tooltip.textContent = swatch.hex.toUpperCase();
-  tooltip.setAttribute("role", "tooltip");
+  const tooltip = createSwatchTooltip({
+    labelText: hexLabel,
+    hexLabel,
+    copyValue: swatch.hex,
+    copyTitle: "Copy hex"
+  });
 
   const meta = document.createElement("div");
   meta.className = "swatch-meta";
@@ -1635,7 +2048,10 @@ function createSwatchTile(swatch, { variant = "roles" } = {}) {
 
   meta.appendChild(editBtn);
   tile.append(tooltip, meta);
-  tile.addEventListener("click", () => {
+  tile.addEventListener("pointerenter", () => clampSwatchTooltip(tile));
+  tile.addEventListener("focus", () => clampSwatchTooltip(tile));
+  tile.addEventListener("click", (event) => {
+    if (event.target.closest(".swatch-edit-btn, .swatch-tooltip-copy")) return;
     const latest = currentPalette.find((s) => s.id === swatch.id) || swatch;
     copySwatchHex(latest, tile);
   });
@@ -1646,36 +2062,45 @@ function createGradientTile(gradient, { variant = "grid" } = {}) {
   const tile = document.createElement("article");
   tile.className = "swatch gradient-swatch";
   if (variant === "bar") tile.classList.add("gradient-swatch-bar");
-  tile.setAttribute("aria-label", `Gradient: ${gradient.css}`);
+  const css = gradient.css || "";
+  tile.setAttribute("aria-label", `Gradient: ${css}`);
   tile.title = "Click to copy CSS";
   tile.dataset.gradientId = gradient.id || "";
-  tile.style.backgroundImage = gradient.css;
+  tile.style.backgroundImage = css;
   tile.style.backgroundColor = "transparent";
 
+  // Empty tip — used only for brief "Copied!" feedback after click.
   const tooltip = document.createElement("div");
   tooltip.className = "swatch-tooltip";
-  tooltip.dataset.fullCss = gradient.css;
-  tooltip.textContent = truncateGradientLabel(gradient.css);
   tooltip.setAttribute("role", "tooltip");
+  const tipLabel = document.createElement("span");
+  tipLabel.className = "swatch-tooltip-label";
+  tooltip.appendChild(tipLabel);
 
   const meta = document.createElement("div");
   meta.className = "swatch-meta";
 
-  const copyBtn = document.createElement("button");
-  copyBtn.type = "button";
-  copyBtn.className = "swatch-edit-btn gradient-copy-btn";
-  copyBtn.title = "Copy CSS";
-  copyBtn.setAttribute("aria-label", "Copy gradient CSS");
-  copyBtn.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">content_copy</span>';
-  copyBtn.addEventListener("click", (event) => {
+  const editBtn = document.createElement("button");
+  editBtn.type = "button";
+  editBtn.className = "swatch-edit-btn";
+  editBtn.dataset.gradientId = gradient.id || "";
+  editBtn.title = "Edit gradient";
+  editBtn.setAttribute("aria-label", "Edit gradient");
+  editBtn.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">edit</span>';
+  editBtn.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
-    copyGradientCss(gradient, tile);
+    const latest = currentGradients.find((item) => item.id === gradient.id) || gradient;
+    openGradientColorPicker(latest, tile);
   });
 
-  meta.appendChild(copyBtn);
+  meta.appendChild(editBtn);
   tile.append(tooltip, meta);
-  tile.addEventListener("click", () => copyGradientCss(gradient, tile));
+  tile.addEventListener("click", (event) => {
+    if (event.target.closest(".swatch-edit-btn")) return;
+    const latest = currentGradients.find((item) => item.id === gradient.id) || gradient;
+    copyGradientCss(latest, tile);
+  });
   return tile;
 }
 
@@ -1743,20 +2168,19 @@ function renderGradientSection() {
 }
 
 function renderSwatches(swatches) {
-  closeColorPicker({ immediate: true });
-  activePickerSwatchId = null;
-  activePickerTile = null;
-  activePickerBaseline = null;
-  exitPickingMode();
+  dismissSwatchColorPicker({ immediate: true });
   swatchesEl.innerHTML = "";
   applyColorViewToggleUi();
 
   if (colorViewMode === COLOR_VIEW_MODES.STACK) {
     renderStackSwatches(swatches);
     renderGradientSection();
-    return;
+  } else {
+    renderOrganizedSwatches(swatches);
   }
-  renderOrganizedSwatches(swatches);
+
+  if (cssPreviewOpen) refreshCssExportPreview();
+  requestAnimationFrame(() => syncPaletteScrollGutters());
 }
 
 function paletteSignature(swatches) {
@@ -1872,11 +2296,13 @@ function buildShuffledPalette(rawExtraction) {
 }
 
 async function shufflePalette() {
-  if (activeMode !== "colors" || !lastRawExtraction || shuffleBtn.disabled) return;
+  if (activeMode !== "colors" || !shuffleBtn || shuffleBtn.disabled) return;
+  if (!lastRawExtraction) return;
 
   shuffleBtn.disabled = true;
   shuffleBtn.classList.add("is-shuffling");
   try {
+    await clearPageColorPreview();
     const attempt = buildShuffledPalette(lastRawExtraction);
     if (!attempt?.swatches?.length) return;
 
@@ -1929,6 +2355,122 @@ async function runHighlightScript(callback, args = []) {
   });
 
   return injection?.result ?? null;
+}
+
+function makePreviewStorageKey(tabOrUrl) {
+  const url = typeof tabOrUrl === "string" ? tabOrUrl : tabOrUrl?.url;
+  if (!url || typeof url !== "string") return null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+    return `prism.previewOnPage.${parsed.origin}${parsed.pathname}`;
+  } catch {
+    return null;
+  }
+}
+
+async function loadPagePreviewPref(tab) {
+  const key = makePreviewStorageKey(tab);
+  if (!key) return false;
+  try {
+    const data = await chrome.storage.local.get(key);
+    return Boolean(data[key]?.enabled);
+  } catch {
+    return false;
+  }
+}
+
+async function savePagePreviewPref(tab, enabled) {
+  const key = makePreviewStorageKey(tab);
+  if (!key) return;
+  try {
+    await chrome.storage.local.set({
+      [key]: { enabled: Boolean(enabled), updatedAt: Date.now() }
+    });
+  } catch {
+    /* storage may be unavailable */
+  }
+}
+
+async function runColorPreviewScript(callback, args = []) {
+  const tab = await getTargetTab();
+  if (!tab?.id || isUnsupportedPageUrl(tab.url || "")) return null;
+
+  await chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    files: ["src/content/previewColor.js"]
+  });
+
+  const [injection] = await chrome.scripting.executeScript({
+    target: { tabId: tab.id },
+    func: callback,
+    args
+  });
+
+  return injection?.result ?? null;
+}
+
+async function clearPageColorPreview() {
+  if (pagePreviewTimer) {
+    clearTimeout(pagePreviewTimer);
+    pagePreviewTimer = null;
+  }
+  pagePreviewPending = null;
+  try {
+    await runColorPreviewScript(() => window.__prismClearColorPreview?.());
+  } catch {
+    /* tab may be unavailable */
+  }
+}
+
+async function applyPageColorPreview(payload) {
+  if (!shouldPreviewColorOnPage() || !payload) return null;
+  const isGradient = payload.mode === "gradient";
+  if (isGradient && (!payload.fromCss || !payload.toCss)) return null;
+  if (!isGradient && (!payload.fromHex || !payload.toHex)) return null;
+  try {
+    const result = await runColorPreviewScript(
+      (next) => {
+        if (typeof window.__prismPreviewColor !== "function") {
+          return { ok: false, count: 0, error: "preview-unavailable" };
+        }
+        return window.__prismPreviewColor(next);
+      },
+      [payload]
+    );
+    return result;
+  } catch (error) {
+    return { ok: false, count: 0, error: error?.message || "preview-failed" };
+  }
+}
+
+function schedulePageColorPreview(payload) {
+  pagePreviewPending = payload;
+  if (pagePreviewTimer) return;
+  pagePreviewTimer = window.setTimeout(async () => {
+    pagePreviewTimer = null;
+    const next = pagePreviewPending;
+    pagePreviewPending = null;
+    if (!next || !shouldPreviewColorOnPage()) return;
+    await applyPageColorPreview(next);
+  }, 32);
+}
+
+async function setPagePreviewEnabled(enabled, { persist = true } = {}) {
+  const next = Boolean(enabled);
+  pagePreviewEnabled = next;
+  applyPagePreviewToggleUi();
+  if (!next) {
+    await clearPageColorPreview();
+  }
+  if (persist) {
+    try {
+      const tab = await getTargetTab();
+      await savePagePreviewPref(tab, next);
+    } catch {
+      /* ignore */
+    }
+  }
 }
 
 /** Fetch a same-origin (or CORS-ok) font file in the page, return ArrayBuffer for FontFace. */
@@ -2147,8 +2689,8 @@ function renderFonts(fonts) {
     const copyButton = document.createElement("button");
     copyButton.type = "button";
     copyButton.className = "font-copy-btn";
-    copyButton.setAttribute("aria-label", `Copy ${font.family}`);
-    copyButton.title = "Copy font family";
+    copyButton.setAttribute("aria-label", `Copy font family name ${font.family}`);
+    copyButton.title = "Copy font family name";
     copyButton.innerHTML = '<span class="material-symbols-outlined" aria-hidden="true">content_copy</span>';
     copyButton.addEventListener("click", (event) => {
       event.stopPropagation();
@@ -2177,8 +2719,25 @@ function renderFonts(fonts) {
     weights.className = "font-weights";
     weights.textContent = `Weights: ${font.weightsLabel || font.weight || 400}`;
 
-    titleRow.append(sample);
-    card.append(copyButton, titleRow, weights);
+    titleRow.append(sample, copyButton);
+    card.append(titleRow, weights);
+
+    const usageRoles = Array.isArray(font.usageRoles)
+      ? font.usageRoles.filter((label) => typeof label === "string" && label.trim())
+      : [];
+    if (usageRoles.length) {
+      const rolesEl = document.createElement("div");
+      rolesEl.className = "font-usage-roles";
+      rolesEl.setAttribute("aria-label", `Used for ${usageRoles.join(", ")}`);
+      for (const label of usageRoles) {
+        const chip = document.createElement("span");
+        chip.className = "font-usage-role";
+        chip.textContent = label;
+        rolesEl.appendChild(chip);
+      }
+      card.appendChild(rolesEl);
+    }
+
     fontsEl.appendChild(card);
   }
 }
@@ -2279,8 +2838,7 @@ function renderActiveModeResults() {
 function switchMode(mode) {
   if (!VALID_MODES.has(mode) || mode === activeMode) return;
 
-  closeColorPicker({ immediate: true });
-  exitPickingMode();
+  dismissSwatchColorPicker({ immediate: true });
 
   appEl.classList.add("is-switching");
 
@@ -2721,6 +3279,9 @@ async function ensureResultsForActiveMode({ force = false, reason = "auto" } = {
   const previousKey = generation.pageKey;
   generation = invalidatePage(generation, pageKey);
   if (previousKey && pageKey && previousKey !== pageKey) {
+    await clearPageColorPreview();
+    pagePreviewEnabled = await loadPagePreviewPref(tab);
+    applyPagePreviewToggleUi();
     syncGenerationMirrors();
   }
 
@@ -2843,13 +3404,48 @@ if (reloadBtn) reloadBtn.addEventListener("click", onReloadOrDownloadClick);
 if (clearSelectionBtn) {
   clearSelectionBtn.addEventListener("click", clearAssetMultiSelection);
 }
-shuffleBtn.addEventListener("click", shufflePalette);
+if (shuffleBtn) shuffleBtn.addEventListener("click", shufflePalette);
+
+if (colorContentMenuBtn) {
+  colorContentMenuBtn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (activeMode !== "colors") return;
+    const open = colorContentMenuBtn.getAttribute("aria-expanded") !== "true";
+    setColorContentMenuOpen(open);
+  });
+}
+
+if (colorContentMenuList) {
+  colorContentMenuList.addEventListener("click", (event) => {
+    const btn = event.target.closest("[data-content]");
+    if (!btn || !colorContentMenuList.contains(btn)) return;
+    event.stopPropagation();
+    if (activeMode !== "colors") return;
+    setColorContentView(btn.dataset.content);
+  });
+}
+
+document.addEventListener("click", (event) => {
+  if (!colorContentMenuEl || colorContentMenuEl.contains(event.target)) return;
+  closeColorContentMenu();
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeColorContentMenu();
+});
 
 if (colorViewToggleEl) {
   colorViewToggleEl.addEventListener("click", (event) => {
     const btn = event.target.closest("[data-view]");
     if (!btn || !colorViewToggleEl.contains(btn)) return;
+    if (cssPreviewOpen) return;
     setColorViewMode(btn.dataset.view);
+  });
+}
+
+if (pagePreviewToggleEl) {
+  pagePreviewToggleEl.addEventListener("change", () => {
+    setPagePreviewEnabled(pagePreviewToggleEl.checked, { persist: true });
   });
 }
 
@@ -2886,12 +3482,14 @@ copyBtn.addEventListener("click", async () => {
   }
 
   try {
-    await copyPaletteImage(currentPalette, exportPageMeta, {
-      viewMode: colorViewMode,
-      gradients: currentGradients.length
-        ? currentGradients
-        : generation.gradients || []
-    });
+    if (cssPreviewOpen) {
+      await copyPaletteCss(currentPalette, currentCssExportOptions());
+    } else {
+      await copyPaletteSvg(currentPalette, exportPageMeta, {
+        viewMode: colorViewMode,
+        gradients: currentCssExportOptions().gradients
+      });
+    }
     statusEl.textContent = "";
     flashCopyFeedback(true);
   } catch (error) {
@@ -2938,10 +3536,22 @@ async function bootstrapPopup() {
     return;
   }
 
+  pagePreviewEnabled = await loadPagePreviewPref(tab);
+  applyPagePreviewToggleUi();
+
   const pageKey = makePageKey(tab);
   const cached = await loadGenerationCache(pageKey);
   if (cached?.pageKey === pageKey) {
     generation = restoreGenerationCache(cached);
+    // Drop any stale edited/shuffled colors from older cache entries and
+    // rebuild from the page scan so reopen always shows the live webpage palette.
+    if (generation.rawExtraction && !generation.dismissed?.colors) {
+      generation = {
+        ...generation,
+        palette: curateColorsFromRaw(generation.rawExtraction) || [],
+        gradients: curateGradientsFromRaw(generation.rawExtraction) || []
+      };
+    }
     syncGenerationMirrors();
     // Warm cache with both pipelines already filled — skip the full rescan.
     if (generation.rawExtraction && generation.rawAssets) {
@@ -2953,6 +3563,8 @@ async function bootstrapPopup() {
       if (hasAnything) {
         exportPageMeta = await readPageMetaFromTab(tab);
         updateSiteBrand();
+        // Rewrite cache so subsequent opens also get the pristine palette.
+        persistGenerationCache();
         revealBestAvailableMode();
         return;
       }
