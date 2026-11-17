@@ -1321,7 +1321,7 @@ function paintSwatchTile(tile, swatch) {
   tile.classList.toggle("swatch-dark", isDarkSwatch(swatch.hex));
   tile.setAttribute("aria-label", swatchAriaLabel(swatch));
   tile.dataset.hex = swatch.hex;
-  tile.title = "Click to copy hex";
+  tile.removeAttribute("title");
   const tip = tile.querySelector(".swatch-tooltip");
   if (tip) {
     tip.dataset.hexLabel = hexLabel;
@@ -2021,7 +2021,6 @@ function createSwatchTile(swatch, { variant = "roles" } = {}) {
   const hexLabel = String(swatch.hex || "").toUpperCase();
   tile.setAttribute("aria-label", swatchAriaLabel(swatch));
   tile.dataset.hex = swatch.hex;
-  tile.title = "Click to copy hex";
   tile.style.backgroundColor = swatch.hex;
 
   const tooltip = createSwatchTooltip({
