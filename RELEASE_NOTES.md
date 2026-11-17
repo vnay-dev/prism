@@ -18,7 +18,7 @@
 
 ### Fixed
 
-- **Hex tooltips** — first-row swatch tips stay fully visible above the tile; the native “Click to copy hex” browser tip is removed so only the custom hex tooltip shows.
+- **Hex tooltips** — swatch tips stay fully visible above the tile (including when a row sits at the top of the scrollport); the native “Click to copy hex” browser tip is removed so only the custom hex tooltip shows.
 - **View toggle overlap** — bottom clearance under the palette keeps the floating Organized/Stack control from covering the last swatch; when the list is height-capped you can scroll that tile clear.
 
 ### Permissions
