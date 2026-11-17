@@ -16,6 +16,11 @@
 
 - **Color picker** — floating in-panel picker for swatch and gradient-stop edits, including a framed picker host for smoother interaction inside the panel.
 
+### Fixed
+
+- **Hex tooltips** — first-row swatch tips stay fully visible above the tile; the native “Click to copy hex” browser tip is removed so only the custom hex tooltip shows.
+- **View toggle overlap** — bottom clearance under the palette keeps the floating Organized/Stack control from covering the last swatch; when the list is height-capped you can scroll that tile clear.
+
 ### Permissions
 
 - **`storage`** — remembers the per-page “preview on page” preference locally. Chrome may ask you to re-enable the extension after update.
