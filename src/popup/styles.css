@@ -1032,7 +1032,8 @@ button:focus-visible {
 }
 
 /* Floating Organized / Stack over the palette bottom-right.
-   Overlay only — do not reserve empty layout space under the swatches.
+   Swatches keep bottom padding (--view-toggle-clearance) so the last row
+   clears this control; when height-capped that pad also enables scroll.
    Keep the grey track so the white active pill stays readable.
    right: 8px by default; 16px when .palette-stage.has-v-scroll (scrollbar). */
 .view-toggle-float {
@@ -1123,6 +1124,11 @@ button:focus-visible {
 }
 
 .swatches {
+  /* Top: room for hex tip above a tile even when scrolled flush to the port edge
+     (~26px tip + 4px gap + small edge pad). Bottom: clears .view-toggle-float
+     (bottom 16px + ~34px pill + small gap). */
+  --swatch-tooltip-clearance: 32px;
+  --view-toggle-clearance: 56px;
   display: flex;
   flex-direction: column;
   flex: 0 0 auto;
@@ -1132,7 +1138,10 @@ button:focus-visible {
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 4px 4px 16px 0;
+  /* Bottom pad also creates scroll room when the list is height-capped. */
+  padding: var(--swatch-tooltip-clearance) 4px var(--view-toggle-clearance) 0;
+  scroll-padding-top: var(--swatch-tooltip-clearance);
+  scroll-padding-bottom: var(--view-toggle-clearance);
   margin-right: -2px;
 }
 
