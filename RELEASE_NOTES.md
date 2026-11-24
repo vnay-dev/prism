@@ -1,5 +1,22 @@
 # Release notes
 
+## 0.8.3 — Store package uses manifest name
+
+**Date:** November 24, 2026
+
+### Fixed
+
+- **Store ZIP name** — `npm run package:store` no longer overwrites the extension title with a hardcoded string, so the Web Store package ships as **Prism - Color Palette & Font Extractor**.
+
+### Package
+
+```bash
+npm run package:store
+# → dist/prism-0.8.3.zip
+```
+
+---
+
 ## 0.8.2 — Store listing name & summary
 
 **Date:** November 24, 2026
