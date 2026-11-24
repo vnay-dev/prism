@@ -1,4 +1,6 @@
-# Prism
+# Prism - Color Palette & Font Extractor
+
+Extract website color palettes, find fonts, copy CSS or paste to Figma, and download images & SVG icons — all in one click.
 
 Chrome extension that extracts a curated **8-color design palette**, **font families**, **images**, and **icons** from any live web page. Colors are sampled from rendered DOM styles (backgrounds, text, borders, icons, gradients), clustered, scored, and assigned semantic roles. Typography is sampled from computed `font-family` and `font-weight` on visible text, then ranked and filtered so you get the families and weights that actually matter on the page.
 
