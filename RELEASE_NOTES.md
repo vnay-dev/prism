@@ -1,5 +1,23 @@
 # Release notes
 
+## 0.8.2 — Store listing name & summary
+
+**Date:** November 24, 2026
+
+### Changed
+
+- **Extension name** — now **Prism - Color Palette & Font Extractor** in Chrome and on the Web Store.
+- **Store summary** — “Extract website color palettes, find fonts, copy CSS or paste to Figma, and download images & SVG icons — all in one click.”
+
+### Package
+
+```bash
+npm run package:store
+# → dist/prism-0.8.2.zip
+```
+
+---
+
 ## 0.8.1 — Palette tooltip clearance
 
 **Date:** November 17, 2026
