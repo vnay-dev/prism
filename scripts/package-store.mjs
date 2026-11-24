@@ -19,8 +19,6 @@ import {
   assertServiceWorkerImportsInZip
 } from "./check-service-worker-imports.mjs";
 
-const PROD_NAME = "Prism - Website Color & Font Extractor";
-
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const manifest = JSON.parse(readFileSync(join(root, "manifest.json"), "utf8"));
 const version = manifest.version || "0.0.0";
@@ -52,13 +50,10 @@ function stageFiles() {
   rmSync(stagingDir, { recursive: true, force: true });
   mkdirSync(stagingDir, { recursive: true });
 
-  const prodManifest = { ...manifest, name: PROD_NAME };
-  if (prodManifest.action) {
-    prodManifest.action = { ...prodManifest.action, default_title: PROD_NAME };
-  }
+  // Use manifest.json as the source of truth for name / default_title.
   writeFileSync(
     join(stagingDir, "manifest.json"),
-    `${JSON.stringify(prodManifest, null, 2)}\n`
+    `${JSON.stringify(manifest, null, 2)}\n`
   );
 
   cpSync(join(root, "icons"), join(stagingDir, "icons"), { recursive: true });
